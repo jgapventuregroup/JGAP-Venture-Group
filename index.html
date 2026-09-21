@@ -1830,9 +1830,16 @@ async function loadJGAPUsersAccess(){
 async function inviteJGAPUser(){
   const email=document.getElementById('uaEmail')?.value.trim().toLowerCase(), role=document.getElementById('uaRole')?.value;
   if(!email){alert('Enter an email address.');return;}
-  const {error}=await sb.rpc('create_current_user_company_invitation',{p_email:email,p_role:role});
-  if(error){alert('Invitation failed: '+error.message);return;}
-  document.getElementById('uaEmail').value=''; await loadJGAPUsersAccess(); alert('Invitation recorded. The user can sign in with this email and accept the invitation.');
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session?.access_token){alert('Your session has expired. Please sign in again.');return;}
+  const {data,error}=await sb.functions.invoke('invite-company-user',{
+    body:{email,role},
+    headers:{Authorization:'Bearer '+session.access_token}
+  });
+  if(error){alert('Invitation failed: '+(error.message||'Unable to send invitation.'));return;}
+  if(data?.error){alert('Invitation failed: '+data.error);return;}
+  document.getElementById('uaEmail').value=''; await loadJGAPUsersAccess();
+  alert('Invitation sent to '+email+'. They can use the email link to create their login and join JGAP Venture Group.');
 }
 async function cancelJGAPInvite(id){ if(!confirm('Cancel this invitation?'))return; const {error}=await sb.rpc('cancel_current_user_company_invitation',{p_invitation_id:id}); if(error){alert(error.message);return;} await loadJGAPUsersAccess(); }
 async function changeJGAPRole(id,role){ const {error}=await sb.rpc('update_current_user_company_member_role',{p_user_id:id,p_role:role}); if(error){alert(error.message);await loadJGAPUsersAccess();return;} await loadJGAPUsersAccess(); }
