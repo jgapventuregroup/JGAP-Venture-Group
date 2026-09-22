@@ -67,9 +67,12 @@ nav .flipNav{font-weight:800;border:2px solid #111;background:#fff;}
     el.innerHTML=a.map((id,i)=>'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;border:1px solid #e2e7ef;border-radius:8px;margin:5px 0;background:#fff"><span>'+labels[id]+'</span><span style="display:flex;gap:4px"><button class="secondary" type="button" onclick="moveNavItem(\''+id+'\',-1)" '+(i===0?'disabled':'')+'>↑</button><button class="secondary" type="button" onclick="moveNavItem(\''+id+'\',1)" '+(i===a.length-1?'disabled':'')+'>↓</button><button class="secondary" type="button" onclick="moveNavItemTop(\''+id+'\')" '+(i===0?'disabled':'')+'>Top</button></span></div>').join('');
   }
   window.toggleNavOrganizer=function(){const el=document.getElementById('navOrganizer');if(!el)return;el.style.display=el.style.display==='none'?'block':'none';renderNavEditor();};
-  window.moveNavItem=function(id,dir){const a=getNavOrder(),i=a.indexOf(id),j=i+dir;if(i<0||j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];localStorage.setItem(KEY,JSON.stringify(a));applyNavOrder();renderNavEditor();};
-  window.moveNavItemTop=function(id){const a=getNavOrder(),i=a.indexOf(id);if(i<=0)return;a.splice(i,1);a.unshift(id);localStorage.setItem(KEY,JSON.stringify(a));applyNavOrder();renderNavEditor();};
-  window.resetNavOrder=function(){localStorage.removeItem(KEY);applyNavOrder();renderNavEditor();};
+  async function saveNavOrderToAccount(layout){try{const {data:{user}}=await sb.auth.getUser();if(!user)return;const {data:member}=await sb.from('company_members').select('company_id').eq('user_id',user.id).limit(1).maybeSingle();if(!member)return;await sb.from('dashboard_layout_preferences').upsert({user_id:user.id,company_id:member.company_id,nav_layout:layout,updated_at:new Date().toISOString()},{onConflict:'user_id'});}catch(e){console.warn('Nav layout account save failed',e);}}
+  async function loadNavOrderFromAccount(){try{const {data:{user}}=await sb.auth.getUser();if(!user)return;const {data}=await sb.from('dashboard_layout_preferences').select('nav_layout').eq('user_id',user.id).maybeSingle();if(data&&Array.isArray(data.nav_layout)&&data.nav_layout.length){const clean=data.nav_layout.filter(id=>DEFAULTS.includes(id)).concat(DEFAULTS.filter(id=>!data.nav_layout.includes(id)));localStorage.setItem(KEY,JSON.stringify(clean));applyNavOrder();renderNavEditor();}}catch(e){console.warn('Nav layout account load failed',e);}}
+  window.loadNavOrderFromAccount=loadNavOrderFromAccount;
+  window.moveNavItem=function(id,dir){const a=getNavOrder(),i=a.indexOf(id),j=i+dir;if(i<0||j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];localStorage.setItem(KEY,JSON.stringify(a));applyNavOrder();renderNavEditor();saveNavOrderToAccount(a);};
+  window.moveNavItemTop=function(id){const a=getNavOrder(),i=a.indexOf(id);if(i<=0)return;a.splice(i,1);a.unshift(id);localStorage.setItem(KEY,JSON.stringify(a));applyNavOrder();renderNavEditor();saveNavOrderToAccount(a);};
+  window.resetNavOrder=function(){localStorage.removeItem(KEY);applyNavOrder();renderNavEditor();saveNavOrderToAccount(DEFAULTS.slice());};
   window.applyNavOrder=applyNavOrder;
   document.addEventListener('DOMContentLoaded',()=>setTimeout(applyNavOrder,0));
 })();
@@ -223,6 +226,7 @@ document.getElementById("app").innerHTML=`<header><div style="display:flex;align
 <div style="margin-top:14px"><button class="primary" onclick="renderTasksPage()">Open Tasks</button> <button class="secondary" onclick="quickAddTask()">+ Add Task</button></div>
 </div>
 <div id="propertyOperationsSummary"></div></div></main></div>`;
+  if(window.applyNavOrder) window.applyNavOrder();
 }
 
 function togglePortfolioDetails(){
@@ -1892,7 +1896,7 @@ async function removeJGAPUser(id){ if(!confirm('Remove this user from JGAP Ventu
 async function render(){
 const {data:{user}}=await sb.auth.getUser();
 if(!user){authView();return;}
-shell(); await window.loadDashboardLayoutFromAccount(); window.applyDashboardLayout(); document.getElementById("who").textContent="Signed in as "+user.email; loadDashboardRentSummary(); loadDashboardPrimeRate(); loadDashboardPropertyManagementCenter(); loadDashboardLeaseExpirations(); loadDashboardDelinquency(); loadDashboardPortfolioPerformance(); loadDashboardTasks();
+shell(); await window.loadDashboardLayoutFromAccount(); if(window.loadNavOrderFromAccount) await window.loadNavOrderFromAccount(); window.applyDashboardLayout(); document.getElementById("who").textContent="Signed in as "+user.email; loadDashboardRentSummary(); loadDashboardPrimeRate(); loadDashboardPropertyManagementCenter(); loadDashboardLeaseExpirations(); loadDashboardDelinquency(); loadDashboardPortfolioPerformance(); loadDashboardTasks();
 try {
   const { data: body, error: rpcError } = await sb.rpc("bootstrap_current_user");
   if (rpcError) {
@@ -1998,77 +2002,3 @@ window.renderDocumentsPage = async function(context={}){
     const main=document.getElementById('main');
     if(!main){ shell(); }
     const main2=document.getElementById('main');
-    const mainTarget=main2||document.querySelector('main');
-    if(!mainTarget) throw new Error('App workspace could not be opened.');
-    mainTarget.innerHTML='';
-    mainTarget.innerHTML=`<div class="pageHead"><div><h1>Documents</h1><p class="muted">Secure company document storage for properties, deals, flips, leases and business records.</p></div></div>
-    <div class="panel" style="margin-bottom:16px"><h2>Upload Document</h2><div class="formgrid">
-      <label>Document Name<input id="docName" placeholder="Purchase agreement, insurance, lease, receipt..." /></label>
-      <label>Document Type<select id="docType"><option>General</option><option>Lease</option><option>Purchase</option><option>Insurance</option><option>Mortgage</option><option>Tax</option><option>Repair</option><option>Flip</option><option>Receipt</option><option>Other</option></select></label>
-      <label>Property (optional)<select id="docProperty"><option value="">Company / General</option></select></label><label>Deal (optional)<select id="docDeal"><option value="">No Deal / General</option></select></label>
-      <label>Description (optional)<input id="docDescription" placeholder="Short description" /></label>
-      <label>File<input id="docFile" type="file" /></label>
-    </div><button class="primary" onclick="uploadJGAPDocument()">Upload Document</button><span id="docUploadStatus" class="muted" style="margin-left:12px"></span></div>
-    <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div><h2>Document Library</h2><p class="muted">Only authorized JGAP members can access these files.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><input id="docSearch" placeholder="Search documents..." oninput="loadJGAPDocuments()" style="max-width:220px"><select id="docTypeFilter" onchange="loadJGAPDocuments()" style="max-width:170px"><option value="">All Types</option><option>General</option><option>Lease</option><option>Purchase</option><option>Insurance</option><option>Mortgage</option><option>Tax</option><option>Repair</option><option>Flip</option><option>Receipt</option><option>Other</option></select><select id="docFilter" onchange="loadJGAPDocuments()" style="max-width:220px"><option value="">All Properties</option></select><select id="docDealFilter" onchange="loadJGAPDocuments()" style="max-width:220px"><option value="">All Deals</option></select></div></div><div id="docList" class="list"><div class="empty">Loading documents...</div></div></div>`;
-    mainTarget.querySelector('#navDocuments')?.classList.add('active');
-    const {data:props,error}=await sb.from('properties').select('id,address_line1,city,state,postal_code').order('name');
-    if(error) throw error;
-    const selects=[document.getElementById('docProperty'),document.getElementById('docFilter')];
-    (props||[]).forEach(x=>selects.forEach(sel=>{if(sel){const o=document.createElement('option');o.value=x.id;o.textContent=[x.address_line1,x.city,x.state,x.postal_code].filter(Boolean).join(', ')||'Property';sel.appendChild(o);}}));
-    const {data:deals}=await sb.from('deals').select('id,name').order('created_at',{ascending:false});
-    const dealSelects=[document.getElementById('docDeal'),document.getElementById('docDealFilter')];
-    (deals||[]).forEach(x=>dealSelects.forEach(sel=>{if(sel){const o=document.createElement('option');o.value=x.id;o.textContent=x.name||'Deal';sel.appendChild(o);}}));
-    if(context.propertyId){const e=document.getElementById('docProperty'); if(e)e.value=context.propertyId;}
-    if(context.dealId){const a=document.getElementById('docDeal'); if(a)a.value=context.dealId; const b=document.getElementById('docDealFilter'); if(b)b.value=context.dealId;}
-    await loadJGAPDocuments();
-  } catch(e) {
-    const main=document.getElementById('main');
-    if(main) main.innerHTML='<div class="panel"><h2>Documents</h2><div class="error">Unable to open Documents: '+escapeHtml(e.message||String(e))+'</div><button class="secondary" onclick="window.renderDocumentsPage()">Try Again</button></div>';
-  }
-};
-
-// Legacy implementation retained below but no longer used.
-/* Legacy implementation removed in Build 106. */
-</script>
-<script>
-document.addEventListener("click",()=>{ 
-  if(window.currentPropertyId) loadPropertyOperationsSummary(window.currentPropertyId);
-});
-</script>
-
-<script>
-async function markPropertySoldUI(propertyId){
-  const date=prompt("Sale date (YYYY-MM-DD):", new Date().toISOString().slice(0,10));
-  if(date===null)return;
-  const price=prompt("Sale price:", "");
-  if(price===null)return;
-  const notes=prompt("Sale notes (optional):","") ?? "";
-  const {error}=await sb.rpc("mark_current_user_property_sold",{
-    p_property_id:propertyId,
-    p_sold_date:date || new Date().toISOString().slice(0,10),
-    p_sale_price:price===""?null:Number(price),
-    p_sale_notes:notes || null
-  });
-  if(error){alert(error.message);return;}
-  alert("Property marked as sold. The property history has been preserved.");
-  if(typeof render==="function") render();
-}
-
-async function toggleProjectDueDiligence(projectId){
- const host=document.getElementById('dd_'+projectId); if(!host)return;
- if(host.style.display==='block'){host.style.display='none';return;} host.style.display='block'; host.innerHTML='Loading due diligence...';
- const {data,error}=await sb.from('project_due_diligence').select('*').eq('project_id',projectId).order('created_at');
- if(error){host.innerHTML='<div class="error">'+escapeHtml(error.message)+'</div>';return;}
- const items=data||[]; const done=items.filter(x=>x.status==='complete').length;
- host.innerHTML=`<div class="panel"><div class="sectionTitle">🔎 Due Diligence <span class="muted">${done}/${items.length} complete</span></div><p class="muted">Track inspections, title, permits, utilities, financing and other pre-close checks for this flip.</p>
- ${items.length?'<div style="overflow:auto"><table class="table"><thead><tr><th>Item</th><th>Status</th><th>Notes</th><th></th></tr></thead><tbody>'+items.map(x=>`<tr><td>${escapeHtml(x.item)}</td><td><select onchange="updateProjectDueDiligence('${x.id}',this.value)"><option value="pending" ${x.status==='pending'?'selected':''}>Pending</option><option value="complete" ${x.status==='complete'?'selected':''}>Complete</option><option value="issue" ${x.status==='issue'?'selected':''}>Issue</option></select></td><td>${escapeHtml(x.notes||'—')}</td><td>${x.status==='issue'?'<span class="error">Issue</span>':''}</td></tr>`).join('')+'</tbody></table></div>':'<p class="muted">No checklist items yet.</p>'}
- <div class="formGrid"><label>Checklist item<input id="dd_item_${projectId}" placeholder="Example: Home inspection"></label><label>Notes<input id="dd_notes_${projectId}" placeholder="Findings / next step"></label></div><button class="primary" onclick="addProjectDueDiligence('${projectId}')">Add Checklist Item</button><button class="secondary" onclick="seedProjectDueDiligence('${projectId}')">Add Standard Checklist</button></div>`;
-}
-async function addProjectDueDiligence(projectId){const item=document.getElementById('dd_item_'+projectId)?.value.trim();const notes=document.getElementById('dd_notes_'+projectId)?.value||'';if(!item){alert('Enter a checklist item.');return;}const {error}=await sb.rpc('create_current_user_project_due_diligence',{p_project_id:projectId,p_item:item,p_notes:notes});if(error){alert(error.message);return;}await toggleProjectDueDiligence(projectId);toggleProjectDueDiligence(projectId);}
-async function updateProjectDueDiligence(id,status){const {data,error}=await sb.rpc('update_current_user_project_due_diligence',{p_id:id,p_status:status,p_notes:null});if(error){alert(error.message);return;}loadProjects();}
-async function seedProjectDueDiligence(projectId){const defaults=['Home inspection','Title search / ownership verification','Survey / boundary review','Permit / zoning review','Utility review','Insurance quote','Financing approval','Contract / closing document review','Repair scope / contractor bids','Final walk-through'];for(const item of defaults){const {error}=await sb.rpc('create_current_user_project_due_diligence',{p_project_id:projectId,p_item:item,p_notes:null});if(error){alert(error.message);return;}}await loadProjects();setTimeout(()=>toggleProjectDueDiligence(projectId),150);}
-</script>
-
-<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}</script>
-<script src="./money-making-system.js"></script><script src="./lead-generation.js?v=20260922-1"></script>\n<script src="./laundromats.js?v=20260922-3"></script><script src="./vendors.js?v=20260922-2"></script><script src="./finance-cpa.js"></script><script src="./lenders.js"></script>
-</body></html>
