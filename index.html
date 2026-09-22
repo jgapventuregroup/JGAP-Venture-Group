@@ -580,7 +580,7 @@ function printRentStatementModal(){
  const area=document.getElementById("statementPrintArea"); if(!area)return;
  const w=window.open("","_blank");
  if(!w){alert("Your browser blocked the print window. Use the Print / Save PDF button again or allow pop-ups for this app.");return;}
- w.document.write(`<html><head><title>JGAP Rent Statement</title><style>body{font-family:Arial,sans-serif;margin:0;padding:32px;color:#111}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#f3f4f6}.muted{color:#666}@media print{body{padding:0}}</style></head><body>${area.innerHTML}<script src="./money-making-system.js"></script>
+ w.document.write(`<html><head><title>JGAP Rent Statement</title><style>body{font-family:Arial,sans-serif;margin:0;padding:32px;color:#111}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#f3f4f6}.muted{color:#666}@media print{body{padding:0}}</style></head><body>${area.innerHTML}<script src="./money-making-system.js"><\/script>
 </body></html>`);w.document.close();w.focus();setTimeout(()=>w.print(),300);
 }
 
