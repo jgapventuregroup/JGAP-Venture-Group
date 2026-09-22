@@ -40,7 +40,11 @@ select,textarea{width:100%;padding:11px;border:1px solid #ccd5e2;border-radius:9
 .reportHeader{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.reportActions{display:flex;gap:8px;flex-wrap:wrap}.reportSheet{background:#fff;border:1px solid #e2e7ef;border-radius:14px;padding:28px;margin-top:16px}.reportKpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.reportKpis .card{box-shadow:none;background:#fbfcfe}@media(max-width:900px){.reportKpis{grid-template-columns:1fr 1fr}}@media print{nav,header,.reportActions,.pageHead{display:none!important}main{max-width:none;padding:0}.reportSheet{border:0;box-shadow:none;padding:0}.reportKpis{grid-template-columns:repeat(4,1fr)}}
 nav .flipNav{font-weight:800;border:2px solid #111;background:#fff;}
 </style>
-<style>.offerPackageHeader{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap}.offerActions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.offerPackageGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}.offerPackageGrid>div{border:1px solid #d9e2ee;border-radius:10px;padding:12px;background:#fff;min-width:0}.offerPackageGrid strong{display:block;margin-top:5px;font-size:18px;line-height:1.25;overflow-wrap:anywhere}@media(max-width:900px){.offerPackageGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.offerPackageGrid{grid-template-columns:1fr}.offerActions{width:100%;justify-content:flex-start}}</style></head>
+<style>.offerPackageHeader{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap}.offerActions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.offerPackageGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}.offerPackageGrid>div{border:1px solid #d9e2ee;border-radius:10px;padding:12px;background:#fff;min-width:0}.offerPackageGrid strong{display:block;margin-top:5px;font-size:18px;line-height:1.25;overflow-wrap:anywhere}@media(max-width:900px){.offerPackageGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.offerPackageGrid{grid-template-columns:1fr}.offerActions{width:100%;justify-content:flex-start}}</style><script defer src="./lead-generation.js"></script>
+<script defer src="./money-making-system.js"></script>
+<script defer src="./vendors.js"></script>
+<script defer src="./laundromats.js"></script>
+</head>
 <body>
 <div id="app"></div>
 <script>
@@ -614,11 +618,6 @@ function printRentStatementModal(){
  const w=window.open("","_blank");
  if(!w){alert("Your browser blocked the print window. Use the Print / Save PDF button again or allow pop-ups for this app.");return;}
  w.document.write(`<html><head><title>JGAP Rent Statement</title><style>body{font-family:Arial,sans-serif;margin:0;padding:32px;color:#111}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#f3f4f6}.muted{color:#666}@media print{body{padding:0}}</style></head><body>${area.innerHTML}<script src="./money-making-system.js"><\/script>
-<!-- JGAP MODULE SCRIPTS -->
-<script src="./lead-generation.js"></script>
-<script src="./money-making-system.js"></script>
-<script src="./vendors.js"></script>
-<script src="./laundromats.js"></script>
 </body></html>`);w.document.close();w.focus();setTimeout(()=>w.print(),300);
 }
 
