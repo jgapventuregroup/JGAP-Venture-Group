@@ -24,7 +24,7 @@
         <div class="formGrid">
           <label>Contact name<input id="v_name" placeholder="John Smith"></label>
           <label>Company name<input id="v_company" placeholder="ABC Construction LLC"></label>
-          <label>Type<select id="v_type"><option value="contractor">Contractor</option><option value="vendor" selected>Vendor</option><option value="service_provider">Service Provider</option><option value="professional">Professional</option><option value="realtor">Realtor</option><option value="broker">Broker</option><option value="insurance">Insurance Agent</option><option value="lawyer">Lawyer / Attorney</option><option value="appraiser">Appraiser</option><option value="private_lender">Private Lender</option><option value="accountant">CPA / Accountant</option><option value="other">Other</option></select></label>
+          <label>Type<select id="v_type"><option value="contractor">Contractor</option><option value="vendor" selected>Vendor</option><option value="service_provider">Service Provider</option><option value="professional">Professional</option><option value="realtor">Realtor</option><option value="broker">Broker</option><option value="insurance">Insurance Agent</option><option value="lawyer">Lawyer / Attorney</option><option value="appraiser">Appraiser</option><option value="private_lender">Private Lender</option><option value="bank_commercial_lender">Bank / Commercial Lender</option><option value="credit_union">Credit Union</option><option value="sba_lender">SBA Lender</option><option value="hard_money_lender">Hard Money Lender</option><option value="dscr_lender">DSCR Lender</option><option value="bridge_lender">Bridge Lender</option><option value="construction_lender">Construction Lender</option><option value="multifamily_commercial_lender">Multifamily / Commercial Lender</option><option value="accountant">CPA / Accountant</option><option value="other">Other</option></select></label>
           <label>Trade / Service<input id="v_trade" placeholder="HVAC, plumbing, roofing, materials..."></label>
           <label>Phone<input id="v_phone" type="tel" placeholder="(555) 555-5555"></label>
           <label>Email<input id="v_email" type="email" placeholder="name@company.com"></label>
@@ -99,7 +99,7 @@
     if(error||!x){alert(error?.message||'Contact not found.');return;}
     const name=prompt('Contact name:',x.name||''); if(name===null)return;
     const company=prompt('Company name:',x.company_name||''); if(company===null)return;
-    const type=prompt('Type (contractor, vendor, service_provider, professional, other):',x.vendor_type||'vendor'); if(type===null)return;
+    const type=prompt('Type (contractor, vendor, service_provider, professional, bank_commercial_lender, sba_lender, private_lender, other):',x.vendor_type||'vendor'); if(type===null)return;
     const trade=prompt('Trade / Service:',x.trade||''); if(trade===null)return;
     const phone=prompt('Phone:',x.phone||''); if(phone===null)return;
     const email=prompt('Email:',x.email||''); if(email===null)return;
