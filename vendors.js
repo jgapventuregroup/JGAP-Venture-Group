@@ -15,16 +15,16 @@
     const main=document.querySelector('main'); if(!main)return;
     main.innerHTML=`
       <div class="pageHead">
-        <div><h1>Vendors & Contractors</h1><p class="muted">Keep JGAP's contractor, vendor, and service-provider contacts in one place.</p></div>
+        <div><h1>Vendors & Contractors</h1><p class="muted">Keep JGAP's contractors, vendors, realtors, brokers, insurance agents, lawyers, appraisers, private lenders, CPAs, and other professional contacts in one place.</p></div>
         <button class="secondary" onclick="render()">← Dashboard</button>
       </div>
 
       <div class="panel" style="margin-bottom:16px">
-        <div class="sectionTitle">Add Vendor / Contractor</div>
+        <div class="sectionTitle">Add Professional / Vendor</div>
         <div class="formGrid">
           <label>Contact name<input id="v_name" placeholder="John Smith"></label>
           <label>Company name<input id="v_company" placeholder="ABC Construction LLC"></label>
-          <label>Type<select id="v_type"><option value="contractor">Contractor</option><option value="vendor" selected>Vendor</option><option value="service_provider">Service Provider</option><option value="professional">Professional</option><option value="other">Other</option></select></label>
+          <label>Type<select id="v_type"><option value="contractor">Contractor</option><option value="vendor" selected>Vendor</option><option value="service_provider">Service Provider</option><option value="professional">Professional</option><option value="realtor">Realtor</option><option value="broker">Broker</option><option value="insurance">Insurance Agent</option><option value="lawyer">Lawyer / Attorney</option><option value="appraiser">Appraiser</option><option value="private_lender">Private Lender</option><option value="accountant">CPA / Accountant</option><option value="other">Other</option></select></label>
           <label>Trade / Service<input id="v_trade" placeholder="HVAC, plumbing, roofing, materials..."></label>
           <label>Phone<input id="v_phone" type="tel" placeholder="(555) 555-5555"></label>
           <label>Email<input id="v_email" type="email" placeholder="name@company.com"></label>
@@ -40,7 +40,7 @@
 
       <div class="panel">
         <div class="toolbar" style="justify-content:space-between;margin-bottom:12px">
-          <div><div class="sectionTitle" style="margin:0">Vendor & Contractor Directory</div><div id="vendorCount" class="muted">Loading...</div></div>
+          <div><div class="sectionTitle" style="margin:0">JGAP Professional Network</div><div id="vendorCount" class="muted">Loading...</div></div>
           <input id="vendorSearch" placeholder="Search name, company, trade..." oninput="loadVendors()" style="max-width:320px">
         </div>
         <div id="vendorsList">Loading contacts...</div>
@@ -78,7 +78,7 @@
     if(error){wrap.innerHTML='<div class="error">Could not load contacts.<br>'+esc(error.message)+'</div>';return;}
     const rows=data||[];
     const count=document.getElementById('vendorCount'); if(count)count.textContent=rows.length+' contact'+(rows.length===1?'':'s');
-    if(!rows.length){wrap.innerHTML='<p class="muted">No vendors or contractors have been added yet.</p>';return;}
+    if(!rows.length){wrap.innerHTML='<p class="muted">No professional contacts have been added yet.</p>';return;}
     wrap.innerHTML='<div style="overflow:auto"><table class="table"><thead><tr><th>Name</th><th>Company</th><th>Type</th><th>Trade / Service</th><th>Phone</th><th>Email</th><th>Insurance</th><th></th></tr></thead><tbody>'+
       rows.map(x=>`<tr>
         <td><b>${esc(x.name)}</b></td>
