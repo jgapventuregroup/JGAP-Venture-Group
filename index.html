@@ -50,7 +50,7 @@ nav .flipNav{font-weight:800;border:2px solid #111;background:#fff;}
   const labels={
     navDeals:'Deals / Analyzer',navMoney:'💰 Money-Making System',navDashboard:'Dashboard',navProperties:'Properties',
     navVendors:'👷 Vendors & Contractors',navRepairs:'Repairs',navProjects:'🏠 House Flips / Projects',navFinances:'Finances',
-    navDocuments:'Documents',navTasks:'Tasks',navReports:'Reports',navInvestments:'Investments',navUsers:'Users & Access'
+    navDocuments:'Documents',navTasks:'Tasks',navReports:'Reports',navInvestments:'Investments',navLenders:'Lenders',navUsers:'Users & Access'
   };
   function getNavOrder(){
     try{const x=JSON.parse(localStorage.getItem(KEY));if(Array.isArray(x)&&x.length)return x.filter(id=>DEFAULTS.includes(id)).concat(DEFAULTS.filter(id=>!x.includes(id)));}catch(e){}
