@@ -2126,53 +2126,7 @@ window.renderDocumentsPage = async function(context={}){
     if(!main){ shell(); }
     const main2=document.getElementById('main');
 
-<!-- JGAP_SAFE_RADAR_V1 -->
-<script>
-(function(){
-  const originalRadar = window.renderDealRadarPage;
-  if(typeof originalRadar !== 'function') return;
-  window.renderDealRadarPage = async function(){
-    await originalRadar();
-    try{
-      const main = document.querySelector('.layout>main');
-      if(!main) return;
-      const old = document.getElementById('jgapSafeRadarPanel');
-      if(old) old.remove();
-      const panel = document.createElement('div');
-      panel.id = 'jgapSafeRadarPanel';
-      panel.className = 'panel';
-      panel.style.marginBottom = '16px';
-      panel.innerHTML =
-        '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">'+
-        '<div><h2 class="sectionTitle" style="margin-bottom:4px">📨 Incoming Property Alerts</h2>'+
-        '<div class="muted">Listings received from your forwarded Zillow, LoopNet, Crexi and other alert emails.</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><span class="pill">Zillow</span><span class="pill">LoopNet</span><span class="pill">Crexi</span></div></div>'+
-        '<div class="pill">Email feed active</div></div>'+
-        '<div id="jgapSafeRadarRows" style="margin-top:12px"><div class="muted">Loading…</div></div>';
-      const target = main.querySelector('.detailGrid');
-      if(target) target.parentNode.insertBefore(panel,target);
-      else main.appendChild(panel);
 
-      const host=document.getElementById('jgapSafeRadarRows');
-      const {data,error}=await sb.from('radar_opportunities')
-        .select('id,name,source,address,city,state,postal_code,units,asking_price,status,opportunity_score,first_seen_at')
-        .order('created_at',{ascending:false}).limit(25);
-      if(error){ host.innerHTML='<div class="muted">Radar data could not be loaded: '+escapeHtml(error.message)+'</div>'; return; }
-      const rows=data||[];
-      if(!rows.length){ host.innerHTML='<div class="muted">No property alerts have been received yet.</div>'; return; }
-      const money=v=>v==null?'—':'$'+Number(v).toLocaleString('en-US',{maximumFractionDigits:0});
-      host.innerHTML='<div style="overflow:auto"><table class="table"><thead><tr><th>Property</th><th>Location</th><th>Units</th><th>Price</th><th>Source</th><th>Status</th></tr></thead><tbody>'+
-        rows.map(r=>{
-          const loc=[r.city,r.state].filter(Boolean).join(', ') || r.address || '—';
-          return '<tr><td><b>'+escapeHtml(r.name||'Untitled opportunity')+'</b><div class="muted" style="font-size:12px">'+escapeHtml(r.address||'')+'</div></td>'+
-            '<td>'+escapeHtml(loc)+'</td><td>'+escapeHtml(r.units==null?'—':String(r.units))+'</td><td>'+money(r.asking_price)+'</td>'+
-            '<td>'+escapeHtml(r.source||'Email')+'</td><td><span class="pill">'+escapeHtml(r.status||'new')+'</span></td></tr>';
-        }).join('')+'</tbody></table></div>';
-    }catch(e){
-      console.warn('JGAP safe radar layer:',e);
-    }
-  };
-})();
-</script>
 
 <script>
 (function(){
