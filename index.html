@@ -1993,6 +1993,31 @@ async function renderDealRadarPage(){
         </div>
       </div>
     </div>
+    <div class="panel" style="margin-top:16px;background:#f8fbff">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap">
+        <div><div class="sectionTitle">📥 JGAP Radar Inbox</div><p class="muted" style="margin:0">Your in-app opportunity list. Save a listing once and keep it in JGAP for screening, tracking and Deal Analyzer.</p></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="primary" type="button" onclick="toggleRadarAddForm()">+ Add Opportunity</button>
+          <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.zillow.com/homes/for_sale/?searchQueryState=%7B%22usersSearchTerm%22%3A%22Bristol%2C%20TN%22%7D">Zillow</a>
+        </div>
+      </div>
+      <div id="radarAddForm" style="display:none;margin-top:14px;padding:14px;border:1px solid #d9e2ee;border-radius:12px;background:#fff">
+        <div class="formGrid">
+          <label>Property / deal name<input id="radar_in_name" placeholder="123 Main St"></label>
+          <label>Source<input id="radar_in_source" placeholder="Zillow, LoopNet, Crexi, Broker"></label>
+          <label>Listing URL<input id="radar_in_url" placeholder="Paste the listing or alert URL"></label>
+          <label>Address / area<input id="radar_in_address" placeholder="Bristol, TN"></label>
+          <label>Units<input id="radar_in_units" type="number" min="1" step="1"></label>
+          <label>Asking price<input id="radar_in_price" type="number" min="0" step="1000"></label>
+          <label>Monthly rent / gross revenue<input id="radar_in_rent" type="number" min="0" step="25"></label>
+          <label>Monthly operating expenses<input id="radar_in_exp" type="number" min="0" step="25"></label>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" type="button" onclick="saveRadarInboxOpportunity()">Save to Radar</button><button class="secondary" type="button" onclick="toggleRadarAddForm()">Cancel</button></div>
+        <div id="radarInboxMsg" class="muted" style="font-size:12px;margin-top:8px"></div>
+      </div>
+      <div id="radarInboxList" style="margin-top:14px"><p class="muted">Loading Radar Inbox...</p></div>
+    </div>
+
     <div class="panel" style="margin-top:16px">
       <div class="sectionTitle">🎯 JGAP Buying Box</div>
       <p class="muted" style="margin-top:0">Set the rules you want Deal Radar to use when screening an opportunity. These settings stay in this browser so you can adjust them as your strategy changes.</p>
@@ -2110,8 +2135,34 @@ async function renderDealRadarPage(){
   if(radarStatusEl) radarStatusEl.innerHTML='<div class="muted">Buying Box loaded. Enter a property above and click <b>Screen Opportunity</b>.</div>';
   const last=document.getElementById("radarStatus");
   if(last)last.textContent="Radar refreshed "+new Date().toLocaleString()+".";
+  loadRadarInbox();
 }
 
+async function radarCompanyId(){
+  try{const {data:{user}}=await sb.auth.getUser();if(!user)return null;const {data,error}=await sb.from("company_members").select("company_id").eq("user_id",user.id).limit(1).maybeSingle();return error||!data?null:data.company_id;}catch(e){return null;}
+}
+function toggleRadarAddForm(){const e=document.getElementById("radarAddForm");if(e)e.style.display=e.style.display==="none"?"block":"none";}
+function radarMoney(v){return v==null||v===""?"—":"$"+Number(v).toLocaleString(undefined,{maximumFractionDigits:0});}
+async function loadRadarInbox(){
+  const host=document.getElementById("radarInboxList");if(!host)return;const companyId=await radarCompanyId();if(!companyId){host.innerHTML='<div class="muted">Could not identify the JGAP company.</div>';return;}
+  const {data,error}=await sb.from("radar_opportunities").select("id,name,source,source_url,address,units,asking_price,monthly_rent,monthly_operating_expenses,cap_rate,opportunity_score,status,last_seen_at,previous_price").eq("company_id",companyId).order("last_seen_at",{ascending:false}).limit(25);
+  if(error){host.innerHTML='<div class="error">Radar Inbox could not load: '+escapeHtml(error.message)+'</div>';return;}
+  const rows=data||[];if(!rows.length){host.innerHTML='<div class="card"><b>No opportunities in the Radar Inbox yet.</b><p class="muted" style="margin-bottom:0">Use <b>+ Add Opportunity</b> to save a listing to JGAP. Then you can screen it or send it to Deal Analyzer without re-entering the numbers.</p></div>';return;}
+  host.innerHTML='<div style="overflow:auto"><table class="table"><thead><tr><th>Opportunity</th><th>Source</th><th>Price</th><th>Units</th><th>Cap</th><th>Status</th><th></th></tr></thead><tbody>'+rows.map(r=>'<tr><td><b>'+escapeHtml(r.name||"Opportunity")+'</b><div class="muted">'+escapeHtml(r.address||"")+'</div>'+(r.previous_price!=null&&Number(r.previous_price)!==Number(r.asking_price||0)?'<span class="pill">Price changed</span>':'')+'</td><td>'+escapeHtml(r.source||"—")+'</td><td>'+radarMoney(r.asking_price)+'</td><td>'+escapeHtml(r.units??"—")+'</td><td>'+(r.cap_rate!=null?Number(r.cap_rate).toFixed(1)+"%":"—")+'</td><td><span class="pill">'+escapeHtml(r.status||"new")+'</span></td><td><div style="display:flex;gap:5px;flex-wrap:wrap">'+(r.source_url?'<a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="'+escapeHtml(r.source_url)+'">Source</a>':"")+'<button class="secondary" type="button" onclick="analyzeRadarInboxOpportunity(\''+r.id+'\')">Analyze</button><button class="secondary" type="button" onclick="markRadarOpportunity(\''+r.id+'\',\'reviewed\')">Reviewed</button></div></td></tr>').join("")+'</tbody></table></div>';
+}
+async function saveRadarInboxOpportunity(){
+  const companyId=await radarCompanyId();if(!companyId){alert("Could not identify the JGAP company.");return;}
+  const val=id=>document.getElementById(id)?.value?.trim()||"";const num=id=>{const v=val(id);return v===""?null:Number(v)};
+  const name=val("radar_in_name"),address=val("radar_in_address");if(!name&&!address){alert("Enter a property name or address.");return;}
+  const units=num("radar_in_units"),price=num("radar_in_price"),rent=num("radar_in_rent"),exp=num("radar_in_exp");const noi=rent!=null&&exp!=null?rent*(1-(Number(document.getElementById("radar_q_vacancy")?.value||5)/100))-exp:null;const cap=price&&noi!=null?(noi*12/price)*100:null;const ppu=units&&price?price/units:null;
+  const payload={company_id:companyId,name:name||address,source:val("radar_in_source")||"Manual import",source_url:val("radar_in_url")||null,address:address||null,units,asking_price:price,monthly_rent:rent,monthly_operating_expenses:exp,cap_rate:cap,price_per_unit:ppu,status:"new",last_seen_at:new Date().toISOString(),raw_data:{imported_from:"JGAP Deal Radar"}};
+  const {error}=await sb.from("radar_opportunities").insert(payload);const msg=document.getElementById("radarInboxMsg");if(error){if(msg)msg.innerHTML='<span class="error">'+escapeHtml(error.message)+'</span>';return;}if(msg)msg.innerHTML='<span class="success">Saved to JGAP Radar.</span>';["radar_in_name","radar_in_source","radar_in_url","radar_in_address","radar_in_units","radar_in_price","radar_in_rent","radar_in_exp"].forEach(id=>{const e=document.getElementById(id);if(e)e.value=""});await loadRadarInbox();
+}
+async function markRadarOpportunity(id,status){const {error}=await sb.from("radar_opportunities").update({status,updated_at:new Date().toISOString()}).eq("id",id);if(error)alert(error.message);else loadRadarInbox();}
+async function analyzeRadarInboxOpportunity(id){
+  const {data,error}=await sb.from("radar_opportunities").select("*").eq("id",id).maybeSingle();if(error||!data){alert(error?.message||"Opportunity not found.");return;}renderDealAnalyzer();
+  setTimeout(()=>{const set=(id,v)=>{const e=document.getElementById(id);if(e&&v!=null)e.value=v};set("d_name",data.name);set("d_type","multifamily");set("d_address",data.address||"");set("d_price",data.asking_price);set("d_asking",data.asking_price);set("d_rent",data.monthly_rent);set("d_exp",data.monthly_operating_expenses);set("d_target_cap",radarGetBuyingBox().minCap);set("d_target_dscr",radarGetBuyingBox().minDscr);set("d_min_cf",radarGetBuyingBox().minCf||0);set("d_status","analyzing");const notes=document.getElementById("d_notes");if(notes)notes.value=(notes.value?notes.value+"\n":"")+"Radar source: "+(data.source||"Manual import")+(data.source_url?"\nSource URL: "+data.source_url:"");if(typeof updateDealTypeUI==="function")updateDealTypeUI();if(typeof calcDeal==="function")calcDeal();window.scrollTo({top:0,behavior:"smooth"});},50);
+}
 function radarGetBuyingBox(){
   try{
     const x=JSON.parse(localStorage.getItem("jgap_radar_buying_box")||"null");
