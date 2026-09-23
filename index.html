@@ -85,8 +85,8 @@ nav .flipNav{font-weight:800;border:2px solid #111;background:#fff;}
 <script>
 (function(){
   const KEY='jgap_dashboard_layout_v2';
-  window.dashboardSections=['kpis','quickActions','primeRate','rent','lease','collections','propertyCenter','portfolioPerformance','tasks'];
-  window.dashboardLabels={kpis:'Key Metrics',quickActions:'Deals / Quick Actions',primeRate:'Prime Rate',rent:'Rent Collection',lease:'Lease Expirations & Renewals',collections:'Collections & Delinquency',propertyCenter:'Property Management Center',portfolioPerformance:'Portfolio Financial Performance',tasks:'Tasks & Action Items'};
+  window.dashboardSections=['multifamilyAlerts','kpis','quickActions','primeRate','rent','lease','collections','propertyCenter','portfolioPerformance','tasks'];
+  window.dashboardLabels={multifamilyAlerts:'Multifamily Alerts',kpis:'Key Metrics',quickActions:'Deals / Quick Actions',primeRate:'Prime Rate',rent:'Rent Collection',lease:'Lease Expirations & Renewals',collections:'Collections & Delinquency',propertyCenter:'Property Management Center',portfolioPerformance:'Portfolio Financial Performance',tasks:'Tasks & Action Items'};
   function getLayout(){try{const x=JSON.parse(localStorage.getItem(KEY)); if(Array.isArray(x)&&x.length) return x.filter(id=>dashboardSections.includes(id)).concat(dashboardSections.filter(id=>!x.includes(id)));}catch(e){} return dashboardSections.slice();}
   async function saveLayoutToAccount(layout){
     try{
@@ -150,7 +150,15 @@ document.getElementById("app").innerHTML=`<header><div style="display:flex;align
 <div class="panel" style="margin-bottom:18px;background:#f8fbff">
 <h2 style="margin:0 0 8px">JGAP Venture Group LLC</h2>
 <div id="accountStatus" class="muted">Checking your company access…</div>
-</div><div id="dashboardContent"><div class="grid" data-dashboard-section="kpis">
+</div><div id="dashboardContent"><div class="panel" data-dashboard-section="multifamilyAlerts" style="margin-bottom:18px;background:#f8fbff">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+<div><h2 style="margin:0 0 4px">🏢 Multifamily Property Alerts</h2><p class="muted" style="margin:0">Watch for new multifamily opportunities in the Tri-Cities and nearby Southwest Virginia.</p></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="primary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.loopnet.com/search/multifamily-properties/bristol-tn/for-sale/">LoopNet</a><a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.crexi.com/properties/TN/Bristol/Multifamily">Crexi</a></div>
+</div>
+<div class="stats" style="margin-top:12px"><div><span>Area</span><b style="font-size:16px">Tri-Cities + SWVA</b></div><div><span>Property Type</span><b style="font-size:16px">Multifamily</b></div><div><span>Alert Method</span><b style="font-size:16px">Saved Search</b></div></div>
+<div class="muted" style="font-size:12px;margin-top:10px">Save the search on either site and turn on new-listing email alerts. Matching opportunities can then be reviewed in the JGAP Deal Analyzer.</div>
+</div>
+<div class="grid" data-dashboard-section="kpis">
 <div class="card"><div class="muted">Properties</div><div class="metric" id="dashProperties">—</div><div class="muted">Live portfolio records</div></div>
 <div class="card"><div class="muted">Active Deals</div><div class="metric" id="dashDeals">—</div><div class="muted">Open pipeline deals</div></div>
 <div class="card"><div class="muted">Open Repairs</div><div class="metric" id="dashRepairs">—</div><div class="muted">Open and in progress</div></div>
