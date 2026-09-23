@@ -2126,7 +2126,7 @@ window.renderDocumentsPage = async function(context={}){
     if(!main){ shell(); }
     const main2=document.getElementById('main');
 
-<!-- JGAP_SAFE_RADAR_V1 -->
+<!-- JGAP_SAFE_RADAR_V2 -->
 <script>
 (function(){
   const originalRadar = window.renderDealRadarPage;
@@ -2154,21 +2154,71 @@ window.renderDocumentsPage = async function(context={}){
 
       const host=document.getElementById('jgapSafeRadarRows');
       const {data,error}=await sb.from('radar_opportunities')
-        .select('id,name,source,address,city,state,postal_code,units,asking_price,status,opportunity_score,first_seen_at')
+        .select('id,name,source,source_url,address,city,state,postal_code,units,asking_price,monthly_rent,monthly_operating_expenses,vacancy_rate,cap_rate,dscr,monthly_cash_flow,status,opportunity_score,first_seen_at,notes')
         .order('created_at',{ascending:false}).limit(25);
       if(error){ host.innerHTML='<div class="muted">Radar data could not be loaded: '+escapeHtml(error.message)+'</div>'; return; }
       const rows=data||[];
       if(!rows.length){ host.innerHTML='<div class="muted">No property alerts have been received yet.</div>'; return; }
-      const money=v=>v==null?'—':'$'+Number(v).toLocaleString('en-US',{maximumFractionDigits:0});
-      host.innerHTML='<div style="overflow:auto"><table class="table"><thead><tr><th>Property</th><th>Location</th><th>Units</th><th>Price</th><th>Source</th><th>Status</th></tr></thead><tbody>'+
+      const money=v=>v==null?'—':'
++Number(v).toLocaleString('en-US',{maximumFractionDigits:0});
+      const screenDeal=(id)=>window.jgapScreenRadarDeal&&window.jgapScreenRadarDeal(id);
+      window.__jgapRadarRows=rows;
+      host.innerHTML='<div style="overflow:auto"><table class="table"><thead><tr><th>Property</th><th>Location</th><th>Units</th><th>Price</th><th>Source</th><th>Status</th><th></th></tr></thead><tbody>'+
         rows.map(r=>{
           const loc=[r.city,r.state].filter(Boolean).join(', ') || r.address || '—';
           return '<tr><td><b>'+escapeHtml(r.name||'Untitled opportunity')+'</b><div class="muted" style="font-size:12px">'+escapeHtml(r.address||'')+'</div></td>'+
             '<td>'+escapeHtml(loc)+'</td><td>'+escapeHtml(r.units==null?'—':String(r.units))+'</td><td>'+money(r.asking_price)+'</td>'+
-            '<td>'+escapeHtml(r.source||'Email')+'</td><td><span class="pill">'+escapeHtml(r.status||'new')+'</span></td></tr>';
+            '<td>'+escapeHtml(r.source||'Email')+'</td><td><span class="pill">'+escapeHtml(r.status||'new')+'</span></td>'+
+            '<td><button class="primary" type="button" onclick="jgapScreenRadarDeal(\''+escapeHtml(r.id)+'\')">Screen Deal</button></td></tr>';
         }).join('')+'</tbody></table></div>';
     }catch(e){
       console.warn('JGAP safe radar layer:',e);
+    }
+  };
+
+  window.jgapScreenRadarDeal=async function(id){
+    try{
+      const {data,error}=await sb.from('radar_opportunities')
+        .select('id,name,source,source_url,address,city,state,postal_code,units,asking_price,monthly_rent,monthly_operating_expenses,vacancy_rate,cap_rate,dscr,monthly_cash_flow,status,notes')
+        .eq('id',id).maybeSingle();
+      if(error) throw error;
+      if(!data){alert('Radar opportunity not found. Refresh Deal Radar and try again.');return;}
+
+      const existing={
+        name:data.name||'',
+        property_type:data.property_type||'multifamily',
+        property_address:[data.address,data.city,data.state,data.postal_code].filter(Boolean).join(', '),
+        purchase_price:data.asking_price,
+        asking_price:data.asking_price,
+        monthly_rent:data.monthly_rent,
+        monthly_operating_expenses:data.monthly_operating_expenses,
+        vacancy_rate:data.vacancy_rate,
+        status:'analyzing',
+        notes:[
+          'Imported from Deal Radar.',
+          data.source?'Source: '+data.source:'',
+          data.units!=null?'Units: '+data.units:'',
+          data.source_url?'Source URL: '+data.source_url:'',
+          data.cap_rate!=null?'Source cap rate: '+data.cap_rate+'%':'',
+          data.dscr!=null?'Source DSCR: '+data.dscr:'',
+          data.monthly_cash_flow!=null?'Source monthly cash flow: '+money(data.monthly_cash_flow):'',
+          data.notes||''
+        ].filter(Boolean).join('\n')
+      };
+
+      window.__jgapRadarScreeningId=id;
+      renderDealAnalyzer(existing);
+      setTimeout(()=>{
+        const banner=document.createElement('div');
+        banner.className='panel';
+        banner.style.cssText='margin:0 0 14px;background:#f8fbff;border:1px solid #c9d8ea';
+        banner.innerHTML='<b>📡 Deal Radar → Deal Analyzer</b><div class="muted" style="margin-top:4px">Imported listing data is shown below. Missing values were left blank so you can enter verified numbers.</div>';
+        const main=document.querySelector('.layout>main');
+        const first=main?.firstElementChild;
+        if(main&&first) main.insertBefore(banner,first.nextSibling);
+      },0);
+    }catch(e){
+      alert('Unable to open this Radar opportunity: '+(e.message||e));
     }
   };
 })();
