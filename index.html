@@ -2052,7 +2052,12 @@ try {
   }
 } catch(e) { console.warn("Bootstrap check failed",e); }
 }
-sb.auth.onAuthStateChange(()=>{window.__jgapSilentRender=true; try{render();} finally{window.__jgapSilentRender=false;} setTimeout(loadDashboardSummary,300);}); render(); setTimeout(loadDashboardSummary,300);
+function jgapRenderRecovery(error){
+  console.error("JGAP render failed:",error);
+  const app=document.getElementById("app");
+  if(app) app.innerHTML='<div style="min-height:100vh;padding:40px;font-family:Arial,sans-serif;background:#f7f8fa"><div style="max-width:760px;margin:auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:24px"><h2 style="margin-top:0">JGAP Venture Group</h2><p>The app hit a startup error and stopped before rendering.</p><p style="color:#667085;font-size:13px">Refresh once. If this message remains, the exact browser error is available in the console and can be fixed without changing your data.</p></div></div>';
+}
+sb.auth.onAuthStateChange(()=>{window.__jgapSilentRender=true; try{render().catch(jgapRenderRecovery);} finally{window.__jgapSilentRender=false;} setTimeout(loadDashboardSummary,300);}); render().catch(jgapRenderRecovery); setTimeout(loadDashboardSummary,300);
 </script>
 <script>
 // JGAP in-app browser history: keep browser Back inside the app and keep
