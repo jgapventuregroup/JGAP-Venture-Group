@@ -152,11 +152,22 @@ document.getElementById("app").innerHTML=`<header><div style="display:flex;align
 <div id="accountStatus" class="muted">Checking your company access…</div>
 </div><div id="dashboardContent"><div class="panel" data-dashboard-section="multifamilyAlerts" style="margin-bottom:18px;background:#f8fbff">
 <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
-<div><h2 style="margin:0 0 4px">🏢 Multifamily Property Alerts</h2><p class="muted" style="margin:0">Watch for new multifamily opportunities in the Tri-Cities and nearby Southwest Virginia.</p></div>
-<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="primary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.loopnet.com/search/multifamily-properties/bristol-tn/for-sale/">LoopNet</a><a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.crexi.com/properties/TN/Bristol/Multifamily">Crexi</a></div>
+<div><h2 style="margin:0 0 4px">🏢 Multifamily Property Alerts</h2><p class="muted" style="margin:0">Your quick-access alert center for new multifamily inventory in the Tri-Cities + Southwest Virginia.</p></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button class="primary" type="button" onclick="renderDealRadarPage()">📡 Open Deal Radar</button>
+<a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.zillow.com/homes/for_sale/?searchQueryState=%7B%22usersSearchTerm%22%3A%22Bristol%2C%20TN%22%7D">Zillow</a>
 </div>
-<div class="stats" style="margin-top:12px"><div><span>Area</span><b style="font-size:16px">Tri-Cities + SWVA</b></div><div><span>Property Type</span><b style="font-size:16px">Multifamily</b></div><div><span>Alert Method</span><b style="font-size:16px">Saved Search</b></div></div>
-<div class="muted" style="font-size:12px;margin-top:10px">Save the search on either site and turn on new-listing email alerts. Matching opportunities can then be reviewed in the JGAP Deal Analyzer.</div>
+</div>
+<div class="stats" style="margin-top:12px">
+<div><span>Area</span><b style="font-size:16px">Tri-Cities + SWVA</b></div>
+<div><span>Property Type</span><b style="font-size:16px">Multifamily</b></div>
+<div><span>Alert Sources</span><b style="font-size:16px">Zillow • LoopNet • Crexi</b></div>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+<a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.loopnet.com/search/multifamily-properties/bristol-tn/for-sale/">LoopNet saved search</a>
+<a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.crexi.com/properties/TN/Bristol/Multifamily">Crexi saved search</a>
+</div>
+<div class="muted" style="font-size:12px;margin-top:10px">Use the source alerts for new-listing emails, then open Deal Radar to screen and track the property in JGAP. No listing data is guessed or fabricated.</div>
 </div>
 <div class="grid" data-dashboard-section="kpis">
 <div class="card"><div class="muted">Properties</div><div class="metric" id="dashProperties">—</div><div class="muted">Live portfolio records</div></div>
