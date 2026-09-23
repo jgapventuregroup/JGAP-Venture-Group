@@ -50,9 +50,9 @@ nav .flipNav{font-weight:800;border:2px solid #111;background:#fff;}
 <script>
 (function(){
   const KEY='jgap_left_nav_order_v1';
-  const DEFAULTS=["navDeals","navLeads","navMoney","navDashboard","navProperties","navVendors","navRepairs","navProjects","navLaundromat","navFinances","navDocuments","navTasks","navReports","navInvestments","navUsers"];
+  const DEFAULTS=["navDeals","navRadar","navLeads","navMoney","navDashboard","navProperties","navVendors","navRepairs","navProjects","navLaundromat","navFinances","navDocuments","navTasks","navReports","navInvestments","navUsers"];
   const labels={
-    navDeals:'Deals / Analyzer',navLeads:'🎯 Lead Generation',navMoney:'💰 Money-Making System',navDashboard:'Dashboard',navProperties:'Properties',
+    navDeals:'Deals / Analyzer',navRadar:'📡 Deal Radar',navLeads:'🎯 Lead Generation',navMoney:'💰 Money-Making System',navDashboard:'Dashboard',navProperties:'Properties',
     navVendors:'👷 Vendors & Contractors',navRepairs:'Repairs',navProjects:'🏠 House Flips / Projects',navLaundromat:'🧺 Laundromat Division',navFinances:'Finances',
     navDocuments:'Documents',navTasks:'Tasks',navReports:'Reports',navInvestments:'Investments',navLenders:'Lenders',navUsers:'Users & Access'
   };
@@ -146,7 +146,7 @@ async function signOut(){await sb.auth.signOut();authView();}
 function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
 function shell(){
 document.getElementById("app").innerHTML=`<header><div style="display:flex;align-items:center;gap:12px"><img src="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20360%20150%22%3E%3Crect%20width%3D%22360%22%20height%3D%22150%22%20fill%3D%22white%22%2F%3E%3Ctext%20x%3D%22180%22%20y%3D%2265%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2254%22%20font-weight%3D%22800%22%20letter-spacing%3D%22-3%22%20fill%3D%22%230b2940%22%3EJGAP%3C%2Ftext%3E%3Ctext%20x%3D%22180%22%20y%3D%22102%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20letter-spacing%3D%226%22%20fill%3D%22%230b2940%22%3EVENTURE%20GROUP%3C%2Ftext%3E%3Crect%20x%3D%22135%22%20y%3D%22116%22%20width%3D%2290%22%20height%3D%224%22%20rx%3D%222%22%20fill%3D%22%231599e8%22%2F%3E%3C%2Fsvg%3E" alt="JGAP Venture Group" style="height:48px;width:auto;max-width:250px;object-fit:contain;background:#fff;border-radius:6px;padding:2px"><div><div class="brand">JGAP Venture Group LLC</div><div class="sub">Real Estate Investments • Asset Management</div><div style="font-size:10px;letter-spacing:.11em;text-transform:uppercase;opacity:.72;margin-top:4px">Acquire. Improve. Build Wealth.</div></div></div><button class="secondary" onclick="signOut()">Sign out</button></header>
-<div class="layout"><nav><button type="button" id="navDeals" onclick="renderDealsPage()">Deals / Analyzer</button><button type="button" id="navLeads" onclick="renderLeadGenerationPage()">🎯 Lead Generation</button><button id="navMoney" type="button" onclick="renderMoneyMakingSystem()">💰 Money-Making System</button><button type="button" id="navDashboard" onclick="render()">Dashboard</button><button id="navProperties" onclick="renderPropertiesPage()">Properties</button><button id="navVendors" type="button" onclick="renderVendorsPage()">👷 Vendors & Contractors</button><button id="navRepairs" onclick="renderRepairsPage()">Repairs</button><button type="button" id="navProjects" onclick="renderProjectsPage()">🏠 House Flips / Projects</button><button type="button" id="navLaundromat" onclick="renderLaundromatPage()">🧺 Laundromat Division</button><button id="navFinances" onclick="renderFinancesPage()">Finances</button><button type="button" id="navDocuments" onclick="window.__jgapDocumentsRequested=true; window.renderDocumentsPage();">Documents</button><button id="navTasks" onclick="renderTasksPage()">Tasks</button><button id="navReports" onclick="renderReportsPage()">Reports</button><button id="navInvestments" onclick="renderInvestmentsPage()">Investments</button><button id="navUsers" onclick="renderUsersAccessPage()">Users & Access</button></nav><main><div class="hero" style="align-items:center"><div style="display:flex;align-items:center;gap:16px;min-width:0"><img src="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20360%20150%22%3E%3Crect%20width%3D%22360%22%20height%3D%22150%22%20fill%3D%22white%22%2F%3E%3Ctext%20x%3D%22180%22%20y%3D%2265%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2254%22%20font-weight%3D%22800%22%20letter-spacing%3D%22-3%22%20fill%3D%22%230b2940%22%3EJGAP%3C%2Ftext%3E%3Ctext%20x%3D%22180%22%20y%3D%22102%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20letter-spacing%3D%226%22%20fill%3D%22%230b2940%22%3EVENTURE%20GROUP%3C%2Ftext%3E%3Crect%20x%3D%22135%22%20y%3D%22116%22%20width%3D%2290%22%20height%3D%224%22%20rx%3D%222%22%20fill%3D%22%231599e8%22%2F%3E%3C%2Fsvg%3E" alt="JGAP Venture Group logo" style="height:72px;width:auto;max-width:320px;object-fit:contain;background:#fff;border-radius:8px;padding:4px;box-shadow:0 1px 4px rgba(0,0,0,.12)"><div><h1 style="margin-bottom:4px">Dashboard</h1><div class="muted" id="who"></div></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" onclick="renderDealsPage()">Deals / Analyzer</button><button class="secondary" onclick="renderDealAnalyzer()">+ New Deal</button></div></div>
+<div class="layout"><nav><button type="button" id="navDeals" onclick="renderDealsPage()">Deals / Analyzer</button><button type="button" id="navRadar" onclick="renderDealRadarPage()">📡 Deal Radar</button><button type="button" id="navLeads" onclick="renderLeadGenerationPage()">🎯 Lead Generation</button><button id="navMoney" type="button" onclick="renderMoneyMakingSystem()">💰 Money-Making System</button><button type="button" id="navDashboard" onclick="render()">Dashboard</button><button id="navProperties" onclick="renderPropertiesPage()">Properties</button><button id="navVendors" type="button" onclick="renderVendorsPage()">👷 Vendors & Contractors</button><button id="navRepairs" onclick="renderRepairsPage()">Repairs</button><button type="button" id="navProjects" onclick="renderProjectsPage()">🏠 House Flips / Projects</button><button type="button" id="navLaundromat" onclick="renderLaundromatPage()">🧺 Laundromat Division</button><button id="navFinances" onclick="renderFinancesPage()">Finances</button><button type="button" id="navDocuments" onclick="window.__jgapDocumentsRequested=true; window.renderDocumentsPage();">Documents</button><button id="navTasks" onclick="renderTasksPage()">Tasks</button><button id="navReports" onclick="renderReportsPage()">Reports</button><button id="navInvestments" onclick="renderInvestmentsPage()">Investments</button><button id="navUsers" onclick="renderUsersAccessPage()">Users & Access</button></nav><main><div class="hero" style="align-items:center"><div style="display:flex;align-items:center;gap:16px;min-width:0"><img src="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20360%20150%22%3E%3Crect%20width%3D%22360%22%20height%3D%22150%22%20fill%3D%22white%22%2F%3E%3Ctext%20x%3D%22180%22%20y%3D%2265%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2254%22%20font-weight%3D%22800%22%20letter-spacing%3D%22-3%22%20fill%3D%22%230b2940%22%3EJGAP%3C%2Ftext%3E%3Ctext%20x%3D%22180%22%20y%3D%22102%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20letter-spacing%3D%226%22%20fill%3D%22%230b2940%22%3EVENTURE%20GROUP%3C%2Ftext%3E%3Crect%20x%3D%22135%22%20y%3D%22116%22%20width%3D%2290%22%20height%3D%224%22%20rx%3D%222%22%20fill%3D%22%231599e8%22%2F%3E%3C%2Fsvg%3E" alt="JGAP Venture Group logo" style="height:72px;width:auto;max-width:320px;object-fit:contain;background:#fff;border-radius:8px;padding:4px;box-shadow:0 1px 4px rgba(0,0,0,.12)"><div><h1 style="margin-bottom:4px">Dashboard</h1><div class="muted" id="who"></div></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" onclick="renderDealsPage()">Deals / Analyzer</button><button class="secondary" onclick="renderDealAnalyzer()">+ New Deal</button></div></div>
 <div class="panel" style="margin-bottom:18px;background:#f8fbff">
 <h2 style="margin:0 0 8px">JGAP Venture Group LLC</h2>
 <div id="accountStatus" class="muted">Checking your company access…</div>
@@ -1913,6 +1913,108 @@ async function inviteJGAPUser(){
 async function cancelJGAPInvite(id){ if(!confirm('Cancel this invitation?'))return; const {error}=await sb.rpc('cancel_current_user_company_invitation',{p_invitation_id:id}); if(error){alert(error.message);return;} await loadJGAPUsersAccess(); }
 async function changeJGAPRole(id,role){ const {error}=await sb.rpc('update_current_user_company_member_role',{p_user_id:id,p_role:role}); if(error){alert(error.message);await loadJGAPUsersAccess();return;} await loadJGAPUsersAccess(); }
 async function removeJGAPUser(id){ if(!confirm('Remove this user from JGAP Venture Group?'))return; const {error}=await sb.rpc('remove_current_user_company_member',{p_user_id:id}); if(error){alert(error.message);return;} await loadJGAPUsersAccess(); }
+
+async function renderDealRadarPage(){
+  const {data:{user}}=await sb.auth.getUser();
+  if(!user){authView();return;}
+  shell();
+  const main=document.querySelector('.layout>main');
+  if(!main)return;
+  main.innerHTML=`
+    <div class="pageHead">
+      <div><h1>📡 Deal Radar</h1><div class="muted">One place to watch the opportunities and signals that can lead to your next deal.</div></div>
+      <div class="toolbar"><button class="secondary" onclick="render()">← Dashboard</button><button class="primary" onclick="renderDealRadarPage()">↻ Refresh Radar</button></div>
+    </div>
+    <div class="panel" style="margin-bottom:16px;background:#f8fbff">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+        <div><h2 style="margin:0 0 5px">Multifamily Property Alerts</h2><p class="muted" style="margin:0">Watch new inventory and price changes in the Tri-Cities and nearby Southwest Virginia.</p></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a class="primary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.loopnet.com/search/multifamily-properties/bristol-tn/for-sale/">LoopNet</a>
+          <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.crexi.com/properties/TN/Bristol/Multifamily">Crexi</a>
+        </div>
+      </div>
+      <div class="stats">
+        <div><span>Area</span><b style="font-size:16px">Tri-Cities + SWVA</b></div>
+        <div><span>Property Type</span><b style="font-size:16px">Multifamily</b></div>
+        <div><span>Alert Method</span><b style="font-size:16px">Saved Search</b></div>
+      </div>
+      <div class="muted" style="font-size:12px;margin-top:10px">Save the searches on LoopNet and Crexi and turn on new-listing email alerts. Deal Radar is your JGAP command center for reviewing those signals.</div>
+    </div>
+    <div class="grid" style="margin-bottom:16px">
+      <div class="card"><div class="muted">Properties in JGAP</div><div id="radarProperties" class="metric">—</div><div class="muted">Portfolio records</div></div>
+      <div class="card"><div class="muted">Active Deals</div><div id="radarDeals" class="metric">—</div><div class="muted">Deal pipeline</div></div>
+      <div class="card"><div class="muted">Off-Market Leads</div><div id="radarLeads" class="metric">—</div><div class="muted">Lead Generation records</div></div>
+      <div class="card"><div class="muted">Broker Network</div><div id="radarBrokers" class="metric">—</div><div class="muted">Real estate broker contacts</div></div>
+    </div>
+    <div class="detailGrid">
+      <div class="stack">
+        <div class="panel">
+          <h2 class="sectionTitle">🚨 New Listings & Price Reductions</h2>
+          <p class="muted">Keep saved searches focused on duplexes, triplexes, fourplexes, 5–10 units, 11–20 units and 20+ units. Add price and unit limits that match your buying box.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.loopnet.com/search/multifamily-properties/bristol-tn/for-sale/">Open LoopNet Search</a>
+            <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.crexi.com/properties/TN/Bristol/Multifamily">Open Crexi Search</a>
+          </div>
+        </div>
+        <div class="panel">
+          <h2 class="sectionTitle">🏚️ Distressed & Tax-Sale Watch</h2>
+          <p class="muted">Watch delinquent-tax and tax-sale information for potential opportunities. Verify property status, liens, ownership and sale terms before treating anything as a deal.</p>
+          <a class="secondary" style="display:inline-block;text-decoration:none;margin-top:8px" target="_blank" rel="noopener noreferrer" href="https://www.bristoltn.gov/322/Delinquent-Tax-Sale">Bristol TN Delinquent Tax Sale</a>
+        </div>
+        <div class="panel">
+          <h2 class="sectionTitle">🏗️ Development & Permit Watch</h2>
+          <p class="muted">Use planning, development and permit activity as an early signal for new construction, redevelopment, major renovations and changing neighborhood activity.</p>
+          <a class="secondary" style="display:inline-block;text-decoration:none;margin-top:8px" target="_blank" rel="noopener noreferrer" href="https://www.bristoltn.gov/203/Community-Development">Bristol TN Community Development</a>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="panel">
+          <h2 class="sectionTitle">🎯 Off-Market & Broker Opportunities</h2>
+          <p class="muted">Lead Generation holds owner and prospecting records. Vendors & Contractors holds your broker network. Use both as sources for deals that never reach public listing sites.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <button class="secondary" onclick="renderLeadGenerationPage()">Open Lead Generation</button>
+            <button class="secondary" onclick="renderVendorsPage()">Open Broker Network</button>
+          </div>
+        </div>
+        <div class="panel">
+          <h2 class="sectionTitle">🧮 Deal Screening</h2>
+          <p class="muted">When a property looks interesting, send it straight to Deal Analyzer to check cash flow, cap rate, DSCR, maximum purchase price and your target offer.</p>
+          <button class="primary" onclick="renderDealsPage()">Open Deal Analyzer</button>
+        </div>
+        <div class="panel" style="background:#f8fbff">
+          <h2 class="sectionTitle">📋 JGAP Radar Workflow</h2>
+          <div style="font-size:14px;line-height:1.65">
+            <div><b>1.</b> New listing or price reduction appears.</div>
+            <div><b>2.</b> Check the property against your buying box.</div>
+            <div><b>3.</b> Run the numbers in Deal Analyzer.</div>
+            <div><b>4.</b> Track the opportunity or owner in JGAP.</div>
+            <div><b>5.</b> Follow up with the broker, owner or other source.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="radarStatus" class="muted" style="font-size:12px;margin-top:12px"></div>
+  `;
+  async function countTable(table, extra){
+    try{
+      let q=sb.from(table).select("id",{count:"exact",head:true});
+      if(extra) q=extra(q);
+      const {count,error}=await q;
+      return error ? 0 : (count||0);
+    }catch(e){return 0;}
+  }
+  const [properties,deals,leads,brokers]=await Promise.all([
+    countTable("properties"),
+    countTable("deals",q=>q.not("status","in","(Closed,Lost)")),
+    countTable("lead_prospects"),
+    countTable("vendors",q=>q.eq("vendor_type","Real Estate Broker"))
+  ]);
+  const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=String(value);};
+  set("radarProperties",properties); set("radarDeals",deals); set("radarLeads",leads); set("radarBrokers",brokers);
+  try{localStorage.setItem("jgap_deal_radar_last_opened",new Date().toISOString());}catch(e){}
+  const last=document.getElementById("radarStatus");
+  if(last)last.textContent="Radar refreshed "+new Date().toLocaleString()+".";
+}
 
 async function render(){
 const {data:{user}}=await sb.auth.getUser();
