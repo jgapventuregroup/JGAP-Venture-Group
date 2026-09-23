@@ -2027,7 +2027,7 @@ function filterRadarInbox(){
         '<td>'+price+'</td>'+
         '<td>'+cap+' / '+dscr+'</td>'+
         '<td><span class="pill">'+escapeHtml(status)+'</span></td>'+
-        '<td style="white-space:nowrap"><button class="primary" onclick="analyzeRadarOpportunity(\''+r.id+'\')">Analyze</button> '+sourceBtn+' <button class="secondary" onclick="updateRadarOpportunityStatus(\''+r.id+'\',\''+(status==='new'?'reviewing':'new')+'\')">'+(status==='new'?'Review':'New')+'</button></td>'+
+        '<td><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="primary" onclick="analyzeRadarOpportunity(\''+r.id+'\')">Analyze</button> '+sourceBtn+' <button class="secondary" onclick="updateRadarOpportunityStatus(\''+r.id+'\',\''+(status==='new'?'reviewing':'new')+'\')">'+(status==='new'?'Review':'New')+'</button></div></td>'+
       '</tr>';
     }).join('')+
     '</tbody></table></div>';
