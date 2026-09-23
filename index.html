@@ -2130,3 +2130,176 @@ window.renderDocumentsPage = async function(context={}){
     const main=document.getElementById('main');
     if(!main){ shell(); }
     const main2=document.getElementById('main');
+<!-- JGAP Deal Radar inbox fix -->
+<script>
+(function(){
+  window.renderDealRadarPage=async function(){
+    const {data:{user}}=await sb.auth.getUser();
+    if(!user){authView();return;}
+    shell();
+    const main=document.querySelector('.layout>main');
+    if(!main)return;
+    main.innerHTML=`
+      <div class="pageHead">
+        <div><h1>📡 Deal Radar</h1><div class="muted">Your incoming property-alert inbox. New listing emails are stored here automatically.</div></div>
+        <div class="toolbar">
+          <button class="secondary" onclick="render()">← Dashboard</button>
+          <button class="primary" onclick="renderDealRadarPage()">↻ Refresh Radar</button>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px;background:#f8fbff">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+          <div>
+            <h2 style="margin:0 0 5px">🚨 Incoming Multifamily Alerts</h2>
+            <p class="muted" style="margin:0">Listings received from your saved-search email alerts appear below. Nothing is hidden just because financial information is missing.</p>
+          </div>
+          <div class="toolbar">
+            <input id="radarSearch" placeholder="Search address, city, state..." style="min-width:260px;margin:0" oninput="filterRadarInbox()">
+            <select id="radarSource" onchange="filterRadarInbox()" style="width:auto;margin:0">
+              <option value="">All sources</option>
+              <option value="Crexi">Crexi</option>
+              <option value="LoopNet">LoopNet</option>
+              <option value="Zillow">Zillow</option>
+              <option value="Email">Email</option>
+            </select>
+            <select id="radarStatusFilter" onchange="filterRadarInbox()" style="width:auto;margin:0">
+              <option value="">All statuses</option>
+              <option value="new">New</option>
+              <option value="reviewing">Reviewing</option>
+              <option value="passed">Passed</option>
+            </select>
+          </div>
+        </div>
+        <div class="stats">
+          <div><span>Total alerts</span><b id="radarTotal">—</b></div>
+          <div><span>New</span><b id="radarNew">—</b></div>
+          <div><span>With asking price</span><b id="radarPriced">—</b></div>
+          <div><span>Last received</span><b id="radarLast">—</b></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div id="radarInboxMsg" class="muted" style="margin-bottom:12px">Loading alerts...</div>
+        <div id="radarInbox"></div>
+      </div>
+
+      <div class="detailGrid" style="margin-top:16px">
+        <div class="panel">
+          <h2 class="sectionTitle">📍 Target Area</h2>
+          <p class="muted">The current JGAP search setup is focused on the Tri-Cities and nearby Southwest Virginia. Keep the saved searches on the listing sites aligned with that buying area.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <a class="primary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.loopnet.com/search/multifamily-properties/bristol-tn/for-sale/">Open LoopNet</a>
+            <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.crexi.com/properties/TN/Bristol/Multifamily">Open Crexi</a>
+          </div>
+        </div>
+        <div class="panel">
+          <h2 class="sectionTitle">🧮 Deal Screening</h2>
+          <p class="muted">Use Analyze on any alert to send its address, asking price, rent, expenses, cap rate and DSCR into Deal Analyzer. Missing fields remain blank instead of being guessed.</p>
+          <button class="primary" onclick="renderDealsPage()">Open Deal Pipeline</button>
+        </div>
+      </div>
+      <div id="radarStatus" class="muted" style="font-size:12px;margin-top:12px"></div>
+    `;
+
+    const {data,error}=await sb.from('radar_opportunities')
+      .select('id,name,source,source_url,external_id,property_type,address,city,state,postal_code,units,asking_price,previous_price,monthly_rent,monthly_operating_expenses,vacancy_rate,cap_rate,dscr,monthly_cash_flow,price_per_unit,opportunity_score,status,first_seen_at,last_seen_at,last_price_change_at,notes')
+      .order('first_seen_at',{ascending:false});
+
+    const msg=document.getElementById('radarInboxMsg');
+    if(error){
+      console.error('Deal Radar load error',error);
+      msg.innerHTML='<span class="error">Could not load Deal Radar: '+escapeHtml(error.message)+'</span>';
+      return;
+    }
+
+    window.__jgapRadarRows=data||[];
+    updateRadarStats(window.__jgapRadarRows);
+    filterRadarInbox();
+    const last=document.getElementById('radarStatus');
+    if(last)last.textContent='Radar refreshed '+new Date().toLocaleString()+'.';
+  };
+
+  function updateRadarStats(rows){
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=String(v);};
+    set('radarTotal',rows.length);
+    set('radarNew',rows.filter(r=>(r.status||'new').toLowerCase()==='new').length);
+    set('radarPriced',rows.filter(r=>r.asking_price!=null).length);
+    const latest=rows[0]?.first_seen_at;
+    set('radarLast',latest?new Date(latest).toLocaleDateString():'—');
+  }
+
+  window.filterRadarInbox=function(){
+    const rows=window.__jgapRadarRows||[];
+    const q=(document.getElementById('radarSearch')?.value||'').trim().toLowerCase();
+    const source=document.getElementById('radarSource')?.value||'';
+    const status=document.getElementById('radarStatusFilter')?.value||'';
+    const filtered=rows.filter(r=>{
+      const hay=[r.name,r.address,r.city,r.state,r.postal_code,r.source].map(x=>String(x||'').toLowerCase()).join(' ');
+      return (!q||hay.includes(q))&&(!source||r.source===source)&&(!status||String(r.status||'new').toLowerCase()===status.toLowerCase());
+    });
+    const msg=document.getElementById('radarInboxMsg'), host=document.getElementById('radarInbox');
+    if(!host)return;
+    if(msg)msg.textContent=filtered.length+' alert'+(filtered.length===1?'':'s')+' shown';
+    if(!filtered.length){
+      host.innerHTML='<div class="card"><b>No alerts match the current filters.</b><p class="muted">Try clearing the search or source/status filters.</p></div>';
+      return;
+    }
+    host.innerHTML='<div style="overflow:auto"><table class="table"><thead><tr><th>Opportunity</th><th>Location</th><th>Units</th><th>Asking</th><th>Cap / DSCR</th><th>Received</th><th>Actions</th></tr></thead><tbody>'+
+      filtered.map(r=>{
+        const price=r.asking_price!=null?radarMoney(r.asking_price):'—';
+        const cap=r.cap_rate!=null?Number(r.cap_rate).toFixed(2)+'%':'—';
+        const dscr=r.dscr!=null?Number(r.dscr).toFixed(2):'—';
+        const received=r.first_seen_at?new Date(r.first_seen_at).toLocaleDateString():'—';
+        const badge=String(r.status||'new').toLowerCase();
+        return '<tr>'+
+          '<td><b>'+escapeHtml(r.name||r.address||'Untitled opportunity')+'</b><div class="muted">'+escapeHtml(r.source||'Email')+(r.last_price_change_at?' • Price changed':'')+'</div></td>'+
+          '<td>'+escapeHtml([r.city,r.state,r.postal_code].filter(Boolean).join(', ')||r.address||'—')+'</td>'+
+          '<td>'+escapeHtml(r.units==null?'—':String(r.units))+'</td>'+
+          '<td>'+price+(r.previous_price!=null?' <div class="muted">Prev. '+radarMoney(r.previous_price)+'</div>':'')+'</td>'+
+          '<td>'+cap+' / '+dscr+'</td>'+
+          '<td>'+received+'<div><span class="pill">'+escapeHtml(badge)+'</span></div></td>'+
+          '<td style="white-space:nowrap">'+
+            '<button class="primary" onclick="analyzeRadarOpportunity(\''+r.id+'\')">Analyze</button> '+
+            (r.source_url?'<a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="'+escapeHtml(r.source_url)+'">Source</a>':'')+
+            ' <button class="secondary" onclick="updateRadarOpportunityStatus(\''+r.id+'\',\''+(badge==='new'?'reviewing':'new')+'\')">'+(badge==='new'?'Review':'New')+'</button>'+
+          '</td></tr>';
+      }).join('')+'</tbody></table></div>';
+  };
+
+  window.analyzeRadarOpportunity=async function(id){
+    const r=(window.__jgapRadarRows||[]).find(x=>x.id===id);
+    if(!r)return;
+    const existing={
+      name:r.name||r.address||'Radar Opportunity',
+      property_type:r.property_type||'multifamily',
+      property_address:r.address||[r.city,r.state,r.postal_code].filter(Boolean).join(', '),
+      purchase_price:r.asking_price??'',
+      asking_price:r.asking_price??'',
+      monthly_rent:r.monthly_rent??'',
+      monthly_operating_expenses:r.monthly_operating_expenses??'',
+      vacancy_rate:r.vacancy_rate??5,
+      target_cap_rate:8,
+      target_cash_on_cash:8,
+      target_monthly_cash_flow:0,
+      target_dscr:r.dscr??'',
+      status:'analyzing',
+      notes:'Imported from Deal Radar ('+(r.source||'Email')+').'+(r.units!=null?' Units: '+r.units+'.':'')+(r.source_url?' Source: '+r.source_url:'')
+    };
+    renderDealAnalyzer(existing);
+  };
+
+  window.updateRadarOpportunityStatus=async function(id,status){
+    const {error}=await sb.from('radar_opportunities').update({status,updated_at:new Date().toISOString()}).eq('id',id);
+    if(error){alert('Could not update alert: '+error.message);return;}
+    const r=(window.__jgapRadarRows||[]).find(x=>x.id===id);
+    if(r)r.status=status;
+    updateRadarStats(window.__jgapRadarRows||[]);
+    filterRadarInbox();
+  };
+
+  function radarMoney(v){
+    return '$'+Number(v||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+  }
+})();
+</script>
