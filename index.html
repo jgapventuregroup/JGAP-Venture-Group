@@ -1914,6 +1914,28 @@ async function cancelJGAPInvite(id){ if(!confirm('Cancel this invitation?'))retu
 async function changeJGAPRole(id,role){ const {error}=await sb.rpc('update_current_user_company_member_role',{p_user_id:id,p_role:role}); if(error){alert(error.message);await loadJGAPUsersAccess();return;} await loadJGAPUsersAccess(); }
 async function removeJGAPUser(id){ if(!confirm('Remove this user from JGAP Venture Group?'))return; const {error}=await sb.rpc('remove_current_user_company_member',{p_user_id:id}); if(error){alert(error.message);return;} await loadJGAPUsersAccess(); }
 
+window.jgapScreenRadarDeal=async function(id){
+  try{
+    const {data,error}=await sb.from("radar_opportunities")
+      .select("id,name,source,source_url,address,city,state,postal_code,units,asking_price,monthly_rent,monthly_operating_expenses,vacancy_rate,cap_rate,dscr,monthly_cash_flow,status,notes")
+      .eq("id",id).maybeSingle();
+    if(error) throw error;
+    if(!data){alert("Radar opportunity not found. Refresh Deal Radar and try again.");return;}
+    renderDealAnalyzer({
+      name:data.name||"",
+      property_type:"multifamily",
+      property_address:[data.address,data.city,data.state,data.postal_code].filter(Boolean).join(", "),
+      purchase_price:data.asking_price,
+      asking_price:data.asking_price,
+      monthly_rent:data.monthly_rent,
+      monthly_operating_expenses:data.monthly_operating_expenses,
+      vacancy_rate:data.vacancy_rate,
+      status:"analyzing",
+      notes:["Imported from Deal Radar.",data.source?"Source: "+data.source:"",data.units!=null?"Units: "+data.units:"",data.source_url?"Source URL: "+data.source_url:"",data.notes||""].filter(Boolean).join("\n")
+    });
+  }catch(e){alert("Unable to open this Radar opportunity: "+(e.message||e));}
+};
+
 async function renderDealRadarPage(){
   const {data:{user}}=await sb.auth.getUser();
   if(!user){authView();return;}
@@ -1945,6 +1967,14 @@ async function renderDealRadarPage(){
       <div class="card"><div class="muted">Active Deals</div><div id="radarDeals" class="metric">—</div><div class="muted">Deal pipeline</div></div>
       <div class="card"><div class="muted">Off-Market Leads</div><div id="radarLeads" class="metric">—</div><div class="muted">Lead Generation records</div></div>
       <div class="card"><div class="muted">Broker Network</div><div id="radarBrokers" class="metric">—</div><div class="muted">Real estate broker contacts</div></div>
+    </div>
+    <div id="jgapIncomingRadar" class="panel" style="margin-bottom:16px;background:#f8fbff">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+        <div><h2 class="sectionTitle" style="margin-bottom:4px">📨 Incoming Property Alerts</h2>
+        <div class="muted">Listings received from forwarded Zillow, LoopNet, Crexi and other alert emails.</div></div>
+        <div class="pill">Email feed active</div>
+      </div>
+      <div id="jgapIncomingRadarRows" style="margin-top:12px"><div class="muted">Loading alerts…</div></div>
     </div>
     <div class="detailGrid">
       <div class="stack">
@@ -1994,6 +2024,32 @@ async function renderDealRadarPage(){
       </div>
     </div>
     <div id="radarStatus" class="muted" style="font-size:12px;margin-top:12px"></div>
+  const radarHost=document.getElementById("jgapIncomingRadarRows");
+  try{
+    const {data:radarRows,error:radarError}=await sb.from("radar_opportunities")
+      .select("id,name,source,address,city,state,postal_code,units,asking_price,status")
+      .order("created_at",{ascending:false}).limit(25);
+    if(radarError) throw radarError;
+    const rows=radarRows||[];
+    if(!rows.length){
+      radarHost.innerHTML='<div class="muted">No property alerts have been received yet.</div>';
+    }else{
+      radarHost.innerHTML='<div style="overflow:auto"><table class="table"><thead><tr><th>Property</th><th>Location</th><th>Units</th><th>Price</th><th>Source</th><th>Status</th><th></th></tr></thead><tbody>'+
+        rows.map(r=>{
+          const loc=[r.city,r.state].filter(Boolean).join(", ")||r.address||"—";
+          const price=r.asking_price==null?"—":"$"+Number(r.asking_price).toLocaleString("en-US",{maximumFractionDigits:0});
+          return '<tr><td><b>'+escapeHtml(r.name||"Untitled opportunity")+'</b><div class="muted" style="font-size:12px">'+escapeHtml(r.address||"")+'</div></td>'+
+            '<td>'+escapeHtml(loc)+'</td><td>'+escapeHtml(r.units==null?"—":String(r.units))+'</td><td>'+price+'</td>'+
+            '<td>'+escapeHtml(r.source||"Email")+'</td><td><span class="pill">'+escapeHtml(r.status||"new")+'</span></td>'+
+            '<td><button class="primary" type="button" data-radar-id="'+escapeHtml(r.id)+'">Screen Deal</button></td></tr>';
+        }).join("")+'</tbody></table></div>';
+      radarHost.querySelectorAll("[data-radar-id]").forEach(btn=>{
+        btn.addEventListener("click",()=>window.jgapScreenRadarDeal(btn.getAttribute("data-radar-id")));
+      });
+    }
+  }catch(e){
+    radarHost.innerHTML='<div class="muted">Radar alerts could not be loaded: '+escapeHtml(e.message||"Unknown error")+'</div>';
+  }
   `;
   async function countTable(table, extra){
     try{
@@ -2125,80 +2181,3 @@ window.renderDocumentsPage = async function(context={}){
     const main=document.getElementById('main');
     if(!main){ shell(); }
     const main2=document.getElementById('main');
-
-
-
-<script>
-(function(){
-  const originalRadar=window.renderDealRadarPage;
-  if(typeof originalRadar!=='function') return;
-
-  window.renderDealRadarPage=async function(){
-    await originalRadar();
-    try{
-      const main=document.querySelector('.layout>main');
-      if(!main) return;
-      const old=document.getElementById('jgapSafeRadarPanel');
-      if(old) old.remove();
-
-      const panel=document.createElement('div');
-      panel.id='jgapSafeRadarPanel';
-      panel.className='panel';
-      panel.style.marginBottom='16px';
-      panel.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h2 class="sectionTitle" style="margin-bottom:4px">📨 Incoming Property Alerts</h2><div class="muted">Listings received from your forwarded Zillow, LoopNet, Crexi and other alert emails.</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><span class="pill">Zillow</span><span class="pill">LoopNet</span><span class="pill">Crexi</span></div></div><div class="pill">Email feed active</div></div><div id="jgapSafeRadarRows" style="margin-top:12px"><div class="muted">Loading…</div></div>';
-
-      const target=main.querySelector('.detailGrid');
-      if(target) target.parentNode.insertBefore(panel,target);
-      else main.appendChild(panel);
-
-      const host=document.getElementById('jgapSafeRadarRows');
-      const {data,error}=await sb.from('radar_opportunities').select('id,name,source,address,city,state,postal_code,units,asking_price,status').order('created_at',{ascending:false}).limit(25);
-      if(error){host.innerHTML='<div class="muted">Radar data could not be loaded: '+escapeHtml(error.message)+'</div>';return;}
-      const rows=data||[];
-      if(!rows.length){host.innerHTML='<div class="muted">No property alerts have been received yet.</div>';return;}
-
-      host.innerHTML='<div style="overflow:auto"><table class="table"><thead><tr><th>Property</th><th>Location</th><th>Units</th><th>Price</th><th>Source</th><th>Status</th><th></th></tr></thead><tbody>'+rows.map(function(r){
-        const loc=[r.city,r.state].filter(Boolean).join(', ')||r.address||'—';
-        const price=r.asking_price==null?'—':'$'+Number(r.asking_price).toLocaleString('en-US',{maximumFractionDigits:0});
-        return '<tr><td><b>'+escapeHtml(r.name||'Untitled opportunity')+'</b><div class="muted" style="font-size:12px">'+escapeHtml(r.address||'')+'</div></td><td>'+escapeHtml(loc)+'</td><td>'+escapeHtml(r.units==null?'—':String(r.units))+'</td><td>'+price+'</td><td>'+escapeHtml(r.source||'Email')+'</td><td><span class="pill">'+escapeHtml(r.status||'new')+'</span></td><td><button class="primary" type="button" data-radar-id="'+escapeHtml(r.id)+'">Screen Deal</button></td></tr>';
-      }).join('')+'</tbody></table></div>';
-
-      Array.from(host.querySelectorAll('[data-radar-id]')).forEach(function(btn){
-        btn.addEventListener('click',function(){ window.jgapScreenRadarDeal(btn.getAttribute('data-radar-id')); });
-      });
-    }catch(e){console.warn('JGAP Radar layer:',e);}
-  };
-
-  window.jgapScreenRadarDeal=async function(id){
-    try{
-      const {data,error}=await sb.from('radar_opportunities').select('id,name,source,source_url,address,city,state,postal_code,units,asking_price,monthly_rent,monthly_operating_expenses,vacancy_rate,cap_rate,dscr,monthly_cash_flow,status,notes').eq('id',id).maybeSingle();
-      if(error) throw error;
-      if(!data){alert('Radar opportunity not found. Refresh Deal Radar and try again.');return;}
-
-      const existing={
-        name:data.name||'',
-        property_type:'multifamily',
-        property_address:[data.address,data.city,data.state,data.postal_code].filter(Boolean).join(', '),
-        purchase_price:data.asking_price,
-        asking_price:data.asking_price,
-        monthly_rent:data.monthly_rent,
-        monthly_operating_expenses:data.monthly_operating_expenses,
-        vacancy_rate:data.vacancy_rate,
-        status:'analyzing',
-        notes:['Imported from Deal Radar.',data.source?'Source: '+data.source:'',data.units!=null?'Units: '+data.units:'',data.source_url?'Source URL: '+data.source_url:'',data.cap_rate!=null?'Source cap rate: '+data.cap_rate+'%':'',data.dscr!=null?'Source DSCR: '+data.dscr:'',data.monthly_cash_flow!=null?'Source monthly cash flow: $'+Number(data.monthly_cash_flow).toLocaleString('en-US',{maximumFractionDigits:0}):'',data.notes||''].filter(Boolean).join('\n')
-      };
-
-      renderDealAnalyzer(existing);
-      setTimeout(function(){
-        const main=document.querySelector('.layout>main');
-        if(!main)return;
-        const banner=document.createElement('div');
-        banner.className='panel';
-        banner.style.cssText='margin:0 0 14px;background:#f8fbff;border:1px solid #c9d8ea';
-        banner.innerHTML='<b>📡 Deal Radar → Deal Analyzer</b><div class="muted" style="margin-top:4px">Imported listing data is shown below. Missing values were left blank so you can enter verified numbers.</div>';
-        if(main.firstElementChild) main.insertBefore(banner,main.firstElementChild.nextSibling); else main.appendChild(banner);
-      },0);
-    }catch(e){alert('Unable to open this Radar opportunity: '+(e.message||e));}
-  };
-})();
-</script>
