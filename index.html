@@ -2023,6 +2023,7 @@ async function renderDealRadarPage(){
       </div>
     </div>
     <div id="radarStatus" class="muted" style="font-size:12px;margin-top:12px"></div>
+  `;
   const radarHost=document.getElementById("jgapIncomingRadarRows");
   try{
     const {data:radarRows,error:radarError}=await sb.from("radar_opportunities")
@@ -2046,8 +2047,6 @@ async function renderDealRadarPage(){
   }catch(e){
     radarHost.innerHTML='<div class="muted">Radar alerts could not be loaded: '+escapeHtml(e.message||"Unknown error")+'</div>';
   }
-
-  `;
   async function countTable(table, extra){
     try{
       let q=sb.from(table).select("id",{count:"exact",head:true});
