@@ -1914,7 +1914,7 @@ async function cancelJGAPInvite(id){ if(!confirm('Cancel this invitation?'))retu
 async function changeJGAPRole(id,role){ const {error}=await sb.rpc('update_current_user_company_member_role',{p_user_id:id,p_role:role}); if(error){alert(error.message);await loadJGAPUsersAccess();return;} await loadJGAPUsersAccess(); }
 async function removeJGAPUser(id){ if(!confirm('Remove this user from JGAP Venture Group?'))return; const {error}=await sb.rpc('remove_current_user_company_member',{p_user_id:id}); if(error){alert(error.message);return;} await loadJGAPUsersAccess(); }
 
-window.jgapScreenRadarDeal=async function(id){
+async function jgapScreenRadarDeal(id){
   try{
     const {data,error}=await sb.from("radar_opportunities")
       .select("id,name,source,source_url,address,city,state,postal_code,units,asking_price,monthly_rent,monthly_operating_expenses,vacancy_rate,cap_rate,dscr,monthly_cash_flow,status,notes")
@@ -1934,7 +1934,7 @@ window.jgapScreenRadarDeal=async function(id){
       notes:["Imported from Deal Radar.",data.source?"Source: "+data.source:"",data.units!=null?"Units: "+data.units:"",data.source_url?"Source URL: "+data.source_url:"",data.notes||""].filter(Boolean).join("\n")
     });
   }catch(e){alert("Unable to open this Radar opportunity: "+(e.message||e));}
-};
+}
 
 async function renderDealRadarPage(){
   const {data:{user}}=await sb.auth.getUser();
@@ -1970,9 +1970,8 @@ async function renderDealRadarPage(){
     </div>
     <div id="jgapIncomingRadar" class="panel" style="margin-bottom:16px;background:#f8fbff">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
-        <div><h2 class="sectionTitle" style="margin-bottom:4px">📨 Incoming Property Alerts</h2>
-        <div class="muted">Listings received from forwarded Zillow, LoopNet, Crexi and other alert emails.</div></div>
-        <div class="pill">Email feed active</div>
+        <div><h2 style="margin:0 0 5px">📨 Incoming Property Alerts</h2><p class="muted" style="margin:0">Listings received from your forwarded Zillow, LoopNet, Crexi and other alert emails.</p></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="pill">Zillow</span><span class="pill">LoopNet</span><span class="pill">Crexi</span></div>
       </div>
       <div id="jgapIncomingRadarRows" style="margin-top:12px"><div class="muted">Loading alerts…</div></div>
     </div>
@@ -2035,21 +2034,19 @@ async function renderDealRadarPage(){
       radarHost.innerHTML='<div class="muted">No property alerts have been received yet.</div>';
     }else{
       radarHost.innerHTML='<div style="overflow:auto"><table class="table"><thead><tr><th>Property</th><th>Location</th><th>Units</th><th>Price</th><th>Source</th><th>Status</th><th></th></tr></thead><tbody>'+
-        rows.map(r=>{
+        rows.map(function(r){
           const loc=[r.city,r.state].filter(Boolean).join(", ")||r.address||"—";
           const price=r.asking_price==null?"—":"$"+Number(r.asking_price).toLocaleString("en-US",{maximumFractionDigits:0});
-          return '<tr><td><b>'+escapeHtml(r.name||"Untitled opportunity")+'</b><div class="muted" style="font-size:12px">'+escapeHtml(r.address||"")+'</div></td>'+
-            '<td>'+escapeHtml(loc)+'</td><td>'+escapeHtml(r.units==null?"—":String(r.units))+'</td><td>'+price+'</td>'+
-            '<td>'+escapeHtml(r.source||"Email")+'</td><td><span class="pill">'+escapeHtml(r.status||"new")+'</span></td>'+
-            '<td><button class="primary" type="button" data-radar-id="'+escapeHtml(r.id)+'">Screen Deal</button></td></tr>';
+          return '<tr><td><b>'+escapeHtml(r.name||"Untitled opportunity")+'</b><div class="muted" style="font-size:12px">'+escapeHtml(r.address||"")+'</div></td><td>'+escapeHtml(loc)+'</td><td>'+escapeHtml(r.units==null?"—":String(r.units))+'</td><td>'+price+'</td><td>'+escapeHtml(r.source||"Email")+'</td><td><span class="pill">'+escapeHtml(r.status||"new")+'</span></td><td><button class="primary" type="button" data-radar-id="'+escapeHtml(r.id)+'">Screen Deal</button></td></tr>';
         }).join("")+'</tbody></table></div>';
-      radarHost.querySelectorAll("[data-radar-id]").forEach(btn=>{
-        btn.addEventListener("click",()=>window.jgapScreenRadarDeal(btn.getAttribute("data-radar-id")));
+      radarHost.querySelectorAll("[data-radar-id]").forEach(function(btn){
+        btn.addEventListener("click",function(){window.jgapScreenRadarDeal(btn.getAttribute("data-radar-id"));});
       });
     }
   }catch(e){
     radarHost.innerHTML='<div class="muted">Radar alerts could not be loaded: '+escapeHtml(e.message||"Unknown error")+'</div>';
   }
+
   `;
   async function countTable(table, extra){
     try{
