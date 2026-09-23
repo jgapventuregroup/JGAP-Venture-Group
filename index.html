@@ -1922,7 +1922,7 @@ async function cancelJGAPInvite(id){ if(!confirm('Cancel this invitation?'))retu
 async function changeJGAPRole(id,role){ const {error}=await sb.rpc('update_current_user_company_member_role',{p_user_id:id,p_role:role}); if(error){alert(error.message);await loadJGAPUsersAccess();return;} await loadJGAPUsersAccess(); }
 async function removeJGAPUser(id){ if(!confirm('Remove this user from JGAP Venture Group?'))return; const {error}=await sb.rpc('remove_current_user_company_member',{p_user_id:id}); if(error){alert(error.message);return;} await loadJGAPUsersAccess(); }
 
-async async function renderDealRadarPage(){
+async function renderDealRadarPage(){
   const {data:{user}}=await sb.auth.getUser();
   if(!user){authView();return;}
   shell();
