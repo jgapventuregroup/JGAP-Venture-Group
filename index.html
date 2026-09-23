@@ -1969,7 +1969,7 @@ async function renderDealRadarPage(){
       <div class="card"><div class="muted">Broker Network</div><div id="radarBrokers" class="metric">—</div><div class="muted">Real estate broker contacts</div></div>
     </div>
     <div id="jgapIncomingRadar" class="panel" style="margin-bottom:16px;background:#f8fbff">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
         <div><h2 style="margin:0 0 5px">📨 Incoming Property Alerts</h2><p class="muted" style="margin:0">Listings received from your forwarded Zillow, LoopNet, Crexi and other alert emails.</p></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="pill">Zillow</span><span class="pill">LoopNet</span><span class="pill">Crexi</span></div>
       </div>
@@ -2024,7 +2024,7 @@ async function renderDealRadarPage(){
     </div>
     <div id="radarStatus" class="muted" style="font-size:12px;margin-top:12px"></div>
   `;
-  const radarHost=document.getElementById("jgapIncomingRadarRows");
+  async function countTable  const radarHost=document.getElementById("jgapIncomingRadarRows");
   try{
     const {data:radarRows,error:radarError}=await sb.from("radar_opportunities")
       .select("id,name,source,address,city,state,postal_code,units,asking_price,status")
@@ -2047,7 +2047,7 @@ async function renderDealRadarPage(){
   }catch(e){
     radarHost.innerHTML='<div class="muted">Radar alerts could not be loaded: '+escapeHtml(e.message||"Unknown error")+'</div>';
   }
-  async function countTable(table, extra){
+(table, extra){
     try{
       let q=sb.from(table).select("id",{count:"exact",head:true});
       if(extra) q=extra(q);
