@@ -1925,7 +1925,7 @@ async function cancelJGAPInvite(id){ if(!confirm('Cancel this invitation?'))retu
 async function changeJGAPRole(id,role){ const {error}=await sb.rpc('update_current_user_company_member_role',{p_user_id:id,p_role:role}); if(error){alert(error.message);await loadJGAPUsersAccess();return;} await loadJGAPUsersAccess(); }
 async function removeJGAPUser(id){ if(!confirm('Remove this user from JGAP Venture Group?'))return; const {error}=await sb.rpc('remove_current_user_company_member',{p_user_id:id}); if(error){alert(error.message);return;} await loadJGAPUsersAccess(); }
 
-async function renderDealRadarPage(){
+async async function renderDealRadarPage(){
   const {data:{user}}=await sb.auth.getUser();
   if(!user){authView();return;}
   shell();
@@ -1933,23 +1933,34 @@ async function renderDealRadarPage(){
   if(!main)return;
   main.innerHTML=`
     <div class="pageHead">
-      <div><h1>📡 Deal Radar</h1><div class="muted">One place to watch the opportunities and signals that can lead to your next deal.</div></div>
+      <div><h1>📡 Deal Radar</h1><div class="muted">Your JGAP command center for multifamily opportunities, price changes and deal screening.</div></div>
       <div class="toolbar"><button class="secondary" onclick="render()">← Dashboard</button><button class="primary" onclick="renderDealRadarPage()">↻ Refresh Radar</button></div>
     </div>
     <div class="panel" style="margin-bottom:16px;background:#f8fbff">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
-        <div><h2 style="margin:0 0 5px">Multifamily Property Alerts</h2><p class="muted" style="margin:0">Watch new inventory and price changes in the Tri-Cities and nearby Southwest Virginia.</p></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <a class="primary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.loopnet.com/search/multifamily-properties/bristol-tn/for-sale/">LoopNet</a>
+        <div><h2 style="margin:0 0 5px">Multifamily Property Alerts</h2><p class="muted" style="margin:0">Track Tri-Cities + Southwest Virginia listings here instead of letting promising properties get lost in email or browser tabs.</p></div>
+        <div class="toolbar">
+          <button class="primary" onclick="addRadarOpportunity()">+ Log New Opportunity</button>
+          <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.loopnet.com/search/multifamily-properties/bristol-tn/for-sale/">LoopNet</a>
           <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.crexi.com/properties/TN/Bristol/Multifamily">Crexi</a>
         </div>
       </div>
       <div class="stats">
         <div><span>Area</span><b style="font-size:16px">Tri-Cities + SWVA</b></div>
         <div><span>Property Type</span><b style="font-size:16px">Multifamily</b></div>
-        <div><span>Alert Method</span><b style="font-size:16px">Saved Search</b></div>
+        <div><span>Stored Opportunities</span><b id="radarOpportunityCount" style="font-size:16px">—</b></div>
+        <div><span>New / Review</span><b id="radarNewCount" style="font-size:16px">—</b></div>
       </div>
-      <div class="muted" style="font-size:12px;margin-top:10px">Save the searches on LoopNet and Crexi and turn on new-listing email alerts. Deal Radar is your JGAP command center for reviewing those signals.</div>
+      <div class="muted" style="font-size:12px;margin-top:10px">External listing sites remain the discovery sources. When you find a listing, log it here so JGAP can track the property, price, source and screening status in Supabase.</div>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+        <div><h2 class="sectionTitle" style="margin-bottom:4px">🚨 Radar Opportunities</h2><div class="muted">Newest opportunities appear first. Price reductions are highlighted when the stored price is lower than the previous price.</div></div>
+        <select id="radarStatusFilter" style="max-width:190px;margin:0" onchange="loadRadarOpportunities()">
+          <option value="all">All statuses</option><option value="new">New</option><option value="reviewing">Reviewing</option><option value="watching">Watching</option><option value="passed">Passed</option><option value="archived">Archived</option>
+        </select>
+      </div>
+      <div id="radarOpportunityList" style="margin-top:14px"><div class="muted">Loading radar opportunities…</div></div>
     </div>
     <div class="grid" style="margin-bottom:16px">
       <div class="card"><div class="muted">Properties in JGAP</div><div id="radarProperties" class="metric">—</div><div class="muted">Portfolio records</div></div>
@@ -1960,9 +1971,9 @@ async function renderDealRadarPage(){
     <div class="detailGrid">
       <div class="stack">
         <div class="panel">
-          <h2 class="sectionTitle">🚨 New Listings & Price Reductions</h2>
-          <p class="muted">Keep saved searches focused on duplexes, triplexes, fourplexes, 5–10 units, 11–20 units and 20+ units. Add price and unit limits that match your buying box.</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <h2 class="sectionTitle">🔎 Discovery Sources</h2>
+          <p class="muted">Use saved searches on the listing sites below, then log qualifying opportunities in Radar. This keeps the app focused on verified listing information rather than guessed data.</p>
+          <div class="toolbar" style="margin-top:10px">
             <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.loopnet.com/search/multifamily-properties/bristol-tn/for-sale/">Open LoopNet Search</a>
             <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.crexi.com/properties/TN/Bristol/Multifamily">Open Crexi Search</a>
           </div>
@@ -1972,59 +1983,110 @@ async function renderDealRadarPage(){
           <p class="muted">Watch delinquent-tax and tax-sale information for potential opportunities. Verify property status, liens, ownership and sale terms before treating anything as a deal.</p>
           <a class="secondary" style="display:inline-block;text-decoration:none;margin-top:8px" target="_blank" rel="noopener noreferrer" href="https://www.bristoltn.gov/322/Delinquent-Tax-Sale">Bristol TN Delinquent Tax Sale</a>
         </div>
-        <div class="panel">
-          <h2 class="sectionTitle">🏗️ Development & Permit Watch</h2>
-          <p class="muted">Use planning, development and permit activity as an early signal for new construction, redevelopment, major renovations and changing neighborhood activity.</p>
-          <a class="secondary" style="display:inline-block;text-decoration:none;margin-top:8px" target="_blank" rel="noopener noreferrer" href="https://www.bristoltn.gov/203/Community-Development">Bristol TN Community Development</a>
-        </div>
       </div>
       <div class="stack">
         <div class="panel">
           <h2 class="sectionTitle">🎯 Off-Market & Broker Opportunities</h2>
           <p class="muted">Lead Generation holds owner and prospecting records. Vendors & Contractors holds your broker network. Use both as sources for deals that never reach public listing sites.</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-            <button class="secondary" onclick="renderLeadGenerationPage()">Open Lead Generation</button>
-            <button class="secondary" onclick="renderVendorsPage()">Open Broker Network</button>
-          </div>
+          <div class="toolbar" style="margin-top:10px"><button class="secondary" onclick="renderLeadGenerationPage()">Open Lead Generation</button><button class="secondary" onclick="renderVendorsPage()">Open Broker Network</button></div>
         </div>
         <div class="panel">
           <h2 class="sectionTitle">🧮 Deal Screening</h2>
-          <p class="muted">When a property looks interesting, send it straight to Deal Analyzer to check cash flow, cap rate, DSCR, maximum purchase price and your target offer.</p>
+          <p class="muted">When a property looks interesting, open Deal Analyzer and use the verified listing numbers. We will not fill in missing financial data by guessing.</p>
           <button class="primary" onclick="renderDealsPage()">Open Deal Analyzer</button>
-        </div>
-        <div class="panel" style="background:#f8fbff">
-          <h2 class="sectionTitle">📋 JGAP Radar Workflow</h2>
-          <div style="font-size:14px;line-height:1.65">
-            <div><b>1.</b> New listing or price reduction appears.</div>
-            <div><b>2.</b> Check the property against your buying box.</div>
-            <div><b>3.</b> Run the numbers in Deal Analyzer.</div>
-            <div><b>4.</b> Track the opportunity or owner in JGAP.</div>
-            <div><b>5.</b> Follow up with the broker, owner or other source.</div>
-          </div>
         </div>
       </div>
     </div>
     <div id="radarStatus" class="muted" style="font-size:12px;margin-top:12px"></div>
   `;
-  async function countTable(table, extra){
-    try{
-      let q=sb.from(table).select("id",{count:"exact",head:true});
-      if(extra) q=extra(q);
-      const {count,error}=await q;
-      return error ? 0 : (count||0);
-    }catch(e){return 0;}
-  }
+
+  window.loadRadarOpportunities=async function(){
+    const host=document.getElementById('radarOpportunityList'); if(!host)return;
+    const {data:{user:currentUser}}=await sb.auth.getUser(); if(!currentUser)return;
+    let q=sb.from('radar_opportunities').select('id,name,source,source_url,property_type,address,city,state,postal_code,units,asking_price,previous_price,monthly_rent,monthly_operating_expenses,vacancy_rate,cap_rate,dscr,monthly_cash_flow,price_per_unit,opportunity_score,status,first_seen_at,last_seen_at,last_price_change_at,notes').order('created_at',{ascending:false}).limit(100);
+    const filter=document.getElementById('radarStatusFilter')?.value||'all';
+    if(filter!=='all')q=q.eq('status',filter);
+    const {data,error}=await q;
+    if(error){host.innerHTML='<div class="error">Could not load Radar: '+escapeHtml(error.message)+'</div>';return;}
+    const rows=data||[];
+    const countEl=document.getElementById('radarOpportunityCount'); if(countEl)countEl.textContent=String(rows.length);
+    const newCount=(data||[]).filter(r=>['new','reviewing'].includes(r.status)).length;
+    const newEl=document.getElementById('radarNewCount'); if(newEl)newEl.textContent=String(newCount);
+    if(!rows.length){host.innerHTML='<div class="card" style="background:#fbfcfe"><b>No radar opportunities yet.</b><p class="muted" style="margin:6px 0 0">Use “+ Log New Opportunity” after you find a multifamily listing. The record will be stored in JGAP and will stay here for screening and follow-up.</p></div>';return;}
+    const money=v=>v==null||v===''?'—':'$'+Number(v).toLocaleString('en-US',{maximumFractionDigits:0});
+    host.innerHTML='<div style="overflow:auto"><table class="table"><thead><tr><th>Property</th><th>Location</th><th>Units</th><th>Price</th><th>Signal</th><th>Score</th><th>Status</th><th></th></tr></thead><tbody>'+
+      rows.map(r=>{
+        const reduced=r.previous_price!=null&&r.asking_price!=null&&Number(r.asking_price)<Number(r.previous_price);
+        const signal=reduced?'⬇ Price reduction':(r.status==='new'?'🆕 New':'—');
+        const loc=[r.city,r.state].filter(Boolean).join(', ')||r.address||'—';
+        return '<tr><td><b>'+escapeHtml(r.name||'Untitled opportunity')+'</b><div class="muted" style="font-size:12px">'+escapeHtml(r.source||'Manual')+'</div></td><td>'+escapeHtml(loc)+'</td><td>'+escapeHtml(r.units==null?'—':String(r.units))+'</td><td>'+money(r.asking_price)+'</td><td>'+signal+'</td><td>'+escapeHtml(r.opportunity_score==null?'—':String(r.opportunity_score))+'</td><td><span class="pill">'+escapeHtml(r.status||'new')+'</span></td><td><div class="toolbar">'+(r.source_url?'<a class="secondary" target="_blank" rel="noopener noreferrer" style="text-decoration:none" href="'+escapeHtml(r.source_url)+'">Source</a>':'')+'<button class="secondary" onclick="updateRadarStatus(\''+r.id+'\')">Status</button><button class="primary" onclick="screenRadarOpportunity(\''+r.id+'\')">Screen</button></div></td></tr>';
+      }).join('')+'</tbody></table></div>';
+  };
+
+  window.addRadarOpportunity=async function(){
+    const {data:{user:currentUser}}=await sb.auth.getUser(); if(!currentUser)return;
+    const {data:member,error:memberError}=await sb.from('company_members').select('company_id').eq('user_id',currentUser.id).limit(1).maybeSingle();
+    if(memberError||!member){alert(memberError?.message||'Your account is not linked to a JGAP company.');return;}
+    const name=prompt('Property / opportunity name:',''); if(name===null||!name.trim())return;
+    const source=prompt('Source (LoopNet, Crexi, broker, etc.):','LoopNet'); if(source===null)return;
+    const sourceUrl=prompt('Listing URL (optional):',''); if(sourceUrl===null)return;
+    const address=prompt('Street address (optional):',''); if(address===null)return;
+    const city=prompt('City:','Bristol'); if(city===null)return;
+    const state=prompt('State:','TN'); if(state===null)return;
+    const units=prompt('Units (optional):',''); if(units===null)return;
+    const price=prompt('Asking price (optional):',''); if(price===null)return;
+    const previous=prompt('Previous price (optional; use this for price-reduction tracking):',''); if(previous===null)return;
+    const cap=prompt('Cap rate % (optional):',''); if(cap===null)return;
+    const score=prompt('Opportunity score 0-100 (optional):',''); if(score===null)return;
+    const notes=prompt('Notes (optional):',''); if(notes===null)return;
+    const payload={company_id:member.company_id,name:name.trim(),source:source.trim()||null,source_url:sourceUrl.trim()||null,property_type:'multifamily',address:address.trim()||null,city:city.trim()||null,state:state.trim()||null,units:units?Number(units):null,asking_price:price?Number(price):null,previous_price:previous?Number(previous):null,cap_rate:cap?Number(cap):null,opportunity_score:score?Number(score):null,status:'new',first_seen_at:new Date().toISOString(),last_seen_at:new Date().toISOString(),last_price_change_at:(previous&&price&&Number(price)<Number(previous))?new Date().toISOString():null,notes:notes.trim()||null};
+    const {error}=await sb.from('radar_opportunities').insert(payload);
+    if(error){alert('Could not save opportunity: '+error.message);return;}
+    await loadRadarOpportunities();
+    const status=document.getElementById('radarStatus'); if(status)status.textContent='Opportunity saved to JGAP Radar.';
+  };
+
+  window.updateRadarStatus=async function(id){
+    const next=prompt('New status: new, reviewing, watching, passed, archived','reviewing'); if(next===null)return;
+    const allowed=['new','reviewing','watching','passed','archived']; if(!allowed.includes(next.trim().toLowerCase())){alert('Use: new, reviewing, watching, passed, or archived.');return;}
+    const {error}=await sb.from('radar_opportunities').update({status:next.trim().toLowerCase(),last_seen_at:new Date().toISOString()}).eq('id',id);
+    if(error){alert(error.message);return;} await loadRadarOpportunities();
+  };
+
+  window.screenRadarOpportunity=async function(id){
+    const {data:r,error}=await sb.from('radar_opportunities').select('name,address,city,state,units,asking_price,monthly_rent,monthly_operating_expenses,vacancy_rate,cap_rate,dscr,monthly_cash_flow,notes,source_url').eq('id',id).maybeSingle();
+    if(error||!r){alert(error?.message||'Opportunity not found.');return;}
+    const lines=[
+      'Property: '+(r.name||''),
+      'Address: '+([r.address,r.city,r.state].filter(Boolean).join(', ')||''),
+      'Units: '+(r.units??''),
+      'Asking price: '+(r.asking_price??''),
+      'Monthly rent: '+(r.monthly_rent??''),
+      'Monthly operating expenses: '+(r.monthly_operating_expenses??''),
+      'Vacancy rate: '+(r.vacancy_rate??''),
+      'Cap rate: '+(r.cap_rate??''),
+      'DSCR: '+(r.dscr??''),
+      '',
+      'Open Deal Analyzer to enter the verified financials.'
+    ];
+    alert(lines.join('\n'));
+    renderDealsPage();
+  };
+
+  const countTable=async(table,extra)=>{
+    try{let q=sb.from(table).select('id',{count:'exact',head:true});if(extra)q=extra(q);const {count,error}=await q;return error?0:(count||0);}catch(e){return 0;}
+  };
   const [properties,deals,leads,brokers]=await Promise.all([
-    countTable("properties"),
-    countTable("deals",q=>q.not("status","in","(Closed,Lost)")),
-    countTable("lead_prospects"),
-    countTable("vendors",q=>q.eq("vendor_type","Real Estate Broker"))
+    countTable('properties'),
+    countTable('deals',q=>q.not('status','in','(Closed,Lost)')),
+    countTable('lead_prospects'),
+    countTable('vendors',q=>q.eq('vendor_type','Real Estate Broker'))
   ]);
   const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=String(value);};
-  set("radarProperties",properties); set("radarDeals",deals); set("radarLeads",leads); set("radarBrokers",brokers);
-  try{localStorage.setItem("jgap_deal_radar_last_opened",new Date().toISOString());}catch(e){}
-  const last=document.getElementById("radarStatus");
-  if(last)last.textContent="Radar refreshed "+new Date().toLocaleString()+".";
+  set('radarProperties',properties);set('radarDeals',deals);set('radarLeads',leads);set('radarBrokers',brokers);
+  await loadRadarOpportunities();
+  try{localStorage.setItem('jgap_deal_radar_last_opened',new Date().toISOString());}catch(e){}
+  const last=document.getElementById('radarStatus');if(last)last.textContent='Radar refreshed '+new Date().toLocaleString()+'.';
 }
 
 async function render(){
