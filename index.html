@@ -163,10 +163,7 @@ document.getElementById("app").innerHTML=`<header><div style="display:flex;align
 <div><span>Property Type</span><b style="font-size:16px">Multifamily</b></div>
 <div><span>Alert Sources</span><b style="font-size:16px">Zillow • LoopNet • Crexi</b></div>
 </div>
-<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-<a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.loopnet.com/search/multifamily-properties/bristol-tn/for-sale/">LoopNet saved search</a>
-<a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.crexi.com/properties/TN/Bristol/Multifamily">Crexi saved search</a>
-</div>
+<div class="pill">📨 Email feed active</div>
 <div class="muted" style="font-size:12px;margin-top:10px">Use the source alerts for new-listing emails, then open Deal Radar to screen and track the property in JGAP. No listing data is guessed or fabricated.</div>
 </div>
 <div class="grid" data-dashboard-section="kpis">
@@ -1939,11 +1936,7 @@ async async function renderDealRadarPage(){
     <div class="panel" style="margin-bottom:16px;background:#f8fbff">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
         <div><h2 style="margin:0 0 5px">Multifamily Property Alerts</h2><p class="muted" style="margin:0">Track Tri-Cities + Southwest Virginia listings here instead of letting promising properties get lost in email or browser tabs.</p></div>
-        <div class="toolbar">
-          <button class="primary" onclick="addRadarOpportunity()">+ Log New Opportunity</button>
-          <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.loopnet.com/search/multifamily-properties/bristol-tn/for-sale/">LoopNet</a>
-          <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.crexi.com/properties/TN/Bristol/Multifamily">Crexi</a>
-        </div>
+        <div class="pill">📨 Email feed active</div>
       </div>
       <div class="stats">
         <div><span>Area</span><b style="font-size:16px">Tri-Cities + SWVA</b></div>
@@ -1972,11 +1965,7 @@ async async function renderDealRadarPage(){
       <div class="stack">
         <div class="panel">
           <h2 class="sectionTitle">🔎 Discovery Sources</h2>
-          <p class="muted">Use saved searches on the listing sites below, then log qualifying opportunities in Radar. This keeps the app focused on verified listing information rather than guessed data.</p>
-          <div class="toolbar" style="margin-top:10px">
-            <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.loopnet.com/search/multifamily-properties/bristol-tn/for-sale/">Open LoopNet Search</a>
-            <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.crexi.com/properties/TN/Bristol/Multifamily">Open Crexi Search</a>
-          </div>
+          <p class="muted">Forward your Zillow, LoopNet, Crexi and other saved-search alert emails to the JGAP Radar inbox. The app receives those emails and turns qualifying multifamily alerts into Radar opportunities automatically.</p><div class="card" style="margin-top:10px"><b>📨 Automated email intake</b><div class="muted" style="margin-top:5px">No manual links are required. Incoming listing alerts are parsed, stored in Supabase and shown above for screening.</div></div>
         </div>
         <div class="panel">
           <h2 class="sectionTitle">🏚️ Distressed & Tax-Sale Watch</h2>
