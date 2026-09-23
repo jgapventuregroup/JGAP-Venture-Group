@@ -1959,12 +1959,12 @@ async function renderDealRadarPage(){
         <div class="panel">
           <h2 class="sectionTitle">🏚️ Distressed & Tax-Sale Watch</h2>
           <p class="muted">Watch delinquent-tax and tax-sale information for potential opportunities. Verify property status, liens, ownership and sale terms before treating anything as a deal.</p>
-          <a class="secondary" style="display:inline-block;text-decoration:none;margin-top:8px" target="_blank" rel="noopener noreferrer" href="https://www.bristoltn.gov/322/Delinquent-Tax-Sale">Bristol TN Delinquent Tax Sale</a>
+          <a class="secondary" style="display:inline-block;text-decoration:none;margin-top:8px" target="_blank" rel="noopener noreferrer" href="https://www.bristoltn.gov/1318/Delinquent-Tax-Sale">Bristol TN Delinquent Tax Sale</a>
         </div>
         <div class="panel">
           <h2 class="sectionTitle">🏗️ Development & Permit Watch</h2>
           <p class="muted">Use planning, development and permit activity as an early signal for new construction, redevelopment, major renovations and changing neighborhood activity.</p>
-          <a class="secondary" style="display:inline-block;text-decoration:none;margin-top:8px" target="_blank" rel="noopener noreferrer" href="https://www.bristoltn.gov/203/Community-Development">Bristol TN Community Development</a>
+          <a class="secondary" style="display:inline-block;text-decoration:none;margin-top:8px" target="_blank" rel="noopener noreferrer" href="https://www.bristoltn.gov/133/Community-Development">Bristol TN Community Development</a>
         </div>
       </div>
       <div class="stack">
@@ -1993,6 +1993,99 @@ async function renderDealRadarPage(){
         </div>
       </div>
     </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="sectionTitle">🎯 JGAP Buying Box</div>
+      <p class="muted" style="margin-top:0">Set the rules you want Deal Radar to use when screening an opportunity. These settings stay in this browser so you can adjust them as your strategy changes.</p>
+      <div class="formGrid">
+        <label>Target areas
+          <input id="radar_buy_areas" placeholder="Bristol, Kingsport, Johnson City, Elizabethton, SWVA">
+        </label>
+        <label>Minimum units
+          <input id="radar_buy_min_units" type="number" min="1" step="1" placeholder="2">
+        </label>
+        <label>Maximum units
+          <input id="radar_buy_max_units" type="number" min="1" step="1" placeholder="20">
+        </label>
+        <label>Maximum purchase price
+          <input id="radar_buy_max_price" type="number" min="0" step="1000" placeholder="No limit">
+        </label>
+        <label>Minimum cap rate %
+          <input id="radar_buy_min_cap" type="number" min="0" step="0.1" placeholder="8">
+        </label>
+        <label>Minimum DSCR
+          <input id="radar_buy_min_dscr" type="number" min="0" step="0.01" placeholder="1.20">
+        </label>
+        <label>Minimum monthly cash flow
+          <input id="radar_buy_min_cf" type="number" step="25" placeholder="500">
+        </label>
+        <label>Maximum price per unit
+          <input id="radar_buy_max_ppu" type="number" min="0" step="1000" placeholder="No limit">
+        </label>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <button class="primary" type="button" onclick="saveRadarBuyingBox()">Save Buying Box</button>
+        <button class="secondary" type="button" onclick="resetRadarBuyingBox()">Reset</button>
+      </div>
+      <div id="radarBuyMsg" class="muted" style="font-size:12px;margin-top:8px"></div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <div class="sectionTitle">⚡ Quick Opportunity Screen</div>
+      <p class="muted" style="margin-top:0">Enter the numbers you know. Deal Radar checks them against your Buying Box and gives you a screening score. Missing information is flagged instead of guessed.</p>
+      <div class="formGrid">
+        <label>Property / deal name
+          <input id="radar_q_name" placeholder="Example: 123 Main St">
+        </label>
+        <label>Property type
+          <select id="radar_q_type"><option value="multifamily">Multifamily</option><option value="single_family">Single Family</option><option value="commercial">Commercial</option><option value="other">Other</option></select>
+        </label>
+        <label>Address / area
+          <input id="radar_q_address" placeholder="Bristol, TN">
+        </label>
+        <label>Units
+          <input id="radar_q_units" type="number" min="1" step="1" placeholder="4">
+        </label>
+        <label>Asking price
+          <input id="radar_q_price" type="number" min="0" step="1000" placeholder="400000">
+        </label>
+        <label>Monthly rent / gross revenue
+          <input id="radar_q_rent" type="number" min="0" step="25" placeholder="4500">
+        </label>
+        <label>Monthly operating expenses
+          <input id="radar_q_exp" type="number" min="0" step="25" placeholder="1500">
+        </label>
+        <label>Vacancy %
+          <input id="radar_q_vacancy" type="number" min="0" max="99" step="0.5" value="5">
+        </label>
+        <label>DSCR <span class="muted">(if known)</span>
+          <input id="radar_q_dscr" type="number" min="0" step="0.01" placeholder="1.25">
+        </label>
+        <label>Monthly cash flow <span class="muted">(if known)</span>
+          <input id="radar_q_cf" type="number" step="25" placeholder="750">
+        </label>
+        <label>Cap rate % <span class="muted">(if known)</span>
+          <input id="radar_q_cap" type="number" min="0" step="0.1" placeholder="8.5">
+        </label>
+        <label>Source / broker
+          <input id="radar_q_source" placeholder="LoopNet, Crexi, broker, owner">
+        </label>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <button class="primary" type="button" onclick="screenRadarOpportunity()">Screen Opportunity</button>
+        <button class="secondary" type="button" onclick="sendRadarToDealAnalyzer()">Send to Deal Analyzer</button>
+      </div>
+      <div id="radarScore" style="margin-top:14px"></div>
+    </div>
+
+    <div class="panel" style="margin-top:16px;background:#f8fbff">
+      <div class="sectionTitle">🔎 Research Signals</div>
+      <p class="muted" style="margin-top:0">Use public-record and development signals as research inputs—not as proof that a property is a deal. Bristol's official Community Development pages cover planning, site plans, subdivision plats and permits, while the city also publishes delinquent-tax-sale information and updates. citeturn0search0turn0search1</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.bristoltn.gov/1318/Delinquent-Tax-Sale">Tax-Sale Watch</a>
+        <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.bristoltn.gov/133/Community-Development">Community Development</a>
+        <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.bristoltn.gov/138/Planning">Planning & Zoning</a>
+      </div>
+    </div>
     <div id="radarStatus" class="muted" style="font-size:12px;margin-top:12px"></div>
   `;
   async function countTable(table, extra){
@@ -2012,10 +2105,95 @@ async function renderDealRadarPage(){
   const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=String(value);};
   set("radarProperties",properties); set("radarDeals",deals); set("radarLeads",leads); set("radarBrokers",brokers);
   try{localStorage.setItem("jgap_deal_radar_last_opened",new Date().toISOString());}catch(e){}
+  loadRadarBuyingBox();
+  const radarStatusEl=document.getElementById("radarScore");
+  if(radarStatusEl) radarStatusEl.innerHTML='<div class="muted">Buying Box loaded. Enter a property above and click <b>Screen Opportunity</b>.</div>';
   const last=document.getElementById("radarStatus");
   if(last)last.textContent="Radar refreshed "+new Date().toLocaleString()+".";
 }
 
+function radarGetBuyingBox(){
+  try{
+    const x=JSON.parse(localStorage.getItem("jgap_radar_buying_box")||"null");
+    return x&&typeof x==="object"?x:{areas:"Bristol, Kingsport, Johnson City, Elizabethton, Southwest Virginia",minUnits:2,maxUnits:20,maxPrice:0,minCap:8,minDscr:1.2,minCf:500,maxPpu:0};
+  }catch(e){return {areas:"Bristol, Kingsport, Johnson City, Elizabethton, Southwest Virginia",minUnits:2,maxUnits:20,maxPrice:0,minCap:8,minDscr:1.2,minCf:500,maxPpu:0};}
+}
+function loadRadarBuyingBox(){
+  const x=radarGetBuyingBox();
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=(v??"")};
+  set("radar_buy_areas",x.areas);set("radar_buy_min_units",x.minUnits);set("radar_buy_max_units",x.maxUnits);set("radar_buy_max_price",x.maxPrice||"");set("radar_buy_min_cap",x.minCap);set("radar_buy_min_dscr",x.minDscr);set("radar_buy_min_cf",x.minCf);set("radar_buy_max_ppu",x.maxPpu||"");
+}
+function saveRadarBuyingBox(){
+  const num=id=>{const v=document.getElementById(id)?.value;return v===""||v==null?0:Number(v)||0};
+  const x={areas:(document.getElementById("radar_buy_areas")?.value||"").trim(),minUnits:Math.max(0,Math.round(num("radar_buy_min_units"))),maxUnits:Math.max(0,Math.round(num("radar_buy_max_units"))),maxPrice:Math.max(0,num("radar_buy_max_price")),minCap:Math.max(0,num("radar_buy_min_cap")),minDscr:Math.max(0,num("radar_buy_min_dscr")),minCf:num("radar_buy_min_cf"),maxPpu:Math.max(0,num("radar_buy_max_ppu"))};
+  if(x.maxUnits>0&&x.minUnits>0&&x.maxUnits<x.minUnits){alert("Maximum units cannot be less than minimum units.");return;}
+  try{localStorage.setItem("jgap_radar_buying_box",JSON.stringify(x));}catch(e){}
+  const m=document.getElementById("radarBuyMsg");if(m)m.innerHTML='<span class="success">Buying Box saved.</span>';
+}
+function resetRadarBuyingBox(){
+  try{localStorage.removeItem("jgap_radar_buying_box");}catch(e){}
+  loadRadarBuyingBox();
+  const m=document.getElementById("radarBuyMsg");if(m)m.textContent="Buying Box reset to JGAP defaults.";
+}
+function radarOpportunityData(){
+  const n=id=>{const v=document.getElementById(id)?.value;return v===""||v==null?null:Number(v)};
+  const type=document.getElementById("radar_q_type")?.value||"multifamily";
+  const units=n("radar_q_units"),price=n("radar_q_price"),rent=n("radar_q_rent"),exp=n("radar_q_exp"),vac=n("radar_q_vacancy");
+  const noi=rent!=null&&exp!=null?rent*(1-(Math.max(0,Math.min(99,vac??5))/100))-exp:null;
+  const calcCap=price&&noi!=null?(noi*12/price)*100:null;
+  const cap=n("radar_q_cap")??calcCap;
+  const ppu=units&&price?price/units:null;
+  return {name:(document.getElementById("radar_q_name")?.value||"").trim(),type,address:(document.getElementById("radar_q_address")?.value||"").trim(),units,price,rent,exp,vacancy:vac,dscr:n("radar_q_dscr"),cf:n("radar_q_cf"),cap,ppu,source:(document.getElementById("radar_q_source")?.value||"").trim()};
+}
+function radarScoreOpportunity(o){
+  const b=radarGetBuyingBox(), checks=[], add=(label,pass,applicable=true)=>{if(applicable)checks.push({label,pass:!!pass})};
+  const areaText=(o.address||"").toLowerCase(), areas=(b.areas||"").split(",").map(x=>x.trim().toLowerCase()).filter(Boolean);
+  add("Target area",areas.length?areas.some(a=>areaText.includes(a)):true,!!o.address);
+  add("Multifamily",o.type==="multifamily",true);
+  add("Unit range",o.units!=null&&o.units>=b.minUnits&&(b.maxUnits<=0||o.units<=b.maxUnits),o.units!=null);
+  add("Maximum price",b.maxPrice<=0||(o.price!=null&&o.price<=b.maxPrice),o.price!=null);
+  add("Minimum cap rate",b.minCap<=0||(o.cap!=null&&o.cap>=b.minCap),o.cap!=null);
+  add("Minimum DSCR",b.minDscr<=0||(o.dscr!=null&&o.dscr>=b.minDscr),o.dscr!=null);
+  add("Minimum monthly cash flow",b.minCf===0||(o.cf!=null&&o.cf>=b.minCf),o.cf!=null);
+  add("Maximum price per unit",b.maxPpu<=0||(o.ppu!=null&&o.ppu<=b.maxPpu),o.ppu!=null);
+  const score=checks.length?Math.round(checks.filter(x=>x.pass).length/checks.length*100):0;
+  return {score,checks,box:b};
+}
+function screenRadarOpportunity(){
+  const o=radarOpportunityData(),r=radarScoreOpportunity(o),el=document.getElementById("radarScore");
+  if(!el)return;
+  const pass=r.checks.filter(x=>x.pass).length, total=r.checks.length;
+  el.innerHTML='<div class="stats" style="margin-top:0"><div><span>Opportunity Score</span><b>'+r.score+'/100</b></div><div><span>Checks Passed</span><b>'+pass+'/'+total+'</b></div><div><span>Price / Unit</span><b>'+ (o.ppu!=null?money2(o.ppu):"—") +'</b></div></div>'+
+    '<div style="margin-top:12px">'+r.checks.map(x=>'<span class="pill" style="background:'+(x.pass?'#ecfdf3':'#fef3f2')+';color:'+(x.pass?'#027a48':'#b42318')+'">'+(x.pass?'✓ ':'✕ ')+escapeHtml(x.label)+'</span>').join("")+'</div>'+
+    '<div class="muted" style="font-size:12px;margin-top:10px">This is a screening tool based on your Buying Box and the information entered. It is not an investment recommendation, and missing data is not guessed.</div>';
+  return r;
+}
+function sendRadarToDealAnalyzer(){
+  const o=radarOpportunityData();
+  if(!o.name&&!o.address){alert("Enter at least a property/deal name or address first.");return;}
+  renderDealAnalyzer();
+  setTimeout(()=>{
+    const set=(id,v)=>{const e=document.getElementById(id);if(e&&v!=null)e.value=v};
+    set("d_name",o.name||o.address);
+    set("d_type",o.type==="multifamily"?"multifamily":o.type==="single_family"?"single_family":"other");
+    set("d_address",o.address);
+    set("d_price",o.price);
+    set("d_asking",o.price);
+    set("d_rent",o.rent);
+    set("d_exp",o.exp);
+    set("d_vacancy",o.vacancy??5);
+    if(o.cap!=null){const b=radarGetBuyingBox();set("d_target_cap",b.minCap);}
+    const b=radarGetBuyingBox();
+    set("d_target_dscr",b.minDscr>0?b.minDscr:"");
+    set("d_min_cf",b.minCf||0);
+    set("d_status","analyzing");
+    const notes=document.getElementById("d_notes");
+    if(notes)notes.value=(notes.value?notes.value+"\n":"")+"Radar source: "+(o.source||"Manual entry")+"\nOpportunity screen: "+radarScoreOpportunity(o).score+"/100";
+    if(typeof updateDealTypeUI==="function")updateDealTypeUI();
+    if(typeof calcDeal==="function")calcDeal();
+    window.scrollTo({top:0,behavior:"smooth"});
+  },50);
+}
 async function render(){
 const {data:{user}}=await sb.auth.getUser();
 if(!user){authView();return;}
