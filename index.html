@@ -2102,7 +2102,14 @@ function filterJGAPNotes(){
   const q=(document.getElementById('notesSearch')?.value||'').toLowerCase().trim();
   const rows=(window.__jgapNotes||[]).filter(n=>(String(n.title||'')+' '+stripHtml(n.content_html||'')).toLowerCase().includes(q));
   const host=document.getElementById('notesList'); if(!host)return;
-  host.innerHTML=rows.length?rows.map(n=>'<button type="button" class="secondary" style="display:block;width:100%;text-align:left;margin:5px 0;white-space:normal" onclick="selectJGAPNote(\\''+n.id+'\\')"><b>'+escapeHtml(n.title||'Untitled Note')+'</b><div class="muted" style="font-size:11px;margin-top:3px">'+escapeHtml(new Date(n.updated_at).toLocaleString())+'</div></button>').join(''):'<div class="muted" style="padding:8px">No notes yet.</div>';
+  if(!rows.length){host.innerHTML='<div class="muted" style="padding:8px">No notes yet.</div>';return;}
+  host.innerHTML=rows.map(n=>{
+    const id=escapeHtml(String(n.id));
+    const title=escapeHtml(n.title||'Untitled Note');
+    const updated=escapeHtml(new Date(n.updated_at).toLocaleString());
+    return '<button type="button" class="secondary" style="display:block;width:100%;text-align:left;margin:5px 0;white-space:normal" data-note-id="'+id+'"><b>'+title+'</b><div class="muted" style="font-size:11px;margin-top:3px">'+updated+'</div></button>';
+  }).join('');
+  host.querySelectorAll('[data-note-id]').forEach(btn=>btn.addEventListener('click',()=>selectJGAPNote(btn.dataset.noteId)));
 }
 function stripHtml(html){const d=document.createElement('div');d.innerHTML=html||'';return d.textContent||d.innerText||'';}
 async function loadJGAPNotes(){
