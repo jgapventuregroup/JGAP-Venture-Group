@@ -50,11 +50,11 @@ nav .flipNav{font-weight:800;border:2px solid #111;background:#fff;}
 <script>
 (function(){
   const KEY='jgap_left_nav_order_v1';
-  const DEFAULTS=["navDeals","navRadar","navLeads","navMoney","navDashboard","navProperties","navVendors","navRepairs","navProjects","navLaundromat","navFinances","navDocuments","navTasks","navReports","navInvestments","navUsers"];
+  const DEFAULTS=["navDeals","navRadar","navLeads","navMoney","navDashboard","navProperties","navVendors","navRepairs","navProjects","navLaundromat","navFinances","navDocuments","navNotes","navTasks","navReports","navInvestments","navUsers"];
   const labels={
     navDeals:'Deals / Analyzer',navRadar:'📡 Deal Radar',navLeads:'🎯 Lead Generation',navMoney:'💰 Money-Making System',navDashboard:'Dashboard',navProperties:'Properties',
     navVendors:'👷 Vendors & Contractors',navRepairs:'Repairs',navProjects:'🏠 House Flips / Projects',navLaundromat:'🧺 Laundromat Division',navFinances:'Finances',
-    navDocuments:'Documents',navTasks:'Tasks',navReports:'Reports',navInvestments:'Investments',navLenders:'Lenders',navUsers:'Users & Access'
+    navDocuments:'Documents',navNotes:'📝 Notes',navTasks:'Tasks',navReports:'Reports',navInvestments:'Investments',navLenders:'Lenders',navUsers:'Users & Access'
   };
   function getNavOrder(){
     try{const x=JSON.parse(localStorage.getItem(KEY));if(Array.isArray(x)&&x.length)return x.filter(id=>DEFAULTS.includes(id)).concat(DEFAULTS.filter(id=>!x.includes(id)));}catch(e){}
@@ -146,7 +146,7 @@ async function signOut(){await sb.auth.signOut();authView();}
 function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
 function shell(){
 document.getElementById("app").innerHTML=`<header><div style="display:flex;align-items:center;gap:12px"><img src="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20360%20150%22%3E%3Crect%20width%3D%22360%22%20height%3D%22150%22%20fill%3D%22white%22%2F%3E%3Ctext%20x%3D%22180%22%20y%3D%2265%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2254%22%20font-weight%3D%22800%22%20letter-spacing%3D%22-3%22%20fill%3D%22%230b2940%22%3EJGAP%3C%2Ftext%3E%3Ctext%20x%3D%22180%22%20y%3D%22102%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20letter-spacing%3D%226%22%20fill%3D%22%230b2940%22%3EVENTURE%20GROUP%3C%2Ftext%3E%3Crect%20x%3D%22135%22%20y%3D%22116%22%20width%3D%2290%22%20height%3D%224%22%20rx%3D%222%22%20fill%3D%22%231599e8%22%2F%3E%3C%2Fsvg%3E" alt="JGAP Venture Group" style="height:48px;width:auto;max-width:250px;object-fit:contain;background:#fff;border-radius:6px;padding:2px"><div><div class="brand">JGAP Venture Group LLC</div><div class="sub">Real Estate Investments • Asset Management</div><div style="font-size:10px;letter-spacing:.11em;text-transform:uppercase;opacity:.72;margin-top:4px">Acquire. Improve. Build Wealth.</div></div></div><button class="secondary" onclick="signOut()">Sign out</button></header>
-<div class="layout"><nav><button type="button" id="navDeals" onclick="renderDealsPage()">Deals / Analyzer</button><button type="button" id="navRadar" onclick="renderDealRadarPage()">📡 Deal Radar</button><button type="button" id="navLeads" onclick="renderLeadGenerationPage()">🎯 Lead Generation</button><button id="navMoney" type="button" onclick="renderMoneyMakingSystem()">💰 Money-Making System</button><button type="button" id="navDashboard" onclick="render()">Dashboard</button><button id="navProperties" onclick="renderPropertiesPage()">Properties</button><button id="navVendors" type="button" onclick="renderVendorsPage()">👷 Vendors & Contractors</button><button id="navRepairs" onclick="renderRepairsPage()">Repairs</button><button type="button" id="navProjects" onclick="renderProjectsPage()">🏠 House Flips / Projects</button><button type="button" id="navLaundromat" onclick="renderLaundromatPage()">🧺 Laundromat Division</button><button id="navFinances" onclick="renderFinancesPage()">Finances</button><button type="button" id="navDocuments" onclick="window.__jgapDocumentsRequested=true; window.renderDocumentsPage();">Documents</button><button id="navTasks" onclick="renderTasksPage()">Tasks</button><button id="navReports" onclick="renderReportsPage()">Reports</button><button id="navInvestments" onclick="renderInvestmentsPage()">Investments</button><button id="navUsers" onclick="renderUsersAccessPage()">Users & Access</button></nav><main><div class="hero" style="align-items:center"><div style="display:flex;align-items:center;gap:16px;min-width:0"><img src="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20360%20150%22%3E%3Crect%20width%3D%22360%22%20height%3D%22150%22%20fill%3D%22white%22%2F%3E%3Ctext%20x%3D%22180%22%20y%3D%2265%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2254%22%20font-weight%3D%22800%22%20letter-spacing%3D%22-3%22%20fill%3D%22%230b2940%22%3EJGAP%3C%2Ftext%3E%3Ctext%20x%3D%22180%22%20y%3D%22102%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20letter-spacing%3D%226%22%20fill%3D%22%230b2940%22%3EVENTURE%20GROUP%3C%2Ftext%3E%3Crect%20x%3D%22135%22%20y%3D%22116%22%20width%3D%2290%22%20height%3D%224%22%20rx%3D%222%22%20fill%3D%22%231599e8%22%2F%3E%3C%2Fsvg%3E" alt="JGAP Venture Group logo" style="height:72px;width:auto;max-width:320px;object-fit:contain;background:#fff;border-radius:8px;padding:4px;box-shadow:0 1px 4px rgba(0,0,0,.12)"><div><h1 style="margin-bottom:4px">Dashboard</h1><div class="muted" id="who"></div></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" onclick="renderDealsPage()">Deals / Analyzer</button><button class="secondary" onclick="renderDealAnalyzer()">+ New Deal</button></div></div>
+<div class="layout"><nav><button type="button" id="navDeals" onclick="renderDealsPage()">Deals / Analyzer</button><button type="button" id="navRadar" onclick="renderDealRadarPage()">📡 Deal Radar</button><button type="button" id="navLeads" onclick="renderLeadGenerationPage()">🎯 Lead Generation</button><button id="navMoney" type="button" onclick="renderMoneyMakingSystem()">💰 Money-Making System</button><button type="button" id="navDashboard" onclick="render()">Dashboard</button><button id="navProperties" onclick="renderPropertiesPage()">Properties</button><button id="navVendors" type="button" onclick="renderVendorsPage()">👷 Vendors & Contractors</button><button id="navRepairs" onclick="renderRepairsPage()">Repairs</button><button type="button" id="navProjects" onclick="renderProjectsPage()">🏠 House Flips / Projects</button><button type="button" id="navLaundromat" onclick="renderLaundromatPage()">🧺 Laundromat Division</button><button id="navFinances" onclick="renderFinancesPage()">Finances</button><button type="button" id="navDocuments" onclick="window.__jgapDocumentsRequested=true; window.renderDocumentsPage();">Documents</button><button id="navNotes" type="button" onclick="renderNotesPage()">📝 Notes</button><button id="navTasks" onclick="renderTasksPage()">Tasks</button><button id="navReports" onclick="renderReportsPage()">Reports</button><button id="navInvestments" onclick="renderInvestmentsPage()">Investments</button><button id="navUsers" onclick="renderUsersAccessPage()">Users & Access</button></nav><main><div class="hero" style="align-items:center"><div style="display:flex;align-items:center;gap:16px;min-width:0"><img src="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20360%20150%22%3E%3Crect%20width%3D%22360%22%20height%3D%22150%22%20fill%3D%22white%22%2F%3E%3Ctext%20x%3D%22180%22%20y%3D%2265%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2254%22%20font-weight%3D%22800%22%20letter-spacing%3D%22-3%22%20fill%3D%22%230b2940%22%3EJGAP%3C%2Ftext%3E%3Ctext%20x%3D%22180%22%20y%3D%22102%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20letter-spacing%3D%226%22%20fill%3D%22%230b2940%22%3EVENTURE%20GROUP%3C%2Ftext%3E%3Crect%20x%3D%22135%22%20y%3D%22116%22%20width%3D%2290%22%20height%3D%224%22%20rx%3D%222%22%20fill%3D%22%231599e8%22%2F%3E%3C%2Fsvg%3E" alt="JGAP Venture Group logo" style="height:72px;width:auto;max-width:320px;object-fit:contain;background:#fff;border-radius:8px;padding:4px;box-shadow:0 1px 4px rgba(0,0,0,.12)"><div><h1 style="margin-bottom:4px">Dashboard</h1><div class="muted" id="who"></div></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" onclick="renderDealsPage()">Deals / Analyzer</button><button class="secondary" onclick="renderDealAnalyzer()">+ New Deal</button></div></div>
 <div class="panel" style="margin-bottom:18px;background:#f8fbff">
 <h2 style="margin:0 0 8px">JGAP Venture Group LLC</h2>
 <div id="accountStatus" class="muted">Checking your company access…</div>
@@ -2063,6 +2063,90 @@ async function updateRadarOpportunityStatus(id,status){
   filterRadarInbox();
 }
 
+async function renderNotesPage(){
+  const {data:{user}}=await sb.auth.getUser();
+  if(!user){authView();return;}
+  shell();
+  const main=document.querySelector('.layout>main');
+  if(!main)return;
+  main.innerHTML=`
+    <div class="pageHead">
+      <div><h1>📝 Notes</h1><div class="muted">Write and save notes like a simple Word document.</div></div>
+      <div class="toolbar">
+        <button class="secondary" onclick="createJGAPNote()">＋ New Note</button>
+      </div>
+    </div>
+    <div class="detailGrid" style="grid-template-columns:280px minmax(0,1fr)">
+      <div class="panel" style="padding:14px">
+        <div class="sectionTitle">My Notes</div>
+        <input id="notesSearch" placeholder="Search notes..." oninput="filterJGAPNotes()">
+        <div id="notesList"><div class="muted">Loading notes...</div></div>
+      </div>
+      <div class="panel">
+        <input id="noteTitle" placeholder="Note title" style="font-size:20px;font-weight:800;margin-bottom:10px">
+        <div id="noteEditor" contenteditable="true" spellcheck="true" style="min-height:500px;border:1px solid #ccd5e2;border-radius:9px;padding:18px;background:#fff;outline:none;line-height:1.65;font-size:16px" data-placeholder="Start typing..."></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap">
+          <span id="noteSaveStatus" class="muted" style="font-size:12px">Select a note or create a new one.</span>
+          <div style="display:flex;gap:8px">
+            <button class="secondary" onclick="deleteJGAPNote()">Delete</button>
+            <button class="primary" onclick="saveJGAPNote()">Save Note</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  window.__jgapNotes=[];
+  window.__jgapCurrentNoteId=null;
+  await loadJGAPNotes();
+}
+function filterJGAPNotes(){
+  const q=(document.getElementById('notesSearch')?.value||'').toLowerCase().trim();
+  const rows=(window.__jgapNotes||[]).filter(n=>(String(n.title||'')+' '+stripHtml(n.content_html||'')).toLowerCase().includes(q));
+  const host=document.getElementById('notesList'); if(!host)return;
+  host.innerHTML=rows.length?rows.map(n=>'<button type="button" class="secondary" style="display:block;width:100%;text-align:left;margin:5px 0;white-space:normal" onclick="selectJGAPNote(\\''+n.id+'\\')"><b>'+escapeHtml(n.title||'Untitled Note')+'</b><div class="muted" style="font-size:11px;margin-top:3px">'+escapeHtml(new Date(n.updated_at).toLocaleString())+'</div></button>').join(''):'<div class="muted" style="padding:8px">No notes yet.</div>';
+}
+function stripHtml(html){const d=document.createElement('div');d.innerHTML=html||'';return d.textContent||d.innerText||'';}
+async function loadJGAPNotes(){
+  const {data,error}=await sb.from('user_notes').select('id,title,content_html,created_at,updated_at').eq('user_id',(await sb.auth.getUser()).data.user.id).order('updated_at',{ascending:false});
+  if(error){const s=document.getElementById('noteSaveStatus');if(s)s.textContent='Unable to load notes: '+error.message;return;}
+  window.__jgapNotes=data||[]; filterJGAPNotes();
+  if(window.__jgapNotes.length) selectJGAPNote(window.__jgapNotes[0].id);
+  else createJGAPNote();
+}
+function selectJGAPNote(id){
+  const n=(window.__jgapNotes||[]).find(x=>x.id===id); if(!n)return;
+  window.__jgapCurrentNoteId=id;
+  document.getElementById('noteTitle').value=n.title||'Untitled Note';
+  document.getElementById('noteEditor').innerHTML=n.content_html||'';
+  document.getElementById('noteSaveStatus').textContent='Last saved '+new Date(n.updated_at).toLocaleString();
+}
+function createJGAPNote(){
+  window.__jgapCurrentNoteId=null;
+  const t=document.getElementById('noteTitle'),e=document.getElementById('noteEditor');
+  if(t)t.value='Untitled Note'; if(e)e.innerHTML='';
+  const s=document.getElementById('noteSaveStatus');if(s)s.textContent='New note — type and save when ready.';
+  if(t)t.focus();
+}
+async function saveJGAPNote(){
+  const title=(document.getElementById('noteTitle')?.value||'Untitled Note').trim()||'Untitled Note';
+  const content=document.getElementById('noteEditor')?.innerHTML||'';
+  const {data:{user}}=await sb.auth.getUser(); if(!user)return;
+  const payload={title,content_html:content,updated_at:new Date().toISOString(),user_id:user.id};
+  let result;
+  if(window.__jgapCurrentNoteId) result=await sb.from('user_notes').update(payload).eq('id',window.__jgapCurrentNoteId);
+  else result=await sb.from('user_notes').insert(payload).select('id,title,content_html,created_at,updated_at').single();
+  if(result.error){alert('Could not save note: '+result.error.message);return;}
+  if(result.data){window.__jgapNotes=[result.data,...(window.__jgapNotes||[]).filter(n=>n.id!==result.data.id)];window.__jgapCurrentNoteId=result.data.id;}
+  else {const refreshed=await sb.from('user_notes').select('id,title,content_html,created_at,updated_at').eq('id',window.__jgapCurrentNoteId).single();if(refreshed.data)window.__jgapNotes=(window.__jgapNotes||[]).map(n=>n.id===refreshed.data.id?refreshed.data:n);}
+  filterJGAPNotes(); const s=document.getElementById('noteSaveStatus');if(s)s.textContent='Saved '+new Date().toLocaleTimeString();
+}
+async function deleteJGAPNote(){
+  if(!window.__jgapCurrentNoteId)return;
+  if(!confirm('Delete this note?'))return;
+  const {error}=await sb.from('user_notes').delete().eq('id',window.__jgapCurrentNoteId);
+  if(error){alert('Could not delete note: '+error.message);return;}
+  window.__jgapNotes=(window.__jgapNotes||[]).filter(n=>n.id!==window.__jgapCurrentNoteId); window.__jgapCurrentNoteId=null;
+  filterJGAPNotes(); createJGAPNote();
+}
 async function render(){
 const {data:{user}}=await sb.auth.getUser();
 if(!user){authView();return;}
@@ -2116,7 +2200,7 @@ sb.auth.onAuthStateChange((event)=>{ if(event==='TOKEN_REFRESHED') return; windo
     'renderDealsPage','renderDocumentsPage','renderPropertiesPage','renderPropertyDetail',
     'renderPropertyManagementPage','renderRepairsPage','renderFinancesPage',
     'renderProjectsPage','renderReportsPage','renderInvestmentsPage',
-    'renderDealAnalyzer','renderDealRadarPage','renderContractorsPage','renderRehabPage','renderRentRoll'
+    'renderDealAnalyzer','renderDealRadarPage','renderNotesPage','renderContractorsPage','renderRehabPage','renderRentRoll'
   ];
   const originals = {};
   navNames.forEach(name => {
