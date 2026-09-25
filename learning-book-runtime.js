@@ -117,8 +117,7 @@
           }
         }
       const list=document.getElementById('lbRuntimeList');
-      await seedClassroomLessons(user.id,chapters);\n      await expandExistingLessons(user.id,chapters);
-      const {data:seededLessons}=await sb.from('learning_book_lessons').select('chapter_id,lesson_number').eq('user_id',user.id);
+      await seedClassroomLessons(user.id,chapters);\n      const {data:seededLessons}=await sb.from('learning_book_lessons').select('chapter_id,lesson_number').eq('user_id',user.id);
       list.innerHTML=(chapters||[]).map(c=>'<button type="button" class="secondary" data-lb-chapter="'+c.id+'" style="display:block;width:100%;text-align:left;margin:5px 0;white-space:normal"><b>Chapter '+c.chapter_number+'</b><div>'+escapeHtml(c.chapter_title)+'</div></button>').join('')||'<div class="muted">No chapters found yet.</div>';
       list.querySelectorAll('[data-lb-chapter]').forEach(b=>b.addEventListener('click',()=>openChapter(b.dataset.lbChapter)));
       if(chapters&&chapters[0]) openChapter(chapters[0].id);
