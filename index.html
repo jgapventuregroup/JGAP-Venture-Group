@@ -50,11 +50,11 @@ nav .flipNav{font-weight:800;border:2px solid #111;background:#fff;}
 <script>
 (function(){
   const KEY='jgap_left_nav_order_v1';
-  const DEFAULTS=["navDeals","navRadar","navLeads","navMoney","navDashboard","navProperties","navVendors","navRepairs","navProjects","navLaundromat","navFinances","navDocuments","navNotes","navTasks","navReports","navInvestments","navUsers"];
+  const DEFAULTS=["navDeals","navRadar","navLeads","navMoney","navDashboard","navProperties","navVendors","navRepairs","navProjects","navLaundromat","navFinances","navDocuments","navLawyer","navNotes","navTasks","navReports","navInvestments","navUsers"];
   const labels={
     navDeals:'Deals / Analyzer',navRadar:'📡 Deal Radar',navLeads:'🎯 Lead Generation',navMoney:'💰 Money-Making System',navDashboard:'Dashboard',navProperties:'Properties',
     navVendors:'👷 Vendors & Contractors',navRepairs:'Repairs',navProjects:'🏠 House Flips / Projects',navLaundromat:'🧺 Laundromat Division',navFinances:'Finances',
-    navDocuments:'Documents',navNotes:'📝 Notes',navTasks:'Tasks',navReports:'Reports',navInvestments:'Investments',navLenders:'Lenders',navUsers:'Users & Access'
+    navDocuments:'Documents',navLawyer:'⚖️ Lawyer Files',navNotes:'📝 Notes',navTasks:'Tasks',navReports:'Reports',navInvestments:'Investments',navLenders:'Lenders',navUsers:'Users & Access'
   };
   function getNavOrder(){
     try{const x=JSON.parse(localStorage.getItem(KEY));if(Array.isArray(x)&&x.length)return x.filter(id=>DEFAULTS.includes(id)).concat(DEFAULTS.filter(id=>!x.includes(id)));}catch(e){}
@@ -146,7 +146,7 @@ async function signOut(){await sb.auth.signOut();authView();}
 function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
 function shell(){
 document.getElementById("app").innerHTML=`<header><div style="display:flex;align-items:center;gap:12px"><img src="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20360%20150%22%3E%3Crect%20width%3D%22360%22%20height%3D%22150%22%20fill%3D%22white%22%2F%3E%3Ctext%20x%3D%22180%22%20y%3D%2265%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2254%22%20font-weight%3D%22800%22%20letter-spacing%3D%22-3%22%20fill%3D%22%230b2940%22%3EJGAP%3C%2Ftext%3E%3Ctext%20x%3D%22180%22%20y%3D%22102%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20letter-spacing%3D%226%22%20fill%3D%22%230b2940%22%3EVENTURE%20GROUP%3C%2Ftext%3E%3Crect%20x%3D%22135%22%20y%3D%22116%22%20width%3D%2290%22%20height%3D%224%22%20rx%3D%222%22%20fill%3D%22%231599e8%22%2F%3E%3C%2Fsvg%3E" alt="JGAP Venture Group" style="height:48px;width:auto;max-width:250px;object-fit:contain;background:#fff;border-radius:6px;padding:2px"><div><div class="brand">JGAP Venture Group LLC</div><div class="sub">Real Estate Investments • Asset Management</div><div style="font-size:10px;letter-spacing:.11em;text-transform:uppercase;opacity:.72;margin-top:4px">Acquire. Improve. Build Wealth.</div></div></div><button class="secondary" onclick="signOut()">Sign out</button></header>
-<div class="layout"><nav><button type="button" id="navDeals" onclick="renderDealsPage()">Deals / Analyzer</button><button type="button" id="navRadar" onclick="renderDealRadarPage()">📡 Deal Radar</button><button type="button" id="navLeads" onclick="renderLeadGenerationPage()">🎯 Lead Generation</button><button id="navMoney" type="button" onclick="renderMoneyMakingSystem()">💰 Money-Making System</button><button type="button" id="navDashboard" onclick="render()">Dashboard</button><button id="navProperties" onclick="renderPropertiesPage()">Properties</button><button id="navVendors" type="button" onclick="renderVendorsPage()">👷 Vendors & Contractors</button><button id="navRepairs" onclick="renderRepairsPage()">Repairs</button><button type="button" id="navProjects" onclick="renderProjectsPage()">🏠 House Flips / Projects</button><button type="button" id="navLaundromat" onclick="renderLaundromatPage()">🧺 Laundromat Division</button><button id="navFinances" onclick="renderFinancesPage()">Finances</button><button type="button" id="navDocuments" onclick="window.__jgapDocumentsRequested=true; window.renderDocumentsPage();">Documents</button><button id="navNotes" type="button" onclick="renderNotesPage()">📝 Notes</button><button id="navTasks" onclick="renderTasksPage()">Tasks</button><button id="navReports" onclick="renderReportsPage()">Reports</button><button id="navInvestments" onclick="renderInvestmentsPage()">Investments</button><button id="navUsers" onclick="renderUsersAccessPage()">Users & Access</button></nav><main><div class="hero" style="align-items:center"><div style="display:flex;align-items:center;gap:16px;min-width:0"><img src="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20360%20150%22%3E%3Crect%20width%3D%22360%22%20height%3D%22150%22%20fill%3D%22white%22%2F%3E%3Ctext%20x%3D%22180%22%20y%3D%2265%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2254%22%20font-weight%3D%22800%22%20letter-spacing%3D%22-3%22%20fill%3D%22%230b2940%22%3EJGAP%3C%2Ftext%3E%3Ctext%20x%3D%22180%22%20y%3D%22102%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20letter-spacing%3D%226%22%20fill%3D%22%230b2940%22%3EVENTURE%20GROUP%3C%2Ftext%3E%3Crect%20x%3D%22135%22%20y%3D%22116%22%20width%3D%2290%22%20height%3D%224%22%20rx%3D%222%22%20fill%3D%22%231599e8%22%2F%3E%3C%2Fsvg%3E" alt="JGAP Venture Group logo" style="height:72px;width:auto;max-width:320px;object-fit:contain;background:#fff;border-radius:8px;padding:4px;box-shadow:0 1px 4px rgba(0,0,0,.12)"><div><h1 style="margin-bottom:4px">Dashboard</h1><div class="muted" id="who"></div></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" onclick="renderDealsPage()">Deals / Analyzer</button><button class="secondary" onclick="renderDealAnalyzer()">+ New Deal</button></div></div>
+<div class="layout"><nav><button type="button" id="navDeals" onclick="renderDealsPage()">Deals / Analyzer</button><button type="button" id="navRadar" onclick="renderDealRadarPage()">📡 Deal Radar</button><button type="button" id="navLeads" onclick="renderLeadGenerationPage()">🎯 Lead Generation</button><button id="navMoney" type="button" onclick="renderMoneyMakingSystem()">💰 Money-Making System</button><button type="button" id="navDashboard" onclick="render()">Dashboard</button><button id="navProperties" onclick="renderPropertiesPage()">Properties</button><button id="navVendors" type="button" onclick="renderVendorsPage()">👷 Vendors & Contractors</button><button id="navRepairs" onclick="renderRepairsPage()">Repairs</button><button type="button" id="navProjects" onclick="renderProjectsPage()">🏠 House Flips / Projects</button><button type="button" id="navLaundromat" onclick="renderLaundromatPage()">🧺 Laundromat Division</button><button id="navFinances" onclick="renderFinancesPage()">Finances</button><button type="button" id="navDocuments" onclick="window.__jgapDocumentsRequested=true; window.renderDocumentsPage();">Documents</button><button id="navLawyer" type="button" onclick="renderLawyerFilesPage()">⚖️ Lawyer Files</button><button id="navNotes" type="button" onclick="renderNotesPage()">📝 Notes</button><button id="navTasks" onclick="renderTasksPage()">Tasks</button><button id="navReports" onclick="renderReportsPage()">Reports</button><button id="navInvestments" onclick="renderInvestmentsPage()">Investments</button><button id="navUsers" onclick="renderUsersAccessPage()">Users & Access</button></nav><main><div class="hero" style="align-items:center"><div style="display:flex;align-items:center;gap:16px;min-width:0"><img src="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20360%20150%22%3E%3Crect%20width%3D%22360%22%20height%3D%22150%22%20fill%3D%22white%22%2F%3E%3Ctext%20x%3D%22180%22%20y%3D%2265%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2254%22%20font-weight%3D%22800%22%20letter-spacing%3D%22-3%22%20fill%3D%22%230b2940%22%3EJGAP%3C%2Ftext%3E%3Ctext%20x%3D%22180%22%20y%3D%22102%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20letter-spacing%3D%226%22%20fill%3D%22%230b2940%22%3EVENTURE%20GROUP%3C%2Ftext%3E%3Crect%20x%3D%22135%22%20y%3D%22116%22%20width%3D%2290%22%20height%3D%224%22%20rx%3D%222%22%20fill%3D%22%231599e8%22%2F%3E%3C%2Fsvg%3E" alt="JGAP Venture Group logo" style="height:72px;width:auto;max-width:320px;object-fit:contain;background:#fff;border-radius:8px;padding:4px;box-shadow:0 1px 4px rgba(0,0,0,.12)"><div><h1 style="margin-bottom:4px">Dashboard</h1><div class="muted" id="who"></div></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" onclick="renderDealsPage()">Deals / Analyzer</button><button class="secondary" onclick="renderDealAnalyzer()">+ New Deal</button></div></div>
 <div class="panel" style="margin-bottom:18px;background:#f8fbff">
 <h2 style="margin:0 0 8px">JGAP Venture Group LLC</h2>
 <div id="accountStatus" class="muted">Checking your company access…</div>
@@ -626,7 +626,105 @@ function printRentStatementModal(){
  const w=window.open("","_blank");
  if(!w){alert("Your browser blocked the print window. Use the Print / Save PDF button again or allow pop-ups for this app.");return;}
  w.document.write(`<html><head><title>JGAP Rent Statement</title><style>body{font-family:Arial,sans-serif;margin:0;padding:32px;color:#111}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#f3f4f6}.muted{color:#666}@media print{body{padding:0}}</style></head><body>${area.innerHTML}<script src="./money-making-system.js"><\/script>
-</body></html>`);w.document.close();w.focus();setTimeout(()=>w.print(),300);
+<script>
+async function renderLawyerFilesPage(){
+  const {data:{user}}=await sb.auth.getUser();
+  if(!user){authView();return;}
+  shell();
+  const main=document.querySelector('.layout>main'); if(!main)return;
+  main.innerHTML=`
+    <div class="pageHead">
+      <div><h1>⚖️ Lawyer Files</h1><div class="muted">Private company folder for documents you want to keep organized for Stephen Gooch.</div></div>
+      <div class="toolbar"><a class="secondary" href="mailto:stephen@sgooch.com" style="text-decoration:none">✉ Email Stephen</a><a class="secondary" href="tel:+12769354524" style="text-decoration:none">📞 Call Stephen</a></div>
+    </div>
+    <div class="panel" style="margin-bottom:16px;background:#f8fbff">
+      <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap">
+        <div><h2 style="margin:0 0 5px">Stephen Gooch</h2><div class="muted">Attorney • (276) 935-4524 • stephen@sgooch.com</div></div>
+        <div class="pill">Lawyer Documents</div>
+      </div>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
+      <h2>Upload to Lawyer Folder</h2>
+      <div class="formGrid">
+        <label>Document Name<input id="lawDocName" placeholder="Contract, closing document, legal notice..." /></label>
+        <label>Description<input id="lawDocDescription" placeholder="What is this document for?" /></label>
+        <label>File<input id="lawDocFile" type="file" /></label>
+      </div>
+      <button class="primary" onclick="uploadLawyerDocument()">Upload Document</button>
+      <span id="lawDocStatus" class="muted" style="margin-left:12px"></span>
+    </div>
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+        <div><h2 style="margin:0">Lawyer Document Folder</h2><p class="muted" style="margin:5px 0 0">Only authorized JGAP company members can access these files.</p></div>
+        <input id="lawDocSearch" placeholder="Search lawyer files..." oninput="filterLawyerDocuments()" style="max-width:260px">
+      </div>
+      <div id="lawDocList" style="margin-top:14px"><div class="muted">Loading...</div></div>
+    </div>`;
+  window.__jgapLawyerDocs=[];
+  await loadLawyerDocuments();
+}
+async function getJGAPCompanyId(){
+  const {data:{user}}=await sb.auth.getUser(); if(!user)throw new Error('Please sign in again.');
+  const {data,error}=await sb.from('company_members').select('company_id').eq('user_id',user.id).limit(1).maybeSingle();
+  if(error||!data?.company_id)throw error||new Error('Company authorization not found.');
+  return {user,companyId:data.company_id};
+}
+async function uploadLawyerDocument(){
+  const file=document.getElementById('lawDocFile')?.files?.[0], name=(document.getElementById('lawDocName')?.value||'').trim();
+  const status=document.getElementById('lawDocStatus'); if(!status)return;
+  if(!file){status.textContent='Choose a file first.';return;}
+  if(!name){status.textContent='Enter a document name.';return;}
+  if(file.size>25*1024*1024){status.textContent='File is larger than the 25 MB limit.';return;}
+  status.textContent='Uploading...';
+  try{
+    const {user,companyId}=await getJGAPCompanyId();
+    const safe=file.name.replace(/[^a-zA-Z0-9._-]+/g,'_');
+    const path=companyId+'/lawyer/'+crypto.randomUUID()+'_'+safe;
+    const up=await sb.storage.from('documents').upload(path,file,{contentType:file.type||'application/octet-stream',upsert:false});
+    if(up.error)throw up.error;
+    const {error}=await sb.from('lawyer_documents').insert({user_id:user.id,company_id:companyId,name,description:(document.getElementById('lawDocDescription')?.value||'').trim()||null,storage_path:path,file_size:file.size,mime_type:file.type||null});
+    if(error){await sb.storage.from('documents').remove([path]);throw error;}
+    status.textContent='Uploaded.';
+    document.getElementById('lawDocFile').value='';document.getElementById('lawDocName').value='';document.getElementById('lawDocDescription').value='';
+    await loadLawyerDocuments();
+  }catch(e){status.textContent='Upload failed: '+(e.message||e);}
+}
+async function loadLawyerDocuments(){
+  const list=document.getElementById('lawDocList'); if(!list)return;
+  list.innerHTML='<div class="muted">Loading...</div>';
+  try{
+    const {companyId}=await getJGAPCompanyId();
+    const {data,error}=await sb.from('lawyer_documents').select('id,name,description,storage_path,file_size,mime_type,created_at').eq('company_id',companyId).order('created_at',{ascending:false});
+    if(error)throw error;
+    window.__jgapLawyerDocs=data||[]; filterLawyerDocuments();
+  }catch(e){list.innerHTML='<div class="error">Unable to load lawyer files: '+escapeHtml(e.message||e)+'</div>';}
+}
+function filterLawyerDocuments(){
+  const host=document.getElementById('lawDocList');if(!host)return;
+  const q=(document.getElementById('lawDocSearch')?.value||'').trim().toLowerCase();
+  const rows=(window.__jgapLawyerDocs||[]).filter(d=>(String(d.name||'')+' '+String(d.description||'')).toLowerCase().includes(q));
+  if(!rows.length){host.innerHTML='<div class="muted" style="padding:10px">No lawyer documents yet.</div>';return;}
+  host.innerHTML=rows.map(d=>{
+    const id=escapeHtml(String(d.id)), size=d.file_size?((d.file_size/1024/1024).toFixed(2)+' MB'):'—';
+    return '<div class="card" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><div><b>'+escapeHtml(d.name)+'</b><div class="muted">'+escapeHtml(d.description||'')+(d.description?' • ':'')+escapeHtml(size)+' • '+new Date(d.created_at).toLocaleString()+'</div></div><div style="display:flex;gap:7px"><button type="button" class="secondary" data-lawyer-open="'+id+'">Open</button><button type="button" class="secondary" data-lawyer-delete="'+id+'">Delete</button></div></div></div>';
+  }).join('');
+  host.querySelectorAll('[data-lawyer-open]').forEach(b=>b.addEventListener('click',()=>openLawyerDocument(b.dataset.lawyerOpen)));
+  host.querySelectorAll('[data-lawyer-delete]').forEach(b=>b.addEventListener('click',()=>deleteLawyerDocument(b.dataset.lawyerDelete)));
+}
+async function openLawyerDocument(id){
+  const d=(window.__jgapLawyerDocs||[]).find(x=>x.id===id);if(!d)return;
+  try{const {data,error}=await sb.storage.from('documents').createSignedUrl(d.storage_path,300);if(error)throw error;window.open(data.signedUrl,'_blank','noopener,noreferrer');}catch(e){alert('Unable to open document: '+(e.message||e));}
+}
+async function deleteLawyerDocument(id){
+  const d=(window.__jgapLawyerDocs||[]).find(x=>x.id===id);if(!d)return;
+  if(!confirm('Delete this lawyer document? This cannot be undone.'))return;
+  try{
+    const {error:se}=await sb.storage.from('documents').remove([d.storage_path]);if(se)throw se;
+    const {error:de}=await sb.from('lawyer_documents').delete().eq('id',id);if(de)throw de;
+    await loadLawyerDocuments();
+  }catch(e){alert('Unable to delete lawyer document: '+(e.message||e));}
+}
+</script></body></html>`);w.document.close();w.focus();setTimeout(()=>w.print(),300);
 }
 
 async function exportTenantLedger(propertyId){
@@ -2207,7 +2305,7 @@ sb.auth.onAuthStateChange((event)=>{ if(event==='TOKEN_REFRESHED') return; windo
     'renderDealsPage','renderDocumentsPage','renderPropertiesPage','renderPropertyDetail',
     'renderPropertyManagementPage','renderRepairsPage','renderFinancesPage',
     'renderProjectsPage','renderReportsPage','renderInvestmentsPage',
-    'renderDealAnalyzer','renderDealRadarPage','renderNotesPage','renderContractorsPage','renderRehabPage','renderRentRoll'
+    'renderDealAnalyzer','renderDealRadarPage','renderLawyerFilesPage','renderNotesPage','renderContractorsPage','renderRehabPage','renderRentRoll'
   ];
   const originals = {};
   navNames.forEach(name => {
