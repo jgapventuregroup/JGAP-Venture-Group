@@ -43,7 +43,7 @@ async function renderLearningBookPage(){
  window.__learningBookChapters=[];await ensureLearningBookOutline();
  const {data,error}=await sb.from('learning_book_chapters').select('id,chapter_number,part_title,chapter_title,content_html,source_file_name,updated_at').eq('user_id',user.id).order('chapter_number');
  if(error){document.getElementById('learningBookList').innerHTML='<div class="error">Unable to load the learning book: '+escapeHtml(error.message)+'</div>';return;}
- window.__learningBookChapters=data||[];filterLearningBookChapters();if(window.__learningBookChapters.length)selectLearningBookChapter(window.__learningBookChapters[0].id);
+ window.__learningBookChapters=data||[];filterLearningBookChapters();const firstPopulated=window.__learningBookChapters.find(c=>c.content_html&&c.content_html.trim());const firstChapter=firstPopulated||window.__learningBookChapters[0];if(firstChapter)selectLearningBookChapter(firstChapter.id);
 }
 function filterLearningBookChapters(){
  const q=(document.getElementById('learningBookSearch')?.value||'').toLowerCase().trim(),host=document.getElementById('learningBookList');if(!host)return;
