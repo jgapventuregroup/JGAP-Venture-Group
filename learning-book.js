@@ -30,10 +30,28 @@ const JGAP_LEARNING_BOOK_LESSON_CONTENT={
 19:{source:"Lesson 6 - READING REAL ESTATE LISTINGS.docx",title:"Reading Real Estate Listings",html:`<h3>Lesson 6 — Reading Real Estate Listings</h3><p><b>A listing is the beginning of the investigation—not the conclusion.</b> Listing information may be incomplete, rounded, estimated, outdated, selectively presented, based on seller information, or based on public records. It should not automatically be treated as verified underwriting data.</p><h4>The Three-Column Method</h4><ul><li><b>Facts:</b> information directly stated in the listing.</li><li><b>Claims:</b> statements that require verification, such as “below-market rents” or “huge upside.”</li><li><b>Missing Information:</b> underwriting inputs not provided, such as actual expenses, taxes, insurance, utilities, repairs, management, rent roll, lease terms, and collections.</li></ul><h4>Investor Workflow</h4><ol><li>Extract the property facts.</li><li>Identify claims.</li><li>Identify missing information.</li><li>Request documentation.</li><li>Verify income and expenses.</li><li>Research comparable rents and sales.</li><li>Inspect the property.</li><li>Underwrite the deal.</li><li>Determine maximum price/terms based on your criteria.</li><li>Decide whether the opportunity deserves an offer or further investigation.</li></ol><h4>FACT — ASSUMPTION — VERIFY</h4><p>The lesson recommends putting these three words at the top of every underwriting file. It also warns against underwriting from a best-case scenario and recommends thinking in conservative, base, and upside cases.</p>`}};
 async function seedLearningBookLessons(userId){
  const rows=Object.entries(JGAP_LEARNING_BOOK_LESSON_CONTENT).map(([chapter_number,v])=>({user_id:userId,chapter_number:Number(chapter_number),content_html:v.html,source_file_name:v.source}));
- const {data:existing}=await sb.from('learning_book_chapters').select('chapter_number,content_html').eq('user_id',userId);
+ const {data:existing}=await sb.from('learning_book_chapters').select('id,chapter_number,content_html').eq('user_id',userId);
  const have=new Map((existing||[]).map(x=>[Number(x.chapter_number),x]));
- const missingContent=rows.filter(r=>{const c=have.get(r.chapter_number);return !c || !c.content_html || !c.content_html.trim();});
- if(missingContent.length){const r=await sb.from('learning_book_chapters').upsert(missingContent,{onConflict:'user_id,chapter_number'});if(r.error)console.warn('Learning book lesson import:',r.error);}
+ for(const r of rows){
+   const current=have.get(r.chapter_number);
+   if(current){
+     if(!current.content_html || !current.content_html.trim()){
+       const u=await sb.from('learning_book_chapters').update({content_html:r.content_html,source_file_name:r.source_file_name,updated_at:new Date().toISOString()}).eq('id',current.id);
+       if(u.error) console.warn('Learning book lesson update:',u.error);
+     }
+   }else{
+     const outline=JGAP_LEARNING_BOOK_OUTLINE[r.chapter_number-1];
+     const i=await sb.from('learning_book_chapters').insert({
+       user_id:userId,
+       chapter_number:r.chapter_number,
+       part_title:outline?outline[0]:'',
+       chapter_title:outline?outline[1]:r.title,
+       content_html:r.content_html,
+       source_file_name:r.source
+     });
+     if(i.error) console.warn('Learning book lesson insert:',i.error);
+   }
+ }
 }
 
 async function renderLearningBookPage(){
