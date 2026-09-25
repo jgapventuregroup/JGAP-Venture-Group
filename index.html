@@ -50,7 +50,7 @@ nav .flipNav{font-weight:800;border:2px solid #111;background:#fff;}
 <script>
 (function(){
   const KEY='jgap_left_nav_order_v1';
-  const DEFAULTS=["navDeals","navRadar","navLeads","navMoney","navDashboard","navProperties","navVendors","navRepairs","navProjects","navLaundromat","navFinances","navDocuments","navLawyer","navNotes","navTasks","navReports","navInvestments","navUsers"];
+  const DEFAULTS=["navDeals","navRadar","navLeads","navMoney","navDashboard","navProperties","navVendors","navRepairs","navProjects","navLaundromat","navFinances","navDocuments","navNotes","navTasks","navReports","navInvestments","navUsers"];
   const labels={
     navDeals:'Deals / Analyzer',navRadar:'📡 Deal Radar',navLeads:'🎯 Lead Generation',navMoney:'💰 Money-Making System',navDashboard:'Dashboard',navProperties:'Properties',
     navVendors:'👷 Vendors & Contractors',navRepairs:'Repairs',navProjects:'🏠 House Flips / Projects',navLaundromat:'🧺 Laundromat Division',navFinances:'Finances',
@@ -1191,24 +1191,7 @@ async function renderFinancesPage(){
  main.innerHTML=`<div class="pageHead"><div><h1>Business Finances</h1><p class="muted">Track company and property-level income and expenses, with monthly cash-flow visibility.</p></div><button class="secondary" onclick="render()">← Dashboard</button></div>
  <div class="grid" id="financeStats"><div class="card"><div class="muted">Income</div><div class="metric">$0</div><div class="muted" id="financeIncomeNote">Selected month</div></div><div class="card"><div class="muted">Expenses</div><div class="metric">$0</div><div class="muted" id="financeExpenseNote">Selected month</div></div><div class="card"><div class="muted">Net Cash Flow</div><div class="metric">$0</div><div class="muted" id="financeNetNote">Selected month</div></div><div class="card"><div class="muted">Transactions</div><div class="metric">0</div><div class="muted">Selected month</div></div></div>
  <div class="panel" style="margin:16px 0"><div class="sectionTitle">Financial Dashboard</div><div class="formGrid"><label>Month<input id="financeMonth" type="month" value="${month}" onchange="loadTransactions()"></label><label>Property Filter<select id="financePropertyFilter" onchange="loadTransactions()"><option value="">All Properties + Company</option>${(props||[]).map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("")}</select></label></div><div id="financeBreakdown" style="margin-top:14px"></div></div>
- <div class="panel" style="margin:16px 0;background:#f8fbff">
- <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
-  <div><div class="sectionTitle" style="margin-bottom:4px">⚖️ Lawyer Documents</div><div class="muted">Separate folder for documents specifically for Stephen Gooch.</div></div>
-  <div style="display:flex;gap:8px"><a class="secondary" href="mailto:stephen@sgooch.com" style="text-decoration:none">✉ Email Stephen</a><a class="secondary" href="tel:+12769354524" style="text-decoration:none">📞 Call Stephen</a></div>
- </div>
- <div class="formGrid" style="margin-top:12px">
-  <label>Document Name<input id="lawDocName" placeholder="Contract, closing document, legal notice..." /></label>
-  <label>Description<input id="lawDocDescription" placeholder="What is this document for?" /></label>
-  <label>File<input id="lawDocFile" type="file" /></label>
- </div>
- <button class="primary" onclick="uploadLawyerDocument()">Upload to Lawyer Folder</button>
- <span id="lawDocStatus" class="muted" style="margin-left:12px"></span>
- <div style="margin-top:16px;border-top:1px solid #e2e8f0;padding-top:12px">
-  <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><b>Lawyer Folder</b><input id="lawDocSearch" placeholder="Search lawyer files..." oninput="filterLawyerDocuments()" style="max-width:260px"></div>
-  <div id="lawDocList" style="margin-top:10px"><div class="muted">Loading lawyer files...</div></div>
- </div>
-</div>
-<div class="panel" style="margin:16px 0"><div class="sectionTitle">Add Transaction</div><div class="formGrid">
+ <div class="panel" style="margin:16px 0"><div class="sectionTitle">Add Transaction</div><div class="formGrid">
  <label>Date<input id="f_date" type="date" value="${new Date().toISOString().slice(0,10)}"></label>
  <label>Type<select id="f_type"><option value="expense">Expense</option><option value="income">Income</option></select></label>
  <label>Property<select id="f_property"><option value="">Company / General</option>${(props||[]).map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("")}</select></label>
@@ -2212,27 +2195,7 @@ function jgapRenderRecovery(error){
   const app=document.getElementById("app");
   if(app) app.innerHTML='<div style="min-height:100vh;padding:40px;font-family:Arial,sans-serif;background:#f7f8fa"><div style="max-width:760px;margin:auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:24px"><h2 style="margin-top:0">JGAP Venture Group</h2><p>The app hit a startup error and stopped before rendering.</p><p style="color:#667085;font-size:13px">Refresh once. If this message remains, the exact browser error is available in the console and can be fixed without changing your data.</p></div></div>';
 }
-sb.auth.onAuthStateChange((event)=>{
-  if(event==='TOKEN_REFRESHED') return;
-  const st=history.state;
-  const route=st&&st.jgap===true?st.route:'renderFinancesPage';
-  const args=st&&Array.isArray(st.args)?st.args:[];
-  if(event==='SIGNED_OUT'){ render().catch(jgapRenderRecovery); return; }
-  if(event==='INITIAL_SESSION'){
-    if(route==='renderFinancesPage'){
-      renderFinancesPage().catch(jgapRenderRecovery);
-    } else if(route && typeof window[route]==='function'){
-      window.__jgapHistoryHandling=true;
-      try{ Promise.resolve(window[route].apply(window,args)).catch(jgapRenderRecovery); }
-      finally{ window.__jgapHistoryHandling=false; }
-    } else {
-      render().catch(jgapRenderRecovery);
-    }
-  }
-  setTimeout(loadDashboardSummary,300);
-});
-render().catch(jgapRenderRecovery);
-setTimeout(loadDashboardSummary,300);
+sb.auth.onAuthStateChange((event)=>{ if(event==='TOKEN_REFRESHED') return; window.__jgapSilentRender=true; const st=history.state; const route=st&&st.jgap===true?st.route:'dashboard'; const args=st&&Array.isArray(st.args)?st.args:[]; try{ if(event==='SIGNED_OUT'){ render().catch(jgapRenderRecovery); } else if(event==='INITIAL_SESSION'){ render().then(()=>{ if(route && route!=='dashboard' && typeof window[route]==='function'){ window.__jgapHistoryHandling=true; try{ window[route].apply(window,args); } finally{ window.__jgapHistoryHandling=false; } } }).catch(jgapRenderRecovery); } } finally{window.__jgapSilentRender=false;} setTimeout(loadDashboardSummary,300);}); render().catch(jgapRenderRecovery); setTimeout(loadDashboardSummary,300);
 </script>
 <script>
 // JGAP in-app browser history: keep browser Back inside the app and keep
@@ -2263,7 +2226,7 @@ setTimeout(loadDashboardSummary,300);
     history.pushState(next,'',APP_URL);
   }
 
-  const rootState={jgap:true,route:'renderFinancesPage',args:[]};
+  const rootState={jgap:true,route:'dashboard',args:[]};
   if(!history.state || history.state.jgap!==true){
     history.replaceState(rootState,'',APP_URL);
   } else if(!history.state.route){
