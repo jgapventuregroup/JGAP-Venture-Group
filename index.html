@@ -43,7 +43,7 @@ nav .flipNav{font-weight:800;border:2px solid #111;background:#fff;}
 <style>.offerPackageHeader{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap}.offerActions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.offerPackageGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}.offerPackageGrid>div{border:1px solid #d9e2ee;border-radius:10px;padding:12px;background:#fff;min-width:0}.offerPackageGrid strong{display:block;margin-top:5px;font-size:18px;line-height:1.25;overflow-wrap:anywhere}@media(max-width:900px){.offerPackageGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.offerPackageGrid{grid-template-columns:1fr}.offerActions{width:100%;justify-content:flex-start}}</style><script defer src="./lead-generation.js"></script>
 <script defer src="./money-making-system.js"></script>
 <script defer src="./vendors.js"></script>
-<script defer src="./laundromats.js"></script><script defer src="./learning-book.js"></script>
+<script defer src="./laundromats.js"></script><script defer src="./learning-book.js?v=20260925-2"></script>
 </head>
 <body>
 <div id="app"></div>
@@ -2195,7 +2195,7 @@ function jgapRenderRecovery(error){
   const app=document.getElementById("app");
   if(app) app.innerHTML='<div style="min-height:100vh;padding:40px;font-family:Arial,sans-serif;background:#f7f8fa"><div style="max-width:760px;margin:auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:24px"><h2 style="margin-top:0">JGAP Venture Group</h2><p>The app hit a startup error and stopped before rendering.</p><p style="color:#667085;font-size:13px">Refresh once. If this message remains, the exact browser error is available in the console and can be fixed without changing your data.</p></div></div>';
 }
-sb.auth.onAuthStateChange((event)=>{ if(event==='TOKEN_REFRESHED') return; window.__jgapSilentRender=true; const st=history.state; const route=st&&st.jgap===true?st.route:'dashboard'; const args=st&&Array.isArray(st.args)?st.args:[]; try{ if(event==='SIGNED_OUT'){ render().catch(jgapRenderRecovery); } else if(event==='INITIAL_SESSION'){ render().then(()=>{ if(route && route!=='dashboard' && typeof window[route]==='function'){ window.__jgapHistoryHandling=true; try{ window[route].apply(window,args); } finally{ window.__jgapHistoryHandling=false; } } }).catch(jgapRenderRecovery); } } finally{window.__jgapSilentRender=false;} setTimeout(loadDashboardSummary,300);}); render().catch(jgapRenderRecovery); setTimeout(loadDashboardSummary,300);
+sb.auth.onAuthStateChange((event)=>{ if(event==='TOKEN_REFRESHED') return; window.__jgapSilentRender=true; try{ if(event==='SIGNED_OUT'){ render().catch(jgapRenderRecovery); } else if(event==='INITIAL_SESSION'){ history.replaceState({jgap:true,route:'dashboard',args:[]},'',window.location.href); render().catch(jgapRenderRecovery); } } finally{window.__jgapSilentRender=false;} setTimeout(loadDashboardSummary,300);}); render().catch(jgapRenderRecovery); setTimeout(loadDashboardSummary,300);
 </script>
 <script>
 // JGAP in-app browser history: keep browser Back inside the app and keep
