@@ -196,3 +196,94 @@ function learningBookPrintHtml(){
 function printLearningBook(){const w=window.open('','_blank');if(!w){alert('Please allow pop-ups for JGAP to print the book.');return;}w.document.write(learningBookPrintHtml());w.document.close();w.focus();setTimeout(()=>w.print(),300);}
 function downloadLearningBook(){const blob=new Blob([learningBookPrintHtml()],{type:'text/html;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='JGAP-Real-Estate-Investors-Learning-Book.html';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
 function emailLearningBook(){const subject=encodeURIComponent("JGAP Real Estate Investor's Learning Book"),body=encodeURIComponent("I am sharing the JGAP Real Estate Investor's Learning Book.\\n\\nUse the JGAP app to download or print the current book.");window.location.href='mailto:?subject='+subject+'&body='+body;}
+
+
+/* === JGAP LEARNING BOOK — CHAPTER → LESSON SYSTEM === */
+async function seedLearningBookLessonRows(userId){
+  const {data:chapters,error}=await sb.from('learning_book_chapters').select('id,chapter_number,chapter_title,content_html,source_file_name').eq('user_id',userId).order('chapter_number');
+  if(error||!chapters)return;
+  const {data:existing}=await sb.from('learning_book_lessons').select('id,chapter_id,lesson_number').eq('user_id',userId);
+  const have=new Set((existing||[]).map(x=>x.chapter_id+'|'+x.lesson_number));
+  for(const c of chapters){
+    if((existing||[]).some(x=>x.chapter_id===c.id))continue;
+    let blocks=[];
+    const html=c.content_html||'';
+    const re=/<h4[^>]*>([\\s\\S]*?)<\\/h4>/gi;
+    let m,starts=[];
+    while((m=re.exec(html)))starts.push({index:m.index,end:re.lastIndex,title:m[1].replace(/<[^>]+>/g,'').trim()});
+    if(starts.length){
+      const intro=html.slice(0,starts[0].index);
+      if(intro.replace(/<[^>]+>/g,'').trim())blocks.push({title:'Chapter Introduction',html:intro});
+      starts.forEach((s,i)=>{const end=i+1<starts.length?starts[i+1].index:html.length;blocks.push({title:s.title.replace(/^\\d+\\.\\s*/,''),html:html.slice(s.end,end)});});
+    }else if(html.replace(/<[^>]+>/g,'').trim()){
+      blocks=[{title:c.chapter_title,html:html}];
+    }else{
+      blocks=[{title:'Chapter Overview',html:'<p>This chapter is ready to be developed. JGAP will build this lesson from investor education material, applicable primary sources, practical examples, and the material already supplied for the Learning Book.</p><p><b>Study focus:</b> '+escapeHtml(c.chapter_title)+'.</p>'}];
+    }
+    for(let i=0;i<blocks.length;i++){
+      const key=c.id+'|'+(i+1);if(have.has(key))continue;
+      await sb.from('learning_book_lessons').insert({user_id:userId,chapter_id:c.id,lesson_number:i+1,lesson_title:blocks[i].title,content_html:blocks[i].html,source_file_name:c.source_file_name||null});
+    }
+  }
+}
+
+async function renderLearningBookPage(){
+  const {data:{user}}=await sb.auth.getUser();if(!user){authView();return;}
+  shell();const main=document.querySelector('.layout>main');if(!main)return;
+  main.innerHTML='<div class="pageHead"><div><h1>📚 JGAP Real Estate Investor\\'s Learning Book</h1><div class="muted">Your complete investor education book — chapters, lessons, examples, checklists and research.</div></div><div class="toolbar"><button class="secondary" onclick="printLearningBook()">🖨️ Print</button><button class="secondary" onclick="downloadLearningBook()">⬇️ Download</button><button class="primary" onclick="emailLearningBook()">✉️ Email</button></div></div><div class="panel" style="margin-bottom:16px;background:#f8fbff"><b>How this book is built:</b> your uploaded lessons are preserved, then expanded with researched investor education and primary-source material. You do not have to wait to upload the next lesson.</div><div class="detailGrid" style="grid-template-columns:310px minmax(0,1fr)"><div class="panel" style="padding:14px"><div class="sectionTitle">Book Outline</div><input id="learningBookSearch" placeholder="Search chapters..." oninput="filterLearningBookChapters()"><div id="learningBookList"><div class="muted">Loading book...</div></div></div><div class="panel"><div id="learningBookEditor"><div class="muted">Select a chapter.</div></div></div></div>';
+  window.__learningBookChapters=[];await ensureLearningBookOutline();await seedLearningBookLessonRows(user.id);
+  const {data,error}=await sb.from('learning_book_chapters').select('id,chapter_number,part_title,chapter_title,content_html,source_file_name,updated_at').eq('user_id',user.id).order('chapter_number');
+  if(error){document.getElementById('learningBookList').innerHTML='<div class="error">Unable to load the learning book: '+escapeHtml(error.message)+'</div>';return;}
+  window.__learningBookChapters=data||[];filterLearningBookChapters();
+  const first=window.__learningBookChapters.find(c=>c.content_html&&c.content_html.trim())||window.__learningBookChapters[0];if(first)selectLearningBookChapter(first.id);
+}
+
+function filterLearningBookChapters(){
+  const q=(document.getElementById('learningBookSearch')?.value||'').toLowerCase().trim(),host=document.getElementById('learningBookList');if(!host)return;
+  const rows=(window.__learningBookChapters||[]).filter(c=>(c.part_title+' '+c.chapter_title).toLowerCase().includes(q));let lastPart='';
+  host.innerHTML=rows.map(c=>{const part=c.part_title!==lastPart?'<div class="muted" style="font-size:11px;font-weight:800;text-transform:uppercase;margin:12px 4px 5px">'+escapeHtml(c.part_title)+'</div>':'';lastPart=c.part_title;return part+'<button type="button" class="secondary" data-book-chapter="'+c.id+'" style="display:block;width:100%;text-align:left;margin:4px 0;white-space:normal"><b>Chapter '+c.chapter_number+'</b><div>'+escapeHtml(c.chapter_title)+'</div></button>';}).join('')||'<div class="muted">No chapters found.</div>';
+  host.querySelectorAll('[data-book-chapter]').forEach(b=>b.addEventListener('click',()=>selectLearningBookChapter(b.dataset.bookChapter)));
+}
+
+async function selectLearningBookChapter(id){
+  const c=(window.__learningBookChapters||[]).find(x=>x.id===id);if(!c)return;window.__learningBookCurrentId=id;
+  const e=document.getElementById('learningBookEditor');if(!e)return;
+  const {data:lessons,error}=await sb.from('learning_book_lessons').select('id,lesson_number,lesson_title,content_html,completed,updated_at').eq('chapter_id',id).order('lesson_number');
+  if(error){e.innerHTML='<div class="error">'+escapeHtml(error.message)+'</div>';return;}
+  window.__learningBookLessons=lessons||[];
+  e.innerHTML='<div class="pageHead" style="margin-bottom:12px"><div><div class="muted">Chapter '+c.chapter_number+' • '+escapeHtml(c.part_title)+'</div><h2 style="margin:4px 0">'+escapeHtml(c.chapter_title)+'</h2></div><span class="muted" style="font-size:12px">'+window.__learningBookLessons.length+' lesson'+(window.__learningBookLessons.length===1?'':'s')+'</span></div><div class="panel" style="background:#f8fbff;margin-bottom:14px"><b>Chapter overview</b><div style="margin-top:6px">'+(c.content_html||'<span class="muted">No chapter overview yet.</span>')+'</div></div><div class="sectionTitle">Lessons in this chapter</div><div id="learningBookLessonList" style="display:grid;gap:8px">'+window.__learningBookLessons.map(l=>'<button type="button" class="secondary" data-book-lesson="'+l.id+'" style="display:flex;justify-content:space-between;gap:12px;text-align:left;align-items:center;white-space:normal"><span><b>Lesson '+l.lesson_number+'</b> — '+escapeHtml(l.lesson_title)+'</span><span>'+ (l.completed?'✅':'○') +'</span></button>').join('')+'</div><div id="learningBookLessonEditor" style="margin-top:18px"><div class="muted">Choose a lesson above.</div></div>';
+  e.querySelectorAll('[data-book-lesson]').forEach(b=>b.addEventListener('click',()=>openLearningBookLesson(b.dataset.bookLesson)));
+  if(window.__learningBookLessons[0])openLearningBookLesson(window.__learningBookLessons[0].id);
+}
+
+function openLearningBookLesson(id){
+  const l=(window.__learningBookLessons||[]).find(x=>x.id===id);if(!l)return;
+  const host=document.getElementById('learningBookLessonEditor');if(!host)return;window.__learningBookCurrentLessonId=id;
+  host.innerHTML='<div class="panel" style="border:2px solid #d9e3ef"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><div><div class="muted">Lesson '+l.lesson_number+'</div><h3 style="margin:3px 0">'+escapeHtml(l.lesson_title)+'</h3></div><label style="font-size:13px"><input id="learningBookLessonDone" type="checkbox" '+(l.completed?'checked':'')+'> Mark lesson complete</label></div><div id="learningBookLessonContent" contenteditable="true" spellcheck="true" style="min-height:320px;border:1px solid #ccd5e2;border-radius:9px;padding:18px;background:#fff;outline:none;line-height:1.7;font-size:16px;margin-top:12px">'+(l.content_html||'')+'</div><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap"><span id="learningBookLessonStatus" class="muted">Edit and save this lesson.</span><button class="primary" onclick="saveLearningBookLesson()">Save Lesson</button></div></div>';
+}
+
+async function saveLearningBookLesson(){
+  const id=window.__learningBookCurrentLessonId;if(!id)return;const content=document.getElementById('learningBookLessonContent')?.innerHTML||'',completed=!!document.getElementById('learningBookLessonDone')?.checked;
+  const {error}=await sb.from('learning_book_lessons').update({content_html:content,completed,updated_at:new Date().toISOString()}).eq('id',id);
+  if(error){alert('Could not save lesson: '+error.message);return;}
+  const l=(window.__learningBookLessons||[]).find(x=>x.id===id);if(l){l.content_html=content;l.completed=completed;l.updated_at=new Date().toISOString();}
+  const s=document.getElementById('learningBookLessonStatus');if(s)s.textContent='Saved '+new Date().toLocaleTimeString();
+}
+
+function learningBookPrintHtml(){
+  const chapters=(window.__learningBookChapters||[]).slice().sort((a,b)=>a.chapter_number-b.chapter_number);
+  const lessonMap=window.__learningBookLessonsByChapter||{};
+  return '<!doctype html><html><head><meta charset="utf-8"><title>JGAP Real Estate Investor\\'s Learning Book</title><style>body{font-family:Arial,sans-serif;max-width:850px;margin:40px auto;line-height:1.65;color:#172033}h1{text-align:center;margin-top:80px}h2{margin-top:55px;border-bottom:1px solid #ddd;padding-bottom:8px}.chapter{page-break-before:always}.lesson{margin:28px 0}@media print{body{margin:0 30px}}</style></head><body><h1>JGAP Real Estate Investor\\'s Learning Book</h1><p style="text-align:center">JGAP Venture Group LLC</p>'+chapters.map(c=>'<section class="chapter"><div class="muted">Chapter '+c.chapter_number+' • '+escapeHtml(c.part_title)+'</div><h2>'+escapeHtml(c.chapter_title)+'</h2>'+(c.content_html||'')+'</section>').join('')+'</body></html>';
+}
+
+async function prepareLearningBookExport(){
+  const {data:{user}}=await sb.auth.getUser();if(!user)return;await seedLearningBookLessonRows(user.id);
+  const {data}=await sb.from('learning_book_lessons').select('chapter_id,lesson_number,lesson_title,content_html,completed').eq('user_id',user.id).order('lesson_number');
+  const map={};(data||[]).forEach(l=>(map[l.chapter_id]||(map[l.chapter_id]=[])).push(l));window.__learningBookLessonsByChapter=map;
+}
+async function printLearningBook(){await prepareLearningBookExport();const w=window.open('','_blank');if(!w){alert('Please allow pop-ups for JGAP to print the book.');return;}w.document.write(learningBookPrintHtmlWithLessons());w.document.close();w.focus();setTimeout(()=>w.print(),300);}
+function learningBookPrintHtmlWithLessons(){
+  const chapters=(window.__learningBookChapters||[]).slice().sort((a,b)=>a.chapter_number-b.chapter_number);
+  return '<!doctype html><html><head><meta charset="utf-8"><title>JGAP Real Estate Investor\\'s Learning Book</title><style>body{font-family:Arial,sans-serif;max-width:850px;margin:40px auto;line-height:1.65;color:#172033}h1{text-align:center;margin-top:80px}h2{margin-top:55px;border-bottom:1px solid #ddd;padding-bottom:8px}.chapter{page-break-before:always}.lesson{margin:28px 0}@media print{body{margin:0 30px}}</style></head><body><h1>JGAP Real Estate Investor\\'s Learning Book</h1><p style="text-align:center">JGAP Venture Group LLC</p>'+chapters.map(c=>{const ls=(window.__learningBookLessonsByChapter||{})[c.id]||[];return '<section class="chapter"><div class="muted">Chapter '+c.chapter_number+' • '+escapeHtml(c.part_title)+'</div><h2>'+escapeHtml(c.chapter_title)+'</h2>'+(c.content_html||'')+ls.map(l=>'<div class="lesson"><h3>Lesson '+l.lesson_number+' — '+escapeHtml(l.lesson_title)+'</h3>'+l.content_html+'</div>').join('')+'</section>';}).join('')+'</body></html>';
+}
+async function downloadLearningBook(){await prepareLearningBookExport();const blob=new Blob([learningBookPrintHtmlWithLessons()],{type:'text/html;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='JGAP-Real-Estate-Investors-Learning-Book.html';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
