@@ -91,10 +91,10 @@
             const box=document.createElement('div'); box.innerHTML=l.content_html;
             const core=(box.innerHTML||'').replace(/<h3>What We're Learning<\/h3>/gi,'<h3>What You Will Learn</h3>')
               .replace(/<h3>Explanation<\/h3>/gi,'<h3>How This Works</h3>')
-              .replace(/<h3>Instructor Explanation<\/h3>/gi,'<h3>How This Works</h3>')
-              .replace(/<h3>Instructor Tip<\/h3>/gi,'<h3>Tip</h3>')
-              .replace(/<h3>Class Exercise<\/h3>/gi,'<h3>Practice Exercise</h3>')
-              .replace(/<h3>Class Review<\/h3>/gi,'<h3>Review</h3>');
+              .replace(/<h3> Explanation<\/h3>/gi,'<h3>How This Works</h3>')
+              .replace(/<h3> Tip<\/h3>/gi,'<h3>Tip</h3>')
+              .replace(/<h3> Exercise<\/h3>/gi,'<h3>Practice Exercise</h3>')
+              .replace(/<h3> Review<\/h3>/gi,'<h3>Review</h3>');
             const chapter=(chapters||[]).find(c=>c.id===l.chapter_id);
             const plain=(box.textContent||'').replace(/\s+/g,' ').trim();
             const summary=plain.length>360?plain.slice(0,357).replace(/\s+\S*$/,'')+'...':plain;
