@@ -1867,14 +1867,13 @@ async function renderUsersAccessPage(){
   <div class="card"><b>Leaked password protection</b><div class="muted" style="margin-top:6px">Enable this once in Supabase: Authentication → Configuration → Password Security → Leaked password protection.</div><div class="pill" style="margin-top:10px">Action required</div></div>
   </div></div>
   </main></div>`;
-  // Keep the normal JGAP navigation shell intact. The old Users page rebuilt the entire app shell and hid the other tabs.
+
   const uaApp=document.getElementById("app");
   const uaMain=uaApp?.querySelector("main");
   const uaContent=uaMain?.innerHTML||"";
   shell();
   const uaTarget=document.querySelector("main");
   if(uaTarget) uaTarget.innerHTML=uaContent;
-
   await loadJGAPUsersAccess();
   await loadJGAPAuditLog();
   const current=(await sb.auth.getUser()).data.user?.email||'';
