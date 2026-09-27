@@ -852,7 +852,18 @@ async function closeDealToProperty(id){
 function renderDealAnalyzer(existing=null){
  const main=document.querySelector("main"); if(!main)return;
  main.innerHTML=`<div class="pageHead"><div><h1>Deal Analyzer</h1><p class="muted">Evaluate a potential investment before you commit capital.</p></div><button class="secondary" onclick="render()">← Dashboard</button></div>
- <div class="panel" style="margin-bottom:14px"><div class="sectionTitle">How to Use the Deal Analyzer</div><div class="stats" style="margin-top:10px"><div><span>1. Seller's price</span><b>Enter asking price</b></div><div><span>2. Your offer</span><b>Enter our offer</b></div><div><span>3. Test the offer</span><b>Analyzer runs the numbers</b></div><div><span>4. Decision</span><b>See target & walk-away price</b></div></div><p class="muted" style="margin:12px 0 0">You should normally enter the seller's asking price and then the offer you want to test. The analyzer uses your income, expenses, financing and return targets to calculate the maximum price the deal supports.</p><div id="dealWorkflow" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px"></div></div>
+ <div id="offerDecisionBanner" class="panel" style="margin-bottom:14px;border:2px solid var(--accent,#2f6fed);">
+<div class="sectionTitle">JGAP OFFER DECISION</div>
+<p class="muted" style="margin:4px 0 12px">Enter what the seller wants, enter what JGAP wants to offer, then test our offer.</p>
+<div class="stats" style="margin-top:8px">
+<div><span>SELLER ASKING PRICE</span><b id="visibleAsking">$0.00</b></div>
+<div><span>JGAP OFFER PRICE</span><b id="visibleOffer">$0.00</b></div>
+<div><span>MAX / WALK-AWAY PRICE</span><b id="visibleMaxOffer">$0.00</b></div>
+</div>
+<button class="primary" style="margin-top:12px" onclick="analyzeOfferFromInputs()">ANALYZE OUR OFFER</button>
+<div id="visibleOfferResult" class="muted" style="margin-top:10px">Enter the deal numbers below to see whether our offer works.</div>
+</div>
+<div class="panel" style="margin-bottom:14px"><div class="sectionTitle">How to Use the Deal Analyzer</div><div class="stats" style="margin-top:10px"><div><span>1. Seller's price</span><b>Enter asking price</b></div><div><span>2. Your offer</span><b>Enter our offer</b></div><div><span>3. Test the offer</span><b>Analyzer runs the numbers</b></div><div><span>4. Decision</span><b>See target & walk-away price</b></div></div><p class="muted" style="margin:12px 0 0">You should normally enter the seller's asking price and then the offer you want to test. The analyzer uses your income, expenses, financing and return targets to calculate the maximum price the deal supports.</p><div id="dealWorkflow" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px"></div></div>
  <div class="detailGrid"><div class="panel"><div class="sectionTitle">Deal Inputs</div><div class="formGrid">
  <label>Deal name<input id="d_name" placeholder="Example: 123 Main St"></label><label>Deal type<select id="d_type" onchange="updateDealTypeUI();calcDeal()"><option value="single_family">Residential / Single Family</option><option value="multifamily">Multifamily</option><option value="house_flip">House Flip</option><option value="laundromat">Laundromat</option><option value="commercial">Commercial Property</option><option value="business_acquisition">Business Acquisition</option><option value="other">Other</option></select></label><label>Property address<input id="d_address" placeholder="123 Main St, Bristol, TN 37620"></label><label>County<input id="d_county" placeholder="Sullivan County"></label><label>Seller name<input id="d_seller" placeholder="Seller / LLC name"></label><label>Offer state<select id="d_offer_state" onchange="renderOfferTemplatePreview()"><option value="TN">Tennessee</option><option value="OTHER">Other / General U.S.</option></select></label><label>Deal stage<select id="d_status"><option value="lead">Lead</option><option value="analyzing">Analyzing</option><option value="due_diligence">Due Diligence</option><option value="offer">Offer</option><option value="under_contract">Under Contract</option><option value="closed">Closed</option><option value="passed">Passed</option></select></label>
  <label>Financing strategy<select id="d_financing_preset" onchange="applyFinancingPreset()"><option value="">Custom / current inputs</option><option value="conventional">Conventional</option><option value="dscr">Investor / DSCR</option><option value="private">Private Money</option><option value="seller">Seller Financing</option><option value="cash">Cash</option></select></label><label>Loan structure<select id="d_loan_structure" onchange="calcDeal()"><option value="amortizing">Amortizing</option><option value="interest_only">Interest-only</option><option value="none">No loan / cash</option></select></label><div style="display:flex;align-items:end;gap:8px"><button class="secondary" type="button" onclick="saveCurrentFinancingPreset()">Save financing as preset</button></div>
@@ -937,6 +948,13 @@ async function saveCurrentFinancingPreset(){
  const sel=document.getElementById("d_financing_preset"); if(sel){const o=document.createElement("option");o.value="db:"+data;o.textContent=name;sel.value=o.value;}
 }
 function money2(v){return "$"+Number(v||0).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});}
+function analyzeOfferFromInputs(){
+ const asking=n("d_asking"), offer=n("d_target_offer");
+ const price=document.getElementById("d_price");
+ if(offer>0){price.value=offer}else if(asking>0){price.value=asking}
+ calcDeal();
+ const el=document.getElementById("offerDecisionBanner"); if(el)el.scrollIntoView({behavior:"smooth",block:"center"});
+}
 function syncDealTestPrice(){
  const offer=document.getElementById("d_target_offer")?.value;
  const asking=document.getElementById("d_asking")?.value;
