@@ -44,7 +44,9 @@
     return '$'+n.toLocaleString(undefined,{maximumFractionDigits:0});
   }
   function esc(v){return escapeHtml(String(v??''));}
-  function rowText(r){return [r.name,r.property_address,r.property_type,r.status].map(v=>String(v||'').toLowerCase()).join(' ');}
+  function rowText(r){return [r.name,r.property_address,r.property_type,r.status,r.neighborhood].map(v=>String(v||'').toLowerCase()).join(' ');}
+  function normalizedStatus(r){return String(r.status||'').toLowerCase()==='closed'?'sold':'for_sale';}
+  function neighborhoodFor(r){if(r.neighborhood)return String(r.neighborhood).trim();const a=String(r.property_address||'').toLowerCase();if(a.includes('kingsport'))return 'Kingsport';if(a.includes('bristol'))return 'Bristol';if(a.includes('bluff city'))return 'Bluff City';if(a.includes('johnson city'))return 'Johnson City';if(a.includes('gray'))return 'Gray';if(a.includes('elizabet'))return 'Elizabethton';return 'Other';}
   function statusLabel(s){return String(s||'lead').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase());}
 
   function injectStyles(){
@@ -139,11 +141,18 @@
     const q=(document.getElementById('marketMapSearch')?.value||'').toLowerCase().trim();
     const type=(document.getElementById('marketMapType')?.value||'').toLowerCase();
     const status=(document.getElementById('marketMapStatus')?.value||'').toLowerCase();
+    const neighborhood=(document.getElementById('marketMapNeighborhood')?.value||'').toLowerCase();
+    const minPrice=Number(document.getElementById('marketMapMinPrice')?.value||0), maxPrice=Number(document.getElementById('marketMapMaxPrice')?.value||0);
+    const minUnits=Number(document.getElementById('marketMapMinUnits')?.value||0), maxUnits=Number(document.getElementById('marketMapMaxUnits')?.value||0);
     const rows=allRows.filter(r=>{
       const text=rowText(r);
       const isType=!type || String(r.property_type||'').toLowerCase().includes(type);
-      const isStatus=!status || String(r.status||'').toLowerCase()===status;
-      return (!q||text.includes(q))&&isType&&isStatus;
+      const isStatus=!status || normalizedStatus(r)===status;
+      const n=Number(r.asking_price||r.purchase_price||0), u=Number(r.units||0);
+      const isNeighborhood=!neighborhood || neighborhoodFor(r).toLowerCase()===neighborhood;
+      const isPrice=(!minPrice&&!maxPrice)||(n>0&&(!minPrice||n>=minPrice)&&(!maxPrice||n<=maxPrice));
+      const isUnits=(!minUnits&&!maxUnits)||(u>0&&(!minUnits||u>=minUnits)&&(!maxUnits||u<=maxUnits));
+      return (!q||text.includes(q))&&isType&&isStatus&&isNeighborhood&&isPrice&&isUnits;
     });
     const count=document.getElementById('marketMapCount');
     if(count)count.textContent=rows.length+' deal'+(rows.length===1?'':'s')+' shown';
@@ -234,23 +243,15 @@
           <div id="marketMapCount" class="pill">Loading…</div>
         </div>
         <div class="toolbar" style="margin-top:12px">
-          <input id="marketMapSearch" placeholder="Search address or deal..." oninput="renderMarketMapList()" style="max-width:300px">
-          <select id="marketMapType" onchange="renderMarketMapList()" style="width:auto;margin:0">
-            <option value="">All property types</option>
-            <option value="multifamily">Multifamily</option>
-            <option value="single">Single Family</option>
-            <option value="duplex">Duplex</option>
-            <option value="triplex">Triplex</option>
-            <option value="quad">4+ Units</option>
-          </select>
-          <select id="marketMapStatus" onchange="renderMarketMapList()" style="width:auto;margin:0">
-            <option value="">All statuses</option>
-            <option value="lead">Lead</option>
-            <option value="analyzing">Analyzing</option>
-            <option value="offer">Offer</option>
-            <option value="under_contract">Under Contract</option>
-            <option value="closed">Closed</option>
-          </select>
+          <input id="marketMapSearch" placeholder="Search address or deal..." oninput="renderMarketMapList()" style="max-width:280px">
+          <select id="marketMapStatus" onchange="renderMarketMapList()" style="width:auto;margin:0"><option value="">For Sale + Sold</option><option value="for_sale">For Sale</option><option value="sold">Sold</option></select>
+          <select id="marketMapType" onchange="renderMarketMapList()" style="width:auto;margin:0"><option value="">All Property Types</option><option value="multifamily">Multifamily</option><option value="single">Single Family</option><option value="duplex">Duplex</option><option value="triplex">Triplex</option><option value="quad">4+ Units</option></select>
+          <input id="marketMapMinPrice" type="number" min="0" placeholder="Min Price" oninput="renderMarketMapList()" style="max-width:115px">
+          <input id="marketMapMaxPrice" type="number" min="0" placeholder="Max Price" oninput="renderMarketMapList()" style="max-width:115px">
+          <input id="marketMapMinUnits" type="number" min="0" placeholder="Min Units" oninput="renderMarketMapList()" style="max-width:105px">
+          <input id="marketMapMaxUnits" type="number" min="0" placeholder="Max Units" oninput="renderMarketMapList()" style="max-width:105px">
+          <select id="marketMapNeighborhood" onchange="renderMarketMapList()" style="width:auto;margin:0"><option value="">All Neighborhoods</option></select>
+          <button class="secondary" type="button" onclick="clearMarketMapFilters()">Clear Filters</button>
         </div>
       </div>
       <div class="panel" style="margin-bottom:16px">
@@ -283,11 +284,13 @@
       <div id="marketMapStatus" class="muted" style="font-size:12px;margin-top:10px">Loading JGAP deals…</div>
     `;
     document.getElementById('marketMapRefresh').addEventListener('click',()=>window.renderMarketMapPage());
+    window.clearMarketMapFilters=function(){['marketMapSearch','marketMapMinPrice','marketMapMaxPrice','marketMapMinUnits','marketMapMaxUnits'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});['marketMapStatus','marketMapType','marketMapNeighborhood'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});renderMarketMapList();};
     try{
       const Llib=await loadLeaflet();
-      const {data,error}=await sb.from('deals').select('id,name,status,property_type,asking_price,target_offer_price,purchase_price,property_address').order('created_at',{ascending:false});
+      const {data,error}=await sb.from('deals').select('id,name,status,property_type,asking_price,target_offer_price,purchase_price,property_address,units,neighborhood').order('created_at',{ascending:false});
       if(error)throw error;
       allRows=data||[];
+      populateNeighborhoodFilter();
       renderMarketMapList();
       const mapHost=document.getElementById('jgapMarketMap');
       mapHost.innerHTML='';
@@ -306,5 +309,6 @@
     }
   };
 
+  function populateNeighborhoodFilter(){const e=document.getElementById('marketMapNeighborhood');if(!e)return;const names=[...new Set(allRows.map(neighborhoodFor).filter(Boolean))].sort();e.innerHTML='<option value="">All Neighborhoods</option>'+names.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('');}
   window.renderMarketMapList=renderRows;
 })();
