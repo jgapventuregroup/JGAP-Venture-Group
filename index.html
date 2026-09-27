@@ -274,22 +274,26 @@ function togglePortfolioDetails(){
 
 async function loadWealthRoadmap(){
  try{
-  const [dr,pr]=await Promise.all([
+  Promise.all([
    sb.from("deals").select("id,status"),
    sb.from("properties").select("id,status").neq("status","sold")
-  ]);
-  if(dr.error) throw dr.error; if(pr.error) throw pr.error;
-  const deals=dr.data||[], props=pr.data||[];
-  const open=deals.filter(x=>!["closed","purchased","lost","dead","sold"].includes(String(x.status||"").toLowerCase())).length;
-  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  set("wealthDealCount",String(open)); set("wealthPropertyCount",String(props.length));
-  set("wealthNextAction",open>0?"Analyze your active pipeline":"Find the next qualified deal");
- }catch(e){
-  console.warn("Wealth roadmap:",e);
-  const el=document.getElementById("wealthNextAction"); if(el)el.textContent="Review Deal Radar";
- }
+  ]).then(([dr,pr])=>{
+   if(dr.error) throw dr.error;
+   if(pr.error) throw pr.error;
+   const deals=dr.data||[], props=pr.data||[];
+   const open=deals.filter(x=>!["closed","purchased","lost","dead","sold"].includes(String(x.status||"").toLowerCase())).length;
+   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+   set("wealthDealCount",String(open));
+   set("wealthPropertyCount",String(props.length));
+   set("wealthNextAction",open>0?"Analyze your active pipeline":"Find the next qualified deal");
+  }).catch(e=>{
+   console.warn("Wealth roadmap:",e);
+   const el=document.getElementById("wealthNextAction"); if(el)el.textContent="Review Deal Radar";
+  });
+ }catch(e){ console.warn("Wealth roadmap startup:",e); }
 }
-\nasync function loadDashboardPortfolioPerformance(){
+
+async function loadDashboardPortfolioPerformance(){
  const ids=['dashPortfolioPurchase','dashPortfolioValue','dashPortfolioEquity','dashPortfolioRent','dashPortfolioDebt','dashPortfolioFixed','dashPortfolioPropertyRows'];
  const els=ids.map(id=>document.getElementById(id));
  if(els.some(x=>!x))return;
