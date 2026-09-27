@@ -223,6 +223,16 @@
           </div>
         </div>
       </div>
+      <div class="panel" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+          <div><b>Live Market Search</b><div class="muted" style="font-size:12px;margin-top:3px">Open current multifamily searches, then bring promising properties back into the JGAP Deal Analyzer.</div></div>
+          <div class="toolbar">
+            <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.redfin.com/city/2220/TN/Bristol/multi-family-homes-for-sale">Bristol Multifamily</a>
+            <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.redfin.com/city/10066/TN/Kingsport/multi-family-homes-for-sale">Kingsport Multifamily</a>
+            <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.showcase.com/tn/kingsport/apartment-buildings/for-sale/">Kingsport Apartments</a>
+          </div>
+        </div>
+      </div>
       <div class="marketMapWrap">
         <div class="panel" style="padding:10px"><div id="jgapMarketMap" class="marketMapCanvas"><div style="padding:20px" class="muted">Loading map…</div></div></div>
         <div class="panel marketMapSide"><div id="marketMapList"><div class="muted">Loading deals…</div></div></div>
