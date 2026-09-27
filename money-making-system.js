@@ -12,8 +12,55 @@
       <div class="panel" style="margin-top:18px"><h2>Money Going Out</h2><div id="smsOutflow" class="stats"></div></div>
       <div class="panel" style="margin-top:18px"><h2>What JGAP Owns</h2><div id="smsAssets"></div></div>
       <div class="panel" style="margin-top:18px"><div class="pageHead" style="margin-bottom:10px"><div><h2 style="margin:0">Deals in Progress</h2><p class="muted" style="margin:4px 0 0">Details stay in the existing Deal Analyzer.</p></div></div><div id="smsDeals"></div></div>
+      <div class="panel" style="margin-top:18px"><h2>JGAP Acquisition Guardrails</h2>
+        <div class="stats">
+          <div><span>Volunteer Coin Laundry Reserve</span><b>$80,000</b></div>
+          <div><span>Minimum New Deal Cash Flow Target</span><b>$500+/mo</b></div>
+          <div><span>Primary Financing Strategy</span><b>Seller Financing</b></div>
+        </div>
+        <p class="muted" style="margin:12px 0 0">The $80,000 laundry reserve is protected unless a specific acquisition plan is approved. Seller-financing scenarios are comparison tools only until actual terms are verified.</p>
+      </div>
+      <div class="panel" style="margin-top:18px"><div class="pageHead" style="margin-bottom:10px"><div><h2 style="margin:0">Seller-Financing Playbook</h2><p class="muted" style="margin:4px 0 0">Compare structures before deciding what a deal can afford.</p></div><button class="primary" onclick="openJGAPSellerFinancingPlaybook()">Open Calculator</button></div>
+        <div class="stats">
+          <div><span>10% Down</span><b>Seller Note</b></div>
+          <div><span>15% Down</span><b>Seller Note</b></div>
+          <div><span>20% Down</span><b>Seller Note</b></div>
+        </div>
+      </div>
       <div class="panel" style="margin-top:18px"><h2>Bottom Line</h2><div id="smsBottom" class="stats"></div></div>`;
     await loadSnapshot();
+  };
+  window.openJGAPSellerFinancingPlaybook=function(){
+    const main=document.querySelector('main'); if(!main)return;
+    main.innerHTML=`
+      <div class="pageHead"><div><h1>Seller-Financing Playbook</h1><p class="muted">Use real seller terms when available. The examples below are comparison scenarios only.</p></div><div class="toolbar"><button class="secondary" onclick="renderMoneyMakingSystem()">← Money-Making System</button><button class="primary" onclick="typeof renderDealAnalyzer==='function'?renderDealAnalyzer():renderDealsPage()">Open Deal Analyzer</button></div></div>
+      <div class="panel">
+        <h2>Deal Inputs</h2>
+        <div class="formGrid">
+          <label>Purchase Price<input id="sfPrice" type="number" value="300000"></label>
+          <label>Monthly NOI<input id="sfNoi" type="number" value="3000"></label>
+          <label>Closing / Other Cash<input id="sfClosing" type="number" value="10000"></label>
+          <label>Monthly Other Debt / Costs<input id="sfOther" type="number" value="0"></label>
+        </div>
+        <div class="stats" id="sfResults"></div>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <h2>Compare Seller Terms</h2>
+        <div style="overflow:auto"><table class="table"><thead><tr><th>Scenario</th><th>Down</th><th>Seller Note</th><th>Rate</th><th>Amortization</th><th>Monthly Payment</th><th>Cash Flow After Seller</th><th>Cash Required</th></tr></thead><tbody id="sfTable"></tbody></table></div>
+        <p class="muted" style="font-size:12px;margin-top:12px">Example rate: 6%. Change it when a seller gives us actual terms. Balloon payments, taxes, insurance, repairs, reserves and other expenses must be included in the full underwriting.</p>
+      </div>`;
+    ['sfPrice','sfNoi','sfClosing','sfOther'].forEach(id=>document.getElementById(id)?.addEventListener('input',renderSellerFinancingTable));
+    renderSellerFinancingTable();
+  };
+  window.renderSellerFinancingTable=function(){
+    const p=Number(document.getElementById('sfPrice')?.value||0),noi=Number(document.getElementById('sfNoi')?.value||0),closing=Number(document.getElementById('sfClosing')?.value||0),other=Number(document.getElementById('sfOther')?.value||0);
+    const rows=[10,15,20].map(dp=>{
+      const down=p*dp/100,note=p-down,rate=.06/12,n=30*12,pmt=note>0?note*rate/(1-Math.pow(1+rate,-n)):0,cash=down+closing;
+      return {dp,down,note,pmt,cash,cf:noi-pmt-other};
+    });
+    const money0=n=>money(n);
+    const host=document.getElementById('sfTable'); if(host)host.innerHTML=rows.map(r=>'<tr><td><b>'+r.dp+'% down</b></td><td>'+money0(r.down)+'</td><td>'+money0(r.note)+'</td><td>6.00%</td><td>30 years</td><td>'+money0(r.pmt)+'/mo</td><td><b>'+money0(r.cf)+'/mo</b></td><td>'+money0(r.cash)+'</td></tr>').join('');
+    const summary=document.getElementById('sfResults'); if(summary)summary.innerHTML='<div><span>Purchase Price</span><b>'+money0(p)+'</b></div><div><span>Monthly NOI</span><b>'+money0(noi)+'</b></div><div><span>Protected Laundry Reserve</span><b>$80,000</b></div>';
   };
   async function loadSnapshot(){
     const cid=await companyId(); if(!cid){document.getElementById('smsSummary').innerHTML='<div class="card">Please sign in.</div>';return;}
@@ -36,3 +83,6 @@
     document.getElementById('smsBottom').innerHTML='<div><span>Properties</span><b>'+props.length+'</b></div><div><span>Active Deals</span><b>'+activeDeals.length+'</b></div><div><span>Portfolio Value</span><b>'+money(value)+'</b></div><div><span>Portfolio Debt</span><b>'+money(debt)+'</b></div><div><span>Portfolio Equity</span><b>'+money(equity)+'</b></div><div><span>Monthly Cash Flow</span><b>'+money(monthlyCash)+'</b></div>';
   }
 })();
+<script>
+// This file is loaded by the JGAP shell, so keep the seller-financing calculator lightweight and isolated.
+</script>
