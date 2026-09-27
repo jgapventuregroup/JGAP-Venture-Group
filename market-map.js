@@ -162,11 +162,38 @@
         '<div><span>JGAP Target</span><b style="font-size:16px">'+money(r.target_offer_price)+'</b></div></div></div>';
     }).join('');
     host.querySelectorAll('[data-market-id]').forEach(el=>el.addEventListener('click',()=>selectRow(el.dataset.marketId,false)));
+    renderSelectedDetails();
+  }
+
+  function renderSelectedDetails(){
+    const host=document.getElementById('marketMapSelectedDetails');
+    if(!host)return;
+    const row=allRows.find(r=>r.id===window.__jgapMarketMapSelectedId);
+    if(!row){
+      host.innerHTML='<div class="muted">Select a property on the map or from the list to see its JGAP details.</div>';
+      return;
+    }
+    const purchase=Number(row.purchase_price||0);
+    const asking=Number(row.asking_price||0);
+    const target=Number(row.target_offer_price||0);
+    const gap=(asking>0&&target>0)?asking-target:null;
+    host.innerHTML=
+      '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">'+
+      '<div><b style="font-size:17px">'+esc(row.name||'JGAP Deal')+'</b><div class="muted" style="margin-top:3px">'+esc(row.property_address||'Address not entered')+'</div></div>'+
+      '<span class="pill">'+esc(statusLabel(row.status))+'</span></div>'+
+      '<div class="stats" style="grid-template-columns:repeat(3,1fr);margin-top:14px">'+
+      '<div><span>Asking</span><b>'+money(asking)+'</b></div>'+
+      '<div><span>JGAP Target</span><b>'+money(target)+'</b></div>'+
+      '<div><span>Purchase</span><b>'+money(purchase)+'</b></div></div>'+
+      '<div class="muted" style="margin-top:12px;font-size:12px">'+
+      (gap!==null?'Target is '+money(gap)+' below asking. ':'')+
+      'Property type: '+esc(row.property_type||'Not entered')+'.</div>';
   }
 
   async function selectRow(id,fromMarker){
     window.__jgapMarketMapSelectedId=id;
     renderRows();
+    renderSelectedDetails();
     const row=allRows.find(r=>r.id===id);
     if(!row)return;
     if(!fromMarker){
@@ -232,6 +259,9 @@
             <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.showcase.com/tn/kingsport/apartment-buildings/for-sale/">Kingsport Apartments</a>
           </div>
         </div>
+      </div>
+      <div class="panel" style="margin-bottom:16px">
+        <div><b>Selected Property Intelligence</b><div id="marketMapSelectedDetails" style="margin-top:10px"><div class="muted">Select a property on the map or from the list to see its JGAP details.</div></div></div>
       </div>
       <div class="marketMapWrap">
         <div class="panel" style="padding:10px"><div id="jgapMarketMap" class="marketMapCanvas"><div style="padding:20px" class="muted">Loading map…</div></div></div>
