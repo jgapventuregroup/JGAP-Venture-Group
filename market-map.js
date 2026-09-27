@@ -1,4 +1,4 @@
-/* JGAP Market Map — Phase 1
+/* JGAP Market Map — Phase 4: Market History
    Purpose: a safe, separate map view connected to existing deal records.
    No schema changes. No changes to Deal Analyzer or Deal Pipeline logic.
 */
@@ -19,6 +19,7 @@
   let markers=[];
   let allRows=[];
   let leafletPromise=null;
+  let marketHistoryByDeal={};
 
   function loadLeaflet(){
     if(window.L) return Promise.resolve(window.L);
@@ -64,6 +65,7 @@
       .marketMapLegend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#667085;margin-top:10px}
       .marketMapLegend span{display:inline-flex;align-items:center;gap:6px}
       .marketMapDot{width:10px;height:10px;border-radius:50%;display:inline-block}\n      .marketIntelBox{border:1px solid #e2e7ef;border-radius:10px;padding:12px;background:#fbfcfe}
+      .marketHistoryTable{width:100%;border-collapse:collapse;font-size:12px}.marketHistoryTable th,.marketHistoryTable td{padding:7px;border-top:1px solid #eef1f5;text-align:left;vertical-align:top}.marketHistoryTable th{color:#667085;font-weight:600}
       @media(max-width:950px){.marketMapWrap{grid-template-columns:1fr}.marketMapSide{max-height:none}.marketMapCanvas{height:480px}}
     `;
     document.head.appendChild(style);
@@ -190,6 +192,30 @@
   }
   function addressQuery(row){return encodeURIComponent((row.property_address||row.name||'')+', Tennessee');}
   function searchUrl(base,row){return base+addressQuery(row);}
+  async function loadMarketHistory(dealId){
+    if(!dealId){marketHistoryByDeal={};return;}
+    const {data,error}=await sb.from('market_history').select('id,recorded_at,price,monthly_rent,status,units,neighborhood').eq('deal_id',dealId).order('recorded_at',{ascending:false});
+    if(error){console.error('JGAP Market History load failed:',error);marketHistoryByDeal[dealId]=[];return;}
+    marketHistoryByDeal[dealId]=data||[];
+  }
+  function renderHistoryBlock(row){
+    const history=marketHistoryByDeal[row.id]||[];
+    const rows=history.map(h=>'<tr><td>'+esc(new Date(h.recorded_at).toLocaleDateString())+'</td><td>'+money(h.price)+'</td><td>'+money(h.monthly_rent)+'</td><td>'+esc(statusLabel(h.status))+'</td><td>'+esc(h.units??'—')+'</td><td>'+esc(h.neighborhood||'—')+'</td></tr>').join('');
+    return '<div class="marketIntelBox" style="margin-top:12px"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap"><div><b>Market History</b><div class="muted" style="font-size:12px;margin-top:3px">Record the price, monthly rent, status, units, and neighborhood as the market changes.</div></div><span class="pill">'+history.length+' snapshot'+(history.length===1?'':'s')+'</span></div>'+
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px"><label style="font-size:12px">Price<input id="marketHistoryPrice" type="number" min="0" value="'+esc(row.asking_price||row.purchase_price||'')+'"></label><label style="font-size:12px">Monthly Rent<input id="marketHistoryRent" type="number" min="0" value="'+esc(row.monthly_rent||'')+'"></label><label style="font-size:12px">Status<select id="marketHistoryStatus"><option value="lead">Lead</option><option value="analyzing">Analyzing</option><option value="closed">Closed / Sold</option><option value="archived">Archived</option></select></label><label style="font-size:12px">Units<input id="marketHistoryUnits" type="number" min="0" value="'+esc(row.units||'')+'"></label></div>'+
+      '<div style="display:flex;gap:8px;align-items:end;margin-top:8px;flex-wrap:wrap"><label style="font-size:12px;flex:1;min-width:180px">Neighborhood<input id="marketHistoryNeighborhood" value="'+esc(neighborhoodFor(row))+'"></label><button class="primary" type="button" onclick="recordMarketSnapshot()">Record Snapshot</button><span id="marketHistorySaveStatus" class="muted" style="font-size:11px"></span></div>'+
+      '<div style="overflow:auto;margin-top:10px"><table class="marketHistoryTable"><thead><tr><th>Date</th><th>Price</th><th>Rent</th><th>Status</th><th>Units</th><th>Neighborhood</th></tr></thead><tbody>'+ (rows||'<tr><td colspan="6" class="muted">No market snapshots recorded yet.</td></tr>')+'</tbody></table></div></div>';
+  }
+  window.recordMarketSnapshot=async function(){
+    const dealId=window.__jgapMarketMapSelectedId, row=allRows.find(r=>r.id===dealId); if(!row)return;
+    const status=document.getElementById('marketHistoryStatus')?.value||row.status||'lead';
+    const payload={company_id:row.company_id,deal_id:dealId,price:Number(document.getElementById('marketHistoryPrice')?.value||0)||null,monthly_rent:Number(document.getElementById('marketHistoryRent')?.value||0)||null,status,units:Number(document.getElementById('marketHistoryUnits')?.value||0)||null,neighborhood:(document.getElementById('marketHistoryNeighborhood')?.value||'').trim()||null};
+    if(!payload.company_id){const s=document.getElementById('marketHistorySaveStatus');if(s)s.textContent='Company could not be identified.';return;}
+    const s=document.getElementById('marketHistorySaveStatus'); if(s)s.textContent='Saving…';
+    const {error}=await sb.from('market_history').insert(payload);
+    if(error){console.error(error);if(s)s.textContent='Could not save snapshot: '+(error.message||'database error');return;}
+    await loadMarketHistory(dealId); renderSelectedDetails();
+  };
   function renderSelectedDetails(){
     const host=document.getElementById('marketMapSelectedDetails'); if(!host)return;
     const row=allRows.find(r=>r.id===window.__jgapMarketMapSelectedId);
@@ -209,12 +235,14 @@
       '<div class="marketIntelBox" style="margin-top:12px"><b>Important items to verify</b><div class="muted" style="font-size:12px;margin:4px 0 8px">Check these before using outside research in a deal decision.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'+
       ['Exact parcel/address','Zoning and permitted use','Unit count / legal status','Recent comparable sales','Current market rents','Property taxes / assessments','Flood zone / site constraints','Major nearby development'].map((label,n)=>{const k='c'+n,done=(research.verify||[]).find(x=>x.k===k)?.done?' checked':'';return '<label style="font-size:12px;display:flex;gap:7px;align-items:flex-start"><input type="checkbox" data-research-check="'+k+'"'+done+' style="width:auto;margin:2px 0 0"> '+esc(label)+'</label>';}).join('')+'</div></div>'+
       '<div class="marketIntelBox" style="margin-top:12px"><b>Research summary</b><div class="muted" style="font-size:12px;margin:4px 0 7px">Short notes about location, comps, rents, zoning, development, and risks. Saved only in this browser.</div><textarea id="marketResearchSummary" placeholder="What did you learn about this location and market?" style="width:100%;min-height:110px;padding:10px;border:1px solid #ccd5e2;border-radius:9px;resize:vertical">'+esc(research.summary||'')+'</textarea><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:8px"><span id="marketResearchSaveStatus" class="muted" style="font-size:11px">'+(research.updated_at?'Last saved '+new Date(research.updated_at).toLocaleString():'Not saved yet')+'</span><button class="primary" type="button" onclick="saveMarketMapResearch()">Save Research</button></div></div>'+
+      renderHistoryBlock(row)+
       (gap!==null?'<div class="muted" style="margin-top:10px;font-size:12px">JGAP target is '+money(gap)+' below asking. Deal economics remain in the Deal Analyzer.</div>':'');
   }
   window.saveMarketMapResearch=function(){if(window.__jgapMarketMapSelectedId)saveResearch(window.__jgapMarketMapSelectedId);};
   async function selectRow(id,fromMarker){
     window.__jgapMarketMapSelectedId=id;
     renderRows();
+    await loadMarketHistory(id);
     renderSelectedDetails();
     const row=allRows.find(r=>r.id===id);
     if(!row)return;
@@ -287,9 +315,10 @@
     window.clearMarketMapFilters=function(){['marketMapSearch','marketMapMinPrice','marketMapMaxPrice','marketMapMinUnits','marketMapMaxUnits'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});['marketMapStatus','marketMapType','marketMapNeighborhood'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});renderMarketMapList();};
     try{
       const Llib=await loadLeaflet();
-      const {data,error}=await sb.from('deals').select('id,name,status,property_type,asking_price,target_offer_price,purchase_price,property_address,units,neighborhood').order('created_at',{ascending:false});
+      const {data,error}=await sb.from('deals').select('id,company_id,name,status,property_type,asking_price,target_offer_price,purchase_price,monthly_rent,property_address,units,neighborhood').order('created_at',{ascending:false});
       if(error)throw error;
       allRows=data||[];
+      marketHistoryByDeal={};
       populateNeighborhoodFilter();
       renderMarketMapList();
       const mapHost=document.getElementById('jgapMarketMap');
