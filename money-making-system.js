@@ -83,6 +83,3 @@
     document.getElementById('smsBottom').innerHTML='<div><span>Properties</span><b>'+props.length+'</b></div><div><span>Active Deals</span><b>'+activeDeals.length+'</b></div><div><span>Portfolio Value</span><b>'+money(value)+'</b></div><div><span>Portfolio Debt</span><b>'+money(debt)+'</b></div><div><span>Portfolio Equity</span><b>'+money(equity)+'</b></div><div><span>Monthly Cash Flow</span><b>'+money(monthlyCash)+'</b></div>';
   }
 })();
-<script>
-// This file is loaded by the JGAP shell, so keep the seller-financing calculator lightweight and isolated.
-</script>
