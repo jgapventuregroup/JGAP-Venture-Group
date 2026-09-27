@@ -852,12 +852,12 @@ async function closeDealToProperty(id){
 function renderDealAnalyzer(existing=null){
  const main=document.querySelector("main"); if(!main)return;
  main.innerHTML=`<div class="pageHead"><div><h1>Deal Analyzer</h1><p class="muted">Evaluate a potential investment before you commit capital.</p></div><button class="secondary" onclick="render()">← Dashboard</button></div>
- <div id="offerDecisionBanner" class="panel" style="margin-bottom:14px;border:2px solid var(--accent,#2f6fed);position:relative;z-index:5;pointer-events:auto;">
+ <div id="offerDecisionBanner" class="panel" style="margin-bottom:14px;border:2px solid var(--accent,#2f6fed);position:relative;z-index:100000;pointer-events:auto;">
 <div class="sectionTitle">JGAP OFFER DECISION</div>
 <p class="muted" style="margin:4px 0 12px">Enter what the seller wants, enter what JGAP wants to offer, then test our offer.</p>
 <div class="stats" style="margin-top:8px">
-<div><span>SELLER ASKING PRICE</span><input id="visibleAskingInput" type="number" min="0" step="1000" placeholder="Seller asking"></div>
-<div><span>JGAP OFFER PRICE</span><input id="visibleOfferInput" type="number" min="0" step="1000" placeholder="Our offer"></div>
+<div><span>SELLER ASKING PRICE</span><input id="visibleAskingInput" type="number" min="0" step="1000" placeholder="Seller asking" autocomplete="off" style="position:relative;z-index:100001;pointer-events:auto;user-select:text;"></div>
+<div><span>JGAP OFFER PRICE</span><input id="visibleOfferInput" type="number" min="0" step="1000" placeholder="Our offer" autocomplete="off" style="position:relative;z-index:100001;pointer-events:auto;user-select:text;"></div>
 <div><span>MAX / WALK-AWAY PRICE</span><b id="visibleMaxOffer">$0.00</b></div>
 </div>
 <button type="button" class="primary" style="margin-top:12px;position:relative;z-index:6;pointer-events:auto" onclick="applyVisibleOfferInputs()">ANALYZE OUR OFFER</button>
@@ -949,6 +949,7 @@ async function saveCurrentFinancingPreset(){
 }
 function money2(v){return "$"+Number(v||0).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});}
 function applyVisibleOfferInputs(){
+
  const a=document.getElementById("visibleAskingInput")?.value||"";
  const o=document.getElementById("visibleOfferInput")?.value||"";
  const ai=document.getElementById("d_asking"), oi=document.getElementById("d_target_offer"), pi=document.getElementById("d_price");
