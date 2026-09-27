@@ -949,14 +949,17 @@ async function saveCurrentFinancingPreset(){
 }
 function money2(v){return "$"+Number(v||0).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});}
 function applyVisibleOfferInputs(){
-
  const a=document.getElementById("visibleAskingInput")?.value||"";
  const o=document.getElementById("visibleOfferInput")?.value||"";
  const ai=document.getElementById("d_asking"), oi=document.getElementById("d_target_offer"), pi=document.getElementById("d_price");
  if(ai)ai.value=a;
  if(oi)oi.value=o;
  if(pi)pi.value=o||a;
- calcDeal();
+ try{calcDeal()}catch(e){console.error("Deal analysis error:",e);alert("The offer was entered, but the analyzer hit an error. Please check the deal inputs below.");return;}
+ const result=document.getElementById("visibleOfferResult");
+ if(result)result.textContent="Offer analyzed. Scroll down to see the full cash-flow and return analysis.";
+ const max=document.getElementById("visibleMaxOffer");
+ if(max && max.textContent==="$0.00")max.textContent=document.getElementById("r_jgap_max_price")?.textContent||"—";
 }
 function analyzeOfferFromInputs(){
  const asking=n("d_asking"), offer=n("d_target_offer");
