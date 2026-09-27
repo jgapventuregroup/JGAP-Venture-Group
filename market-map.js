@@ -68,6 +68,7 @@
       .marketHistoryTable{width:100%;border-collapse:collapse;font-size:12px}.marketHistoryTable th,.marketHistoryTable td{padding:7px;border-top:1px solid #eef1f5;text-align:left;vertical-align:top}.marketHistoryTable th{color:#667085;font-weight:600}
       .marketNeighborhoodTable{width:100%;border-collapse:collapse;font-size:12px}.marketNeighborhoodTable th,.marketNeighborhoodTable td{padding:8px;border-top:1px solid #eef1f5;text-align:left;vertical-align:top;white-space:nowrap}.marketNeighborhoodTable th{color:#667085;font-weight:600}
       .marketNeighborhoodTable td.num{text-align:right}
+      .marketGrowthTable{width:100%;border-collapse:collapse;font-size:12px}.marketGrowthTable th,.marketGrowthTable td{padding:8px;border-top:1px solid #eef1f5;text-align:left;vertical-align:top;white-space:nowrap}.marketGrowthTable th{color:#667085;font-weight:600}.marketGrowthTable td.num{text-align:right}.marketGrowthUp,.marketGrowthDown,.marketGrowthFlat{font-weight:700}
       @media(max-width:950px){.marketMapWrap{grid-template-columns:1fr}.marketMapSide{max-height:none}.marketMapCanvas{height:480px}}
     `;
     document.head.appendChild(style);
@@ -209,6 +210,22 @@
       : '<div class="muted">Not enough entered multifamily data to calculate neighborhood statistics yet.</div>';
   }
 
+  async function loadMarketGrowth(){
+    const host=document.getElementById('marketGrowthTracking'); if(!host)return;
+    host.innerHTML='<div class="muted">Loading growth history…</div>';
+    const {data,error}=await sb.from('market_history').select('deal_id,recorded_at,price,monthly_rent,neighborhood,created_at').order('recorded_at',{ascending:true});
+    if(error){console.error('JGAP Market Growth load failed:',error);host.innerHTML='<div class="error">Growth history could not be loaded: '+esc(error.message||'database error')+'</div>';return;}
+    const byDeal={};
+    (data||[]).forEach(h=>{const a=new Date(h.recorded_at).getTime(),b=new Date(h.created_at).getTime();if(!Number.isFinite(a)||!Number.isFinite(b)||Math.abs(a-b)>300000)return;(byDeal[h.deal_id]||(byDeal[h.deal_id]=[])).push(h);});
+    const groups={};
+    Object.values(byDeal).forEach(h=>{if(h.length<2)return;const first=h[0],last=h[h.length-1],n=String(last.neighborhood||first.neighborhood||'Other').trim()||'Other';if(!groups[n])groups[n]={name:n,properties:0,snapshots:0,prices:[],rents:[]};const g=groups[n];g.properties++;g.snapshots+=h.length;const fp=Number(first.price||0),lp=Number(last.price||0),fr=Number(first.monthly_rent||0),lr=Number(last.monthly_rent||0);if(fp>0&&lp>0)g.prices.push((lp-fp)/fp*100);if(fr>0&&lr>0)g.rents.push((lr-fr)/fr*100);});
+    const real=Object.values(byDeal).reduce((s,h)=>s+h.length,0),rows=Object.values(groups).sort((a,b)=>a.name.localeCompare(b.name)),avg=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:null,pct=v=>v===null?'—':(v>0?'+':'')+v.toFixed(1)+'%';
+    const direction=(p,r)=>{const v=[p,r].filter(x=>x!==null);if(!v.length)return '<span class="marketGrowthFlat">Building history</span>';const a=v.reduce((s,x)=>s+x,0)/v.length;return a>.5?'<span class="marketGrowthUp">↑ Increasing</span>':a<-.5?'<span class="marketGrowthDown">↓ Decreasing</span>':'<span class="marketGrowthFlat">→ Stable</span>';};
+    if(!real){host.innerHTML='<div class="muted">Growth tracking is ready. Record market snapshots as prices and rents change; JGAP will calculate trends from real observations.</div>';return;}
+    if(!rows.length){host.innerHTML='<div class="muted">'+real+' real market snapshot'+(real===1?'':'s')+' recorded, but no property has two observations yet. Record a second snapshot later to establish a growth trend.</div>';return;}
+    host.innerHTML='<div class="muted" style="font-size:12px;margin-bottom:8px">Growth uses properties with at least two user-recorded snapshots. Initial seeded snapshots are excluded.</div><div style="overflow:auto"><table class="marketGrowthTable"><thead><tr><th>Neighborhood</th><th>Properties with History</th><th>Snapshots</th><th>Price Change</th><th>Rent Change</th><th>Direction</th></tr></thead><tbody>'+rows.map(g=>{const p=avg(g.prices),r=avg(g.rents);return '<tr><td><b>'+esc(g.name)+'</b></td><td class="num">'+g.properties+'</td><td class="num">'+g.snapshots+'</td><td class="num">'+pct(p)+'</td><td class="num">'+pct(r)+'</td><td>'+direction(p,r)+'</td></tr>';}).join('')+'</tbody></table></div>';
+  }
+
   function distanceMiles(a,b){
     const R=3958.7613, p=Math.PI/180;
     const dLat=(b.lat-a.lat)*p, dLon=(b.lon-a.lon)*p;
@@ -343,6 +360,11 @@
         <div id="marketNeighborhoodAnalysis" style="margin-top:10px"><div class="muted">Calculating neighborhood statistics…</div></div>
       </div>
       <div class="panel" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">
+          <div><b>Growth Tracking</b><div class="muted" style="font-size:12px;margin-top:3px">Phase 6: track neighborhood price and rent changes over time from JGAP's recorded market snapshots.</div></div><span class="pill">Phase 6</span>
+        </div><div id="marketGrowthTracking" style="margin-top:10px"><div class="muted">Loading growth history…</div></div>
+      </div>
+      <div class="panel" style="margin-bottom:16px">
         <div><b>Property Intelligence Workspace</b><div id="marketMapSelectedDetails" style="margin-top:10px"><div class="muted">Select a property on the map or from the list to see its JGAP details.</div></div></div>
       </div>
       <div class="marketMapWrap">
@@ -361,6 +383,7 @@
       marketHistoryByDeal={};
       populateNeighborhoodFilter();
       renderNeighborhoodAnalysis();
+      await loadMarketGrowth();
       renderMarketMapList();
       const mapHost=document.getElementById('jgapMarketMap');
       mapHost.innerHTML='';
