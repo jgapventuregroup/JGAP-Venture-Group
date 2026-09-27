@@ -61,7 +61,7 @@
       .marketMapCard.selected{border:2px solid #1f6feb;padding:11px}
       .marketMapLegend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#667085;margin-top:10px}
       .marketMapLegend span{display:inline-flex;align-items:center;gap:6px}
-      .marketMapDot{width:10px;height:10px;border-radius:50%;display:inline-block}
+      .marketMapDot{width:10px;height:10px;border-radius:50%;display:inline-block}\n      .marketIntelBox{border:1px solid #e2e7ef;border-radius:10px;padding:12px;background:#fbfcfe}
       @media(max-width:950px){.marketMapWrap{grid-template-columns:1fr}.marketMapSide{max-height:none}.marketMapCanvas{height:480px}}
     `;
     document.head.appendChild(style);
@@ -165,31 +165,44 @@
     renderSelectedDetails();
   }
 
-  function renderSelectedDetails(){
-    const host=document.getElementById('marketMapSelectedDetails');
-    if(!host)return;
-    const row=allRows.find(r=>r.id===window.__jgapMarketMapSelectedId);
-    if(!row){
-      host.innerHTML='<div class="muted">Select a property on the map or from the list to see its JGAP details.</div>';
-      return;
-    }
-    const purchase=Number(row.purchase_price||0);
-    const asking=Number(row.asking_price||0);
-    const target=Number(row.target_offer_price||0);
-    const gap=(asking>0&&target>0)?asking-target:null;
-    host.innerHTML=
-      '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">'+
-      '<div><b style="font-size:17px">'+esc(row.name||'JGAP Deal')+'</b><div class="muted" style="margin-top:3px">'+esc(row.property_address||'Address not entered')+'</div></div>'+
-      '<span class="pill">'+esc(statusLabel(row.status))+'</span></div>'+
-      '<div class="stats" style="grid-template-columns:repeat(3,1fr);margin-top:14px">'+
-      '<div><span>Asking</span><b>'+money(asking)+'</b></div>'+
-      '<div><span>JGAP Target</span><b>'+money(target)+'</b></div>'+
-      '<div><span>Purchase</span><b>'+money(purchase)+'</b></div></div>'+
-      '<div class="muted" style="margin-top:12px;font-size:12px">'+
-      (gap!==null?'Target is '+money(gap)+' below asking. ':'')+
-      'Property type: '+esc(row.property_type||'Not entered')+'.</div>';
+  function distanceMiles(a,b){
+    const R=3958.7613, p=Math.PI/180;
+    const dLat=(b.lat-a.lat)*p, dLon=(b.lon-a.lon)*p;
+    const x=Math.sin(dLat/2)**2+Math.cos(a.lat*p)*Math.cos(b.lat*p)*Math.sin(dLon/2)**2;
+    return 2*R*Math.asin(Math.sqrt(x));
   }
-
+  function researchKey(id){return 'jgap_market_research_'+String(id||'');}
+  function loadResearch(id){try{return JSON.parse(localStorage.getItem(researchKey(id))||'{}')||{};}catch(e){return {};}}
+  function saveResearch(id){
+    const summary=document.getElementById('marketResearchSummary')?.value||'';
+    const verify=[...document.querySelectorAll('[data-research-check]')].map(x=>({k:x.dataset.researchCheck,done:x.checked}));
+    try{localStorage.setItem(researchKey(id),JSON.stringify({summary,verify,updated_at:new Date().toISOString()}));const s=document.getElementById('marketResearchSaveStatus');if(s)s.textContent='Research saved '+new Date().toLocaleTimeString();}
+    catch(e){const s=document.getElementById('marketResearchSaveStatus');if(s)s.textContent='Could not save research in this browser.';}
+  }
+  function addressQuery(row){return encodeURIComponent((row.property_address||row.name||'')+', Tennessee');}
+  function searchUrl(base,row){return base+addressQuery(row);}
+  function renderSelectedDetails(){
+    const host=document.getElementById('marketMapSelectedDetails'); if(!host)return;
+    const row=allRows.find(r=>r.id===window.__jgapMarketMapSelectedId);
+    if(!row){host.innerHTML='<div class="muted">Select a property on the map or list to unlock its location intelligence.</div>';return;}
+    const purchase=Number(row.purchase_price||0),asking=Number(row.asking_price||0),target=Number(row.target_offer_price||0);
+    const gap=(asking>0&&target>0)?asking-target:null, research=loadResearch(row.id), p=window.__jgapMarketMapSelectedPoint;
+    const nearby=(p&&Number.isFinite(p.lat)?(window.__jgapMarketMapPoints||[]).filter(x=>x.id!==row.id&&Number.isFinite(x.lat)).map(x=>({...x,distance:distanceMiles(p,x)}).filter?null:null):null);
+    const nearbyRows=(p&&Number.isFinite(p.lat)?(window.__jgapMarketMapPoints||[]).filter(x=>x.id!==row.id&&Number.isFinite(x.lat)&&Number.isFinite(x.lon)).map(x=>({...x,distance:distanceMiles(p,x)})).filter(x=>x.distance<=5).sort((a,b)=>a.distance-b.distance).slice(0,8):[]);
+    const compSearch={property_address:(row.property_address||'')+' comparable sales'};
+    const rentSearch={property_address:(row.property_address||'')+' apartments rents'};
+    host.innerHTML=
+      '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap"><div><b style="font-size:17px">'+esc(row.name||'JGAP Deal')+'</b><div class="muted" style="margin-top:3px">'+esc(row.property_address||'Address not entered')+'</div></div><span class="pill">Location Intelligence</span></div>'+
+      '<div class="stats" style="grid-template-columns:repeat(4,1fr);margin-top:14px"><div><span>Asking</span><b>'+money(asking)+'</b></div><div><span>JGAP Target</span><b>'+money(target)+'</b></div><div><span>Purchase</span><b>'+money(purchase)+'</b></div><div><span>Type</span><b style="font-size:14px">'+esc(row.property_type||'Not entered')+'</b></div></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">'+
+      '<div class="marketIntelBox"><b>Nearby JGAP properties</b><div class="muted" style="font-size:12px;margin:4px 0 8px">Existing Pipeline deals within 5 miles.</div>'+(nearbyRows.length?nearbyRows.map(x=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-top:1px solid #eef1f5"><span><b>'+esc(x.name||x.address||'JGAP Deal')+'</b><br><span class="muted" style="font-size:11px">'+esc(x.address||'')+'</span></span><span class="pill">'+x.distance.toFixed(1)+' mi</span></div>').join(''):'<div class="muted">No other mapped JGAP deals within 5 miles.</div>')+'</div>'+
+      '<div class="marketIntelBox"><b>Property-specific research</b><div class="muted" style="font-size:12px;margin:4px 0 8px">External research stays outside underwriting until you verify it.</div><div class="toolbar"><a class="secondary" target="_blank" rel="noopener" href="'+searchUrl('https://www.google.com/search?q=',row)+'">Web research</a><a class="secondary" target="_blank" rel="noopener" href="'+searchUrl('https://www.google.com/search?q=',compSearch)+'">Comparable sales</a><a class="secondary" target="_blank" rel="noopener" href="'+searchUrl('https://www.google.com/search?q=',rentSearch)+'">Rent research</a></div></div></div>'+
+      '<div class="marketIntelBox" style="margin-top:12px"><b>Important items to verify</b><div class="muted" style="font-size:12px;margin:4px 0 8px">Check these before using outside research in a deal decision.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'+
+      ['Exact parcel/address','Zoning and permitted use','Unit count / legal status','Recent comparable sales','Current market rents','Property taxes / assessments','Flood zone / site constraints','Major nearby development'].map((label,n)=>{const k='c'+n,done=(research.verify||[]).find(x=>x.k===k)?.done?' checked':'';return '<label style="font-size:12px;display:flex;gap:7px;align-items:flex-start"><input type="checkbox" data-research-check="'+k+'"'+done+' style="width:auto;margin:2px 0 0"> '+esc(label)+'</label>';}).join('')+'</div></div>'+
+      '<div class="marketIntelBox" style="margin-top:12px"><b>Research summary</b><div class="muted" style="font-size:12px;margin:4px 0 7px">Short notes about location, comps, rents, zoning, development, and risks. Saved only in this browser.</div><textarea id="marketResearchSummary" placeholder="What did you learn about this location and market?" style="width:100%;min-height:110px;padding:10px;border:1px solid #ccd5e2;border-radius:9px;resize:vertical">'+esc(research.summary||'')+'</textarea><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:8px"><span id="marketResearchSaveStatus" class="muted" style="font-size:11px">'+(research.updated_at?'Last saved '+new Date(research.updated_at).toLocaleString():'Not saved yet')+'</span><button class="primary" type="button" onclick="saveMarketMapResearch()">Save Research</button></div></div>'+
+      (gap!==null?'<div class="muted" style="margin-top:10px;font-size:12px">JGAP target is '+money(gap)+' below asking. Deal economics remain in the Deal Analyzer.</div>':'');
+  }
+  window.saveMarketMapResearch=function(){if(window.__jgapMarketMapSelectedId)saveResearch(window.__jgapMarketMapSelectedId);};
   async function selectRow(id,fromMarker){
     window.__jgapMarketMapSelectedId=id;
     renderRows();
@@ -212,12 +225,12 @@
     if(!main)return;
     main.innerHTML=`
       <div class="pageHead">
-        <div><h1>🗺️ JGAP Market Map</h1><div class="muted">Track your deal locations now; build neighborhood and market history here over time.</div></div>
+        <div><h1>🗺️ JGAP Market Map</h1><div class="muted">Location + market intelligence for the properties you are researching.</div></div>
         <div class="toolbar"><button class="secondary" type="button" onclick="render()">← Dashboard</button><button class="primary" type="button" id="marketMapRefresh">↻ Refresh Map</button></div>
       </div>
       <div class="panel" style="margin-bottom:16px;background:#f8fbff">
         <div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap">
-          <div><b>Phase 1 — JGAP Deal Locations</b><div class="muted" style="margin-top:4px">This first version reads the existing Deal Pipeline. It does not change your existing deals or analyzer.</div></div>
+          <div><b>JGAP Market Intelligence Map</b><div class="muted" style="margin-top:4px">This first version reads the existing Deal Pipeline. It does not change your existing deals or analyzer.</div></div>
           <div id="marketMapCount" class="pill">Loading…</div>
         </div>
         <div class="toolbar" style="margin-top:12px">
@@ -242,7 +255,7 @@
       </div>
       <div class="panel" style="margin-bottom:16px">
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
-          <div><b>Official Market & Property Research</b><div class="muted" style="font-size:12px;margin-top:3px">Use official city mapping tools to verify parcels and zoning before relying on a map location.</div></div>
+          <div><b>Official GIS & Property Research</b><div class="muted" style="font-size:12px;margin-top:3px">Use official city mapping tools to verify parcels and zoning before relying on a map location.</div></div>
           <div class="toolbar">
             <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.bristoltn.gov/1452/GIS-Map">Bristol GIS</a>
             <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.bristoltn.gov/RealEstate.aspx">Bristol Real Estate Locator</a>
@@ -252,7 +265,7 @@
       </div>
       <div class="panel" style="margin-bottom:16px">
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
-          <div><b>Live Market Search</b><div class="muted" style="font-size:12px;margin-top:3px">Open current multifamily searches, then bring promising properties back into the JGAP Deal Analyzer.</div></div>
+          <div><b>Live Market Research</b><div class="muted" style="font-size:12px;margin-top:3px">Open current multifamily searches, then bring promising properties back into the JGAP Deal Analyzer.</div></div>
           <div class="toolbar">
             <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.redfin.com/city/2220/TN/Bristol/multi-family-homes-for-sale">Bristol Multifamily</a>
             <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.redfin.com/city/10066/TN/Kingsport/multi-family-homes-for-sale">Kingsport Multifamily</a>
@@ -261,7 +274,7 @@
         </div>
       </div>
       <div class="panel" style="margin-bottom:16px">
-        <div><b>Selected Property Intelligence</b><div id="marketMapSelectedDetails" style="margin-top:10px"><div class="muted">Select a property on the map or from the list to see its JGAP details.</div></div></div>
+        <div><b>Property Intelligence Workspace</b><div id="marketMapSelectedDetails" style="margin-top:10px"><div class="muted">Select a property on the map or from the list to see its JGAP details.</div></div></div>
       </div>
       <div class="marketMapWrap">
         <div class="panel" style="padding:10px"><div id="jgapMarketMap" class="marketMapCanvas"><div style="padding:20px" class="muted">Loading map…</div></div></div>
