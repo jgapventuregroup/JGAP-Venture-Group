@@ -2190,7 +2190,7 @@ async function deleteJGAPNote(){
 async function render(){
 const {data:{user}}=await sb.auth.getUser();
 if(!user){authView();return;}
-shell(); await window.loadDashboardLayoutFromAccount(); if(window.loadNavOrderFromAccount) await window.loadNavOrderFromAccount(); window.applyDashboardLayout(); document.getElementById("who").textContent="Signed in as "+user.email; loadDashboardRentSummary(); loadDashboardPrimeRate(); loadDashboardPropertyManagementCenter(); loadDashboardLeaseExpirations(); loadDashboardDelinquency(); loadDashboardPortfolioPerformance(); loadDashboardTasks();
+shell(); await window.loadDashboardLayoutFromAccount(); if(window.loadNavOrderFromAccount) await window.loadNavOrderFromAccount(); window.applyDashboardLayout(); document.getElementById("who").textContent="Signed in as "+user.email; loadDashboardRentSummary(); loadDashboardPrimeRate(); loadDashboardPropertyManagementCenter(); loadDashboardLeaseExpirations(); loadDashboardDelinquency(); loadDashboardPortfolioPerformance(); loadDashboardTasks(); loadWealthRoadmap();
 try {
   const { data: body, error: rpcError } = await sb.rpc("bootstrap_current_user");
   if (rpcError) {
