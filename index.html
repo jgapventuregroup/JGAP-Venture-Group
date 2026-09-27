@@ -158,6 +158,27 @@ document.getElementById("app").innerHTML=`<header><div style="display:flex;align
 <div class="stats" style="margin-top:12px"><div><span>Area</span><b style="font-size:16px">Tri-Cities + SWVA</b></div><div><span>Property Type</span><b style="font-size:16px">Multifamily</b></div><div><span>Alert Method</span><b style="font-size:16px">Saved Search</b></div></div>
 <div class="muted" style="font-size:12px;margin-top:10px">Save the search on either site and turn on new-listing email alerts. Matching opportunities can then be reviewed in the JGAP Deal Analyzer.</div>
 </div>
+<div class="panel" data-dashboard-section="wealthRoadmap" style="margin-top:18px">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+  <div><h2 style="margin:0 0 5px">💰 JGAP Wealth Roadmap</h2><p class="muted" style="margin:0">A simple action system for turning deals, properties, and cash flow into the next acquisition.</p></div>
+  <button class="secondary" type="button" onclick="renderDealsPage()">Open Deal Analyzer</button>
+</div>
+<div class="stats" style="margin-top:16px">
+  <div><span>Pipeline Deals</span><b id="wealthDealCount">—</b></div>
+  <div><span>Active Properties</span><b id="wealthPropertyCount">—</b></div>
+  <div><span>Next Action</span><b id="wealthNextAction" style="font-size:15px">Loading…</b></div>
+  <div><span>System Goal</span><b style="font-size:15px">Acquire • Improve • Repeat</b></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:16px">
+  <div class="card" style="padding:14px"><b>1. FIND</b><div class="muted" style="font-size:12px;margin-top:5px">Use Deal Radar and Lead Generation to keep opportunities coming in.</div></div>
+  <div class="card" style="padding:14px"><b>2. ANALYZE</b><div class="muted" style="font-size:12px;margin-top:5px">Run every serious opportunity through the Deal Analyzer.</div></div>
+  <div class="card" style="padding:14px"><b>3. OFFER</b><div class="muted" style="font-size:12px;margin-top:5px">Use the numbers to establish your working offer and terms.</div></div>
+  <div class="card" style="padding:14px"><b>4. IMPROVE</b><div class="muted" style="font-size:12px;margin-top:5px">Control repairs, rents, expenses, and operations after closing.</div></div>
+  <div class="card" style="padding:14px"><b>5. REPEAT</b><div class="muted" style="font-size:12px;margin-top:5px">Track cash flow and equity, then work toward the next acquisition.</div></div>
+</div>
+<div id="wealthRoadmapNote" class="muted" style="font-size:12px;margin-top:12px">The roadmap shows your operating system, not a promise of investment returns.</div>
+</div>
+<style>@media(max-width:1000px){[data-dashboard-section="wealthRoadmap"]>div:nth-child(3){grid-template-columns:1fr 1fr!important}}@media(max-width:560px){[data-dashboard-section="wealthRoadmap"]>div:nth-child(3){grid-template-columns:1fr!important}}</style>
 <div class="grid" data-dashboard-section="kpis">
 <div class="card"><div class="muted">Properties</div><div class="metric" id="dashProperties">—</div><div class="muted">Live portfolio records</div></div>
 <div class="card"><div class="muted">Active Deals</div><div class="metric" id="dashDeals">—</div><div class="muted">Open pipeline deals</div></div>
@@ -250,7 +271,25 @@ function togglePortfolioDetails(){
  btn.textContent=open?'▾ Hide Property Details':'▸ View Property Details';
 }
 
-async function loadDashboardPortfolioPerformance(){
+
+async function loadWealthRoadmap(){
+ try{
+  const [dr,pr]=await Promise.all([
+   sb.from("deals").select("id,status"),
+   sb.from("properties").select("id,status").neq("status","sold")
+  ]);
+  if(dr.error) throw dr.error; if(pr.error) throw pr.error;
+  const deals=dr.data||[], props=pr.data||[];
+  const open=deals.filter(x=>!["closed","purchased","lost","dead","sold"].includes(String(x.status||"").toLowerCase())).length;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  set("wealthDealCount",String(open)); set("wealthPropertyCount",String(props.length));
+  set("wealthNextAction",open>0?"Analyze your active pipeline":"Find the next qualified deal");
+ }catch(e){
+  console.warn("Wealth roadmap:",e);
+  const el=document.getElementById("wealthNextAction"); if(el)el.textContent="Review Deal Radar";
+ }
+}
+\nasync function loadDashboardPortfolioPerformance(){
  const ids=['dashPortfolioPurchase','dashPortfolioValue','dashPortfolioEquity','dashPortfolioRent','dashPortfolioDebt','dashPortfolioFixed','dashPortfolioPropertyRows'];
  const els=ids.map(id=>document.getElementById(id));
  if(els.some(x=>!x))return;
