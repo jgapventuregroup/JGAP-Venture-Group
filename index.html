@@ -829,8 +829,7 @@ async function saveProperty(id) {
 }
 
 
-async function saveDealSnapshotPrompt(id){const current=localStorage.getItem("jgap_deal_snapshot_"+id)||"";const note=prompt("Quick Snapshot - enter a short note (example: Looked at it / Good Fit / Not a Good Fit):",current);if(note!==null)localStorage.setItem("jgap_deal_snapshot_"+id,note);}
-function renderDealsPage(){
+async function renderDealsPage(){
  const main=document.querySelector("main"); if(!main)return;
  main.innerHTML=`<div class="pageHead"><div><h1>Deal Pipeline</h1><p class="muted">Track opportunities from first lead through closing.</p></div><div><button class="secondary" onclick="render()">← Dashboard</button> <button class="primary" onclick="renderDealAnalyzer()">+ New Deal</button></div></div><div id="dealsMsg" class="muted">Loading deals...</div><div id="dealPipeline" class="cards"></div>`;
  const {data:deals,error}=await sb.from("deals").select("*").order("created_at",{ascending:false});
@@ -840,7 +839,7 @@ function renderDealsPage(){
  const labels={lead:"Lead",analyzing:"Analyzing",due_diligence:"Due Diligence",offer:"Offer",under_contract:"Under Contract",closed:"Closed",passed:"Passed"};
  const groups={}; stages.forEach(x=>groups[x]=[]); (deals||[]).forEach(d=>{if(!groups[d.status])groups[d.status]=[];groups[d.status].push(d);});
  msg.textContent=(deals||[]).length+" saved deal"+((deals||[]).length===1?"":"s");
- grid.innerHTML=stages.map(stage=>`<div class="panel"><div class="sectionTitle">${labels[stage]} <span class="muted">(${groups[stage].length})</span></div>${groups[stage].length?groups[stage].map(d=>`<div class="card" style="margin:10px 0;cursor:pointer" onclick="openDeal('${d.id}')"><b>${escapeHtml(d.name||"Untitled Deal")}</b><div class="muted">${escapeHtml(d.property_type||"")}</div><strong>${money2(d.purchase_price)}</strong><button type="button" class="secondary" style="margin-top:6px;padding:5px 9px" onclick="event.stopPropagation();saveDealSnapshotPrompt(&quot;${d.id}&quot;)">Quick Snapshot</button></div>`).join(""):'<div class="muted">No deals</div>'}</div>`).join("");
+ grid.innerHTML=stages.map(stage=>`<div class="panel"><div class="sectionTitle">${labels[stage]} <span class="muted">(${groups[stage].length})</span></div>${groups[stage].length?groups[stage].map(d=>`<div class="card" style="margin:10px 0;cursor:pointer" onclick="openDeal('${d.id}')"><b>${escapeHtml(d.name||"Untitled Deal")}</b><div class="muted">${escapeHtml(d.property_type||"")}</div><strong>${money2(d.purchase_price)}</strong></div>`).join(""):'<div class="muted">No deals</div>'}</div>`).join("");
 }
 async function openDeal(id){
  const {data,error}=await sb.from("deals").select("*").eq("id",id).single();
