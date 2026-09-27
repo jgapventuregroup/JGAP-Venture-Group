@@ -213,6 +213,16 @@
           </select>
         </div>
       </div>
+      <div class="panel" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+          <div><b>Official Market & Property Research</b><div class="muted" style="font-size:12px;margin-top:3px">Use official city mapping tools to verify parcels and zoning before relying on a map location.</div></div>
+          <div class="toolbar">
+            <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.bristoltn.gov/1452/GIS-Map">Bristol GIS</a>
+            <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.bristoltn.gov/RealEstate.aspx">Bristol Real Estate Locator</a>
+            <a class="secondary" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://www.kingsporttn.gov/city-services/planning-zoning/zoning/">Kingsport Zoning / GIS</a>
+          </div>
+        </div>
+      </div>
       <div class="marketMapWrap">
         <div class="panel" style="padding:10px"><div id="jgapMarketMap" class="marketMapCanvas"><div style="padding:20px" class="muted">Loading map…</div></div></div>
         <div class="panel marketMapSide"><div id="marketMapList"><div class="muted">Loading deals…</div></div></div>
