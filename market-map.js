@@ -66,6 +66,8 @@
       .marketMapLegend span{display:inline-flex;align-items:center;gap:6px}
       .marketMapDot{width:10px;height:10px;border-radius:50%;display:inline-block}\n      .marketIntelBox{border:1px solid #e2e7ef;border-radius:10px;padding:12px;background:#fbfcfe}
       .marketHistoryTable{width:100%;border-collapse:collapse;font-size:12px}.marketHistoryTable th,.marketHistoryTable td{padding:7px;border-top:1px solid #eef1f5;text-align:left;vertical-align:top}.marketHistoryTable th{color:#667085;font-weight:600}
+      .marketNeighborhoodTable{width:100%;border-collapse:collapse;font-size:12px}.marketNeighborhoodTable th,.marketNeighborhoodTable td{padding:8px;border-top:1px solid #eef1f5;text-align:left;vertical-align:top;white-space:nowrap}.marketNeighborhoodTable th{color:#667085;font-weight:600}
+      .marketNeighborhoodTable td.num{text-align:right}
       @media(max-width:950px){.marketMapWrap{grid-template-columns:1fr}.marketMapSide{max-height:none}.marketMapCanvas{height:480px}}
     `;
     document.head.appendChild(style);
@@ -174,6 +176,37 @@
     }).join('');
     host.querySelectorAll('[data-market-id]').forEach(el=>el.addEventListener('click',()=>selectRow(el.dataset.marketId,false)));
     renderSelectedDetails();
+  }
+
+  function renderNeighborhoodAnalysis(){
+    const host=document.getElementById('marketNeighborhoodAnalysis');
+    if(!host)return;
+    const groups={};
+    allRows.filter(r=>String(r.property_type||'').toLowerCase().includes('multifamily') || Number(r.monthly_rent||0)>0).forEach(r=>{
+      const n=neighborhoodFor(r)||'Other';
+      if(!groups[n])groups[n]={name:n,total:0,forSale:0,sold:0,asking:[],soldPrices:[],rents:[]};
+      const g=groups[n];
+      g.total++;
+      if(normalizedStatus(r)==='sold'){
+        g.sold++;
+        const soldPrice=Number(r.purchase_price||0);
+        if(soldPrice>0)g.soldPrices.push(soldPrice);
+      }else{
+        g.forSale++;
+        const asking=Number(r.asking_price||0);
+        if(asking>0)g.asking.push(asking);
+      }
+      const rent=Number(r.monthly_rent||0);
+      if(rent>0)g.rents.push(rent);
+    });
+    const rows=Object.values(groups).sort((a,b)=>a.name.localeCompare(b.name));
+    const avg=a=>a.length?a.reduce((sum,v)=>sum+v,0)/a.length:0;
+    const moneyCell=a=>a.length?money(avg(a)):'—';
+    host.innerHTML=rows.length
+      ? '<div style="overflow:auto"><table class="marketNeighborhoodTable"><thead><tr><th>Neighborhood</th><th>Tracked</th><th>For Sale</th><th>Sold</th><th>Avg Asking</th><th>Avg Sold Price</th><th>Avg Monthly Rent</th></tr></thead><tbody>'+
+        rows.map(g=>'<tr><td><b>'+esc(g.name)+'</b></td><td class="num">'+g.total+'</td><td class="num">'+g.forSale+'</td><td class="num">'+g.sold+'</td><td class="num">'+moneyCell(g.asking)+'</td><td class="num">'+moneyCell(g.soldPrices)+'</td><td class="num">'+moneyCell(g.rents)+'</td></tr>').join('')+
+        '</tbody></table></div>'
+      : '<div class="muted">Not enough entered multifamily data to calculate neighborhood statistics yet.</div>';
   }
 
   function distanceMiles(a,b){
@@ -303,6 +336,13 @@
         </div>
       </div>
       <div class="panel" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">
+          <div><b>Neighborhood Analysis</b><div class="muted" style="font-size:12px;margin-top:3px">Phase 5: rent and sales statistics from JGAP's entered multifamily deal data. No outside estimates are added.</div></div>
+          <span class="pill">All tracked multifamily deals</span>
+        </div>
+        <div id="marketNeighborhoodAnalysis" style="margin-top:10px"><div class="muted">Calculating neighborhood statistics…</div></div>
+      </div>
+      <div class="panel" style="margin-bottom:16px">
         <div><b>Property Intelligence Workspace</b><div id="marketMapSelectedDetails" style="margin-top:10px"><div class="muted">Select a property on the map or from the list to see its JGAP details.</div></div></div>
       </div>
       <div class="marketMapWrap">
@@ -320,6 +360,7 @@
       allRows=data||[];
       marketHistoryByDeal={};
       populateNeighborhoodFilter();
+      renderNeighborhoodAnalysis();
       renderMarketMapList();
       const mapHost=document.getElementById('jgapMarketMap');
       mapHost.innerHTML='';
