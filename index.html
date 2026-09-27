@@ -839,8 +839,18 @@ async function renderDealsPage(){
  const labels={lead:"Lead",analyzing:"Analyzing",due_diligence:"Due Diligence",offer:"Offer",under_contract:"Under Contract",closed:"Closed",passed:"Passed"};
  const groups={}; stages.forEach(x=>groups[x]=[]); (deals||[]).forEach(d=>{if(!groups[d.status])groups[d.status]=[];groups[d.status].push(d);});
  msg.textContent=(deals||[]).length+" saved deal"+((deals||[]).length===1?"":"s");
- grid.innerHTML=stages.map(stage=>`<div class="panel"><div class="sectionTitle">${labels[stage]} <span class="muted">(${groups[stage].length})</span></div>${groups[stage].length?groups[stage].map(d=>`<div class="card" style="margin:10px 0;cursor:pointer" onclick="openDeal('${d.id}')"><b>${escapeHtml(d.name||"Untitled Deal")}</b><div class="muted">${escapeHtml(d.property_type||"")}</div><strong>${money2(d.purchase_price)}</strong></div>`).join(""):'<div class="muted">No deals</div>'}</div>`).join("");
+ grid.innerHTML=stages.map(stage=>`<div class="panel"><div class="sectionTitle">${labels[stage]} <span class="muted">(${groups[stage].length})</span></div>${groups[stage].length?groups[stage].map(d=>{const n=String(d.notes||"");const m=n.match(/^\\[JGAP SNAPSHOT:([^\\]]+)\\]\\s*/i);const snap=m?m[1]:"";const note=m?n.slice(m[0].length):n;return `<div class="card" style="margin:10px 0"><div style="cursor:pointer" onclick="openDeal('${d.id}')"><b>${escapeHtml(d.name||"Untitled Deal")}</b><div class="muted">${escapeHtml(d.property_type||"")}</div><strong>${money2(d.purchase_price)}</strong></div><div style="margin-top:10px;padding-top:10px;border-top:1px solid #e2e7ef"><div class="muted" style="font-size:12px;font-weight:700">QUICK SNAPSHOT</div><div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;margin-top:6px"><select id="snap-status-${d.id}" style="min-width:150px"><option value="">Status</option><option ${snap==="Looked At"?"selected":""}>Looked At</option><option ${snap==="Tried"?"selected":""}>Tried</option><option ${snap==="Opened"?"selected":""}>Opened</option><option ${snap==="Good Fit"?"selected":""}>Good Fit</option><option ${snap==="Not a Good Fit"?"selected":""}>Not a Good Fit</option><option ${snap==="Need More Info"?"selected":""}>Need More Info</option><option ${snap==="Follow-Up"?"selected":""}>Follow-Up</option></select><textarea id="snap-note-${d.id}" rows="2" placeholder="Quick note..." style="min-width:220px;flex:1">${escapeHtml(note)}</textarea><button type="button" class="secondary" onclick="saveDealSnapshot('${d.id}')">Save</button></div></div></div>`}).join(""):'<div class="muted">No deals</div>'}</div>`).join("");
 }
+async function saveDealSnapshot(id){
+ const status=document.getElementById("snap-status-"+id)?.value||"";
+ const note=document.getElementById("snap-note-"+id)?.value||"";
+ const combined=(status?"[JGAP SNAPSHOT: "+status+"] ":"")+note;
+ const {error}=await sb.from("deals").update({notes:combined,updated_at:new Date().toISOString()}).eq("id",id);
+ if(error){alert(error.message);return;}
+ const btn=document.querySelector('[onclick="saveDealSnapshot(\\''+id+'\\')"]');
+ if(btn){const old=btn.textContent;btn.textContent="Saved";setTimeout(()=>btn.textContent=old,900);}
+}
+
 async function openDeal(id){
  const {data,error}=await sb.from("deals").select("*").eq("id",id).single();
  if(error){alert(error.message);return;} renderDealAnalyzer(data);
