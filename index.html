@@ -978,74 +978,29 @@ function syncDealTestPrice(){
 }
 function calcDeal(){
  if(!document.getElementById("d_price"))return;
- const price=n("d_price"), down=n("d_down"), rate=n("d_rate")/100, term=Math.max(1,n("d_term")), close=n("d_close"), rehab=n("d_rehab"), rent=n("d_rent"), vacancy=Math.min(.99,Math.max(0,n("d_vacancy")/100)), exp=n("d_exp"), other=n("d_other"), structure=document.getElementById("d_loan_structure")?.value||"amortizing";
- const loan=structure==="none"?0:Math.max(0,price-down), mr=rate/12, months=term*12;
- const paymentFor=(principal)=>{if(principal<=0)return 0; if(structure==="none")return 0; if(structure==="interest_only")return principal*mr; return mr?principal*mr*Math.pow(1+mr,months)/(Math.pow(1+mr,months)-1):principal/months};
- const debt=paymentFor(loan), income=rent*(1-vacancy)+other, noi=income-exp, anoi=noi*12, cf=noi-debt, cash=down+close+rehab;
- const cap=price?anoi/price:0, coc=cash?(cf*12/cash):0, dscr=debt?noi/debt:0, be=rent?Math.min(999,(debt+exp-other)/rent):0;
+ const price=n("d_price"),down=n("d_down"),rate=n("d_rate")/100,term=Math.max(1,n("d_term")),close=n("d_close"),rehab=n("d_rehab"),rent=n("d_rent"),vacancy=Math.min(.99,Math.max(0,n("d_vacancy")/100)),exp=n("d_exp"),other=n("d_other"),structure=document.getElementById("d_loan_structure")?.value||"amortizing";
+ const loan=structure==="none"?0:Math.max(0,price-down),mr=rate/12,months=term*12;
+ const paymentFor=p=>{if(p<=0||structure==="none")return 0;if(structure==="interest_only")return p*mr;return mr?p*mr*Math.pow(1+mr,months)/(Math.pow(1+mr,months)-1):p/months};
+ const debt=paymentFor(loan),income=rent*(1-vacancy)+other,noi=income-exp,anoi=noi*12,cf=noi-debt,cash=Math.max(0,Math.min(down,price))+close+rehab;
+ const cap=price?anoi/price:0,coc=cash?cf*12/cash:0,dscr=debt?noi/debt:0,be=rent?Math.min(999,(debt+exp-other)/rent):0;
  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
- set("r_loan",money2(loan));set("r_debt",money2(debt));set("r_income",money2(income));set("r_noi",money2(noi));set("r_anoi",money2(anoi));set("r_cf",money2(cf));set("r_cap",(cap*100).toFixed(2)+"%");set("r_coc",(coc*100).toFixed(2)+"%");set("r_dscr",dscr.toFixed(2));set("r_be",(be*100).toFixed(1)+"%");set("r_cash",money2(cash));
- const tc=n("d_target_coc")/100,tp=n("d_target_cap")/100,tdVal=document.getElementById("d_target_dscr")?.value,td=tdVal===""?null:Number(tdVal);
- const meets=coc>=tc&&cap>=tp&&(td===null||dscr>=td);
- set("r_target",meets?"Meets all entered targets":"Below one or more entered targets");
- const st=document.getElementById("dealStatus"); if(st)st.innerHTML=`<b>${meets?"Entered targets met":"Below one or more entered targets"}</b><p class="muted">Cap rate ${(cap*100).toFixed(2)}% vs ${(tp*100).toFixed(1)}% • Cash-on-cash ${(coc*100).toFixed(2)}% vs ${(tc*100).toFixed(1)}%${td===null?" • DSCR not required for this analysis":" • DSCR "+dscr.toFixed(2)+" vs "+td.toFixed(2)}. These are calculations from your inputs, not an investment recommendation.</p>`;
- // Maximum purchase prices use the current fixed down payment, closing costs and rehab assumptions.
- const solve=(condition)=>{let lo=0,hi=Math.max(price*4,1000000);for(let i=0;i<70;i++){const mid=(lo+hi)/2;const d=paymentFor(Math.max(0,mid-down));const val=condition(mid,d);if(val){lo=mid}else{hi=mid}}return lo};
- const maxCapRaw=tp>0?anoi/tp:0;
- const maxCocRaw=tc>0?solve((p,d)=>cash>0?((noi-d)*12/cash)>=tc:false):0;
- const maxDscrRaw=td!==null&&td>0?solve((p,d)=>d>0?noi/d>=td:true):0;
- const maxCap=maxCapRaw>0?maxCapRaw:null;
- const maxCoc=maxCocRaw>0?maxCocRaw:null;
- const maxDscr=maxDscrRaw>0?maxDscrRaw:null;
- const targetPriceText=(v)=>v===null?"No positive price":money2(v);
- set("r_max_cap",targetPriceText(maxCap));set("r_max_coc",targetPriceText(maxCoc));set("r_max_dscr",td!==null&&td>0?targetPriceText(maxDscr):"—");
- const targetMsg=document.getElementById("targetPriceMessage");
- if(targetMsg){
-   const none=!maxCap&&!maxCoc&&!(td!==null&&td>0&&maxDscr);
-   targetMsg.innerHTML=none
-     ? '<b>No positive purchase price meets the entered target(s) under the current assumptions.</b><div class="muted" style="margin-top:5px">Review rent, vacancy, operating expenses, financing, and target return assumptions. The analyzer is showing the math from your inputs rather than forcing a positive offer price.</div>'
-     : '<span class="muted">A target price is shown only when the current assumptions produce a positive mathematical result.</span>';
- }
- const dscrBox=document.getElementById("maxDscrBox"); if(dscrBox)dscrBox.style.display=(td!==null&&td>0)?"":"none";
- const scen=document.getElementById("scenarioCards"); if(scen){const scenarios=[['Conservative',Math.min(.99,vacancy+.05),exp*1.10],['Expected',vacancy,exp],['Optimistic',Math.max(0,vacancy-.02),exp*.95]]; scen.innerHTML=scenarios.map(([name,v,e])=>{const inc=rent*(1-v)+other,n2=inc-e,c=n2-debt,ca=cash?c*12/cash:0,cp=price?n2*12/price:0,sd=debt?n2/debt:0;return `<div class="card"><b>${name}</b><div class="muted">Vacancy ${(v*100).toFixed(1)}% • OpEx ${money2(e)}/mo</div><strong>NOI ${money2(n2)}/mo</strong><div>Cash flow ${money2(c)}/mo</div><div>Cap ${(cp*100).toFixed(2)}% • CoC ${(ca*100).toFixed(2)}% • DSCR ${sd.toFixed(2)}</div></div>`}).join('')}
- const fc=document.getElementById("financingComparison"); if(fc){
-  const downPctBase=price>0?Math.max(0,Math.min(100,down/price*100)):20;
-  const downPcts=[10,15,20,25,30];
-  const rates=[rate*100-1,rate*100,rate*100+1,rate*100+2];
-  const rows=[];
-  downPcts.forEach(dp=>rates.forEach(rr=>{
-   const principal=Math.max(0,price*(1-dp/100));
-   const r=rr/100/12;
-   const d=r>0?principal*r*Math.pow(1+r,months)/(Math.pow(1+r,months)-1):principal/months;
-   const cashReq=price*(dp/100)+close+rehab;
-   const cflow=noi-d;
-   const cc=cashReq?cflow*12/cashReq:0;
-   const sd=d?noi/d:0;
-   rows.push({dp,rr,d,cashReq,cflow,cc,sd});
-  }));
-  fc.innerHTML=`<table><thead><tr><th>Down</th><th>Rate</th><th>Loan</th><th>Cash Needed</th><th>Monthly Debt</th><th>Monthly CF</th><th>CoC</th><th>DSCR</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.dp}%</td><td>${x.rr.toFixed(2)}%</td><td>${money2(x.dp?price*(1-x.dp/100):price)}</td><td>${money2(x.cashReq)}</td><td>${money2(x.d)}</td><td>${money2(x.cflow)}</td><td>${(x.cc*100).toFixed(2)}%</td><td>${x.sd.toFixed(2)}</td></tr>`).join('')}</tbody></table>`;
- }
- const ps=document.getElementById("priceSensitivity"); if(ps){const mult=[.8,.9,1,1.1,1.2];ps.innerHTML=`<table><thead><tr><th>Purchase Price</th><th>Loan</th><th>Cash Needed</th><th>Monthly CF</th><th>Cap</th><th>CoC</th><th>DSCR</th></tr></thead><tbody>${mult.map(m=>{const p=price*m,l=Math.max(0,p-down),d=paymentFor(l),cflow=noi-d,cp=p?anoi/p:0,cc=cash?cflow*12/cash:0,sd=d?noi/d:0;return `<tr><td>${money2(p)}</td><td>${money2(l)}</td><td>${money2(cash)}</td><td>${money2(cflow)}</td><td>${(cp*100).toFixed(2)}%</td><td>${(cc*100).toFixed(2)}%</td><td>${sd.toFixed(2)}</td></tr>`}).join('')}</tbody></table>`}
-
- const asking=n("d_asking")||price;
- const minCf=n("d_min_cf");
- const offerBuffer=Math.max(0,Math.min(100,n("d_offer_buffer")))/100;
- const maxCfRaw=minCf>0?solve((p,d)=>(noi-d)>=minCf):0;
- const maxCf=maxCfRaw>0?maxCfRaw:null;
- set("r_max_cf",maxCf===null?"—":money2(maxCf));
- const maxCfBox=document.getElementById("maxCfBox"); if(maxCfBox)maxCfBox.style.display=minCf>0?"":"none";
- const validTargets=[maxCap,maxCoc,maxDscr,maxCf].filter(v=>typeof v==="number"&&v>0);
- const calculated=validTargets.length?Math.min(...validTargets):null;
- const maxOffer=calculated===null?0:calculated;
- const jgapTargetOffer=calculated===null?null:calculated*(1-offerBuffer);
- set("r_jgap_max_price",calculated===null?"—":money2(calculated));
- set("r_jgap_target_offer",jgapTargetOffer===null?"—":money2(jgapTargetOffer));
- const entered=n("d_target_offer"); const offer=entered||maxOffer; const diff=asking-offer;
- const os=document.getElementById("offerSummary"); if(os)os.innerHTML=`<div><span>Seller asking</span><b>${money2(asking)}</b></div><div><span>Calculated max offer</span><b>${money2(maxOffer)}</b></div><div><span>Working offer</span><b>${money2(offer)}</b></div><div><span>Gap vs asking</span><b>${money2(diff)} (${asking?((diff/asking)*100).toFixed(1):"0.0"}%)</b></div>`;
- const ot=document.getElementById("offerAnalysisTable"); if(ot){const rows=[["Target Cap Rate",maxCap],["Target Cash-on-Cash",maxCoc],["Target DSCR",maxDscr]];ot.innerHTML=`<table><thead><tr><th>Target</th><th>Maximum Price</th><th>Gap vs Asking</th><th>Gap %</th></tr></thead><tbody>${rows.map(([l,v])=>{const g=asking-(v||0);return `<tr><td>${l}</td><td>${money2(v)}</td><td>${money2(g)}</td><td>${asking?((g/asking)*100).toFixed(1):"0.0"}%</td></tr>`}).join("")}</tbody></table>`;}
- const ow=document.getElementById("offerWorksheet"); if(ow){const earnest=n("d_earnest"),dd=Math.max(0,Math.round(n("d_dd_days"))),cd=Math.max(0,Math.round(n("d_close_days"))),ft=document.getElementById("d_offer_financing")?.value||"Not specified",cont=document.getElementById("d_contingencies")?.value||"Not specified";ow.innerHTML=`<div class="offerPackageHeader"><div><div class="sectionTitle" style="margin:0">Offer Package — Legal Offer Form Worksheet</div><div class="muted" style="margin-top:4px">Review the offer details below, then print or prepare the email.</div></div><div class="offerActions"><button class="secondary" onclick="printPurchaseOfferPackage()">Print / Save PDF</button><button class="secondary" onclick="emailPurchaseOfferPackage()">Email Offer Package</button></div></div><div class="offerPackageGrid"><div><span class="muted">Offer price</span><strong>${money2(offer)}</strong></div><div><span class="muted">Earnest money</span><strong>${money2(earnest)}</strong></div><div><span class="muted">Due diligence</span><strong>${dd} days</strong></div><div><span class="muted">Closing</span><strong>${cd} days</strong></div><div><span class="muted">Financing</span><strong>${escapeHtml(ft)}</strong></div><div><span class="muted">Estimated total cash</span><strong>${money2(offer?((offer*(down/Math.max(price,1)))+close+rehab):0)}</strong></div></div><p class="muted" style="margin-top:10px"><b>Contingencies:</b> ${escapeHtml(cont)}</p>`;}
-}
-function renderOfferTemplatePreview(){
+ set("r_loan",money2(loan));set("r_debt",money2(debt));set("r_income",money2(income));set("r_noi",money2(noi));set("r_anoi",money2(anoi));set("r_cf",money2(cf));set("r_cap",(cap*100).toFixed(2)+"%");set("r_coc",(coc*100).toFixed(2)+"%");set("r_dscr",debt?dscr.toFixed(2):"—");set("r_be",(be*100).toFixed(1)+"%");set("r_cash",money2(cash));
+ const tc=n("d_target_coc")/100,tp=n("d_target_cap")/100,tdv=document.getElementById("d_target_dscr")?.value,td=tdv===""?null:Number(tdv);
+ const meets=coc>=tc&&cap>=tp&&(td===null||dscr>=td);set("r_target",meets?"Meets all entered targets":"Below one or more entered targets");
+ const st=document.getElementById("dealStatus");if(st)st.innerHTML=`<b>${meets?"Entered targets met":"Below one or more entered targets"}</b><p class="muted">Cap rate ${(cap*100).toFixed(2)}% vs ${(tp*100).toFixed(1)}% • Cash-on-cash ${(coc*100).toFixed(2)}% vs ${(tc*100).toFixed(1)}%${td===null?" • DSCR not required for this analysis":" • DSCR "+dscr.toFixed(2)+" vs "+td.toFixed(2)}. These are calculations from your inputs, not an investment recommendation.</p>`;
+ const solve=condition=>{let lo=0,hi=Math.max(price*4,1000000);for(let i=0;i<80;i++){const p=(lo+hi)/2,d=paymentFor(Math.max(0,p-down));if(condition(p,d))lo=p;else hi=p}return lo};
+ const maxCap=tp>0&&anoi>0?anoi/tp:null,maxCoc=tc>0?solve((p,d)=>{const c=Math.max(0,Math.min(down,p))+close+rehab;return c>0&&((noi-d)*12/c)>=tc}):null,maxDscr=td!==null&&td>0?solve((p,d)=>d>0?noi/d>=td:true):null,minCf=n("d_min_cf"),maxCf=minCf>0?solve((p,d)=>noi-d>=minCf):null;
+ const vals=[maxCap,maxCoc,maxDscr,maxCf].filter(v=>typeof v==="number"&&v>0&&Number.isFinite(v)),maxPrice=vals.length?Math.min(...vals):null,buffer=Math.min(100,Math.max(0,n("d_offer_buffer")))/100,targetOffer=maxPrice===null?null:maxPrice*(1-buffer),show=v=>v===null?"—":money2(v);
+ set("r_max_cap",show(maxCap));set("r_max_coc",show(maxCoc));set("r_max_dscr",show(maxDscr));set("r_max_cf",show(maxCf));set("r_jgap_max_price",show(maxPrice));set("r_jgap_target_offer",show(targetOffer));
+ const db=document.getElementById("maxDscrBox");if(db)db.style.display=td!==null&&td>0?"":"none";const cb=document.getElementById("maxCfBox");if(cb)cb.style.display=minCf>0?"":"none";
+ const tm=document.getElementById("targetPriceMessage");if(tm)tm.innerHTML=maxPrice===null?"<b>No positive purchase price meets the entered target(s) under the current assumptions.</b><div class='muted' style='margin-top:5px'>Review rent, vacancy, operating expenses, financing, and return targets. The analyzer shows the math from your inputs.</div>":"<span class='muted'>Maximum price is the lowest positive price supported by the entered target constraints.</span>";
+ const scen=document.getElementById("scenarioCards");if(scen){const rows=[["Conservative",Math.min(.99,vacancy+.05),exp*1.10],["Expected",vacancy,exp],["Optimistic",Math.max(0,vacancy-.02),exp*.95]];scen.innerHTML=rows.map(([name,v,e])=>{const inc=rent*(1-v)+other,no=inc-e,cc=no-debt,co=cash?cc*12/cash:0,ca=price?no*12/price:0,sd=debt?no/debt:0;return `<div class="card"><b>${name}</b><div class="muted">Vacancy ${(v*100).toFixed(1)}% • OpEx ${money2(e)}/mo</div><strong>NOI ${money2(no)}/mo</strong><div>Cash flow ${money2(cc)}/mo</div><div>Cap ${(ca*100).toFixed(2)}% • CoC ${(co*100).toFixed(2)}% • DSCR ${debt?sd.toFixed(2):"—"}</div></div>`}).join("")}
+ const fc=document.getElementById("financingComparison");if(fc){const rows=[];[10,15,20,25,30].forEach(dp=>[rate*100-1,rate*100,rate*100+1,rate*100+2].forEach(rr=>{const principal=Math.max(0,price*(1-dp/100)),r=rr/100/12,d=r>0?principal*r*Math.pow(1+r,months)/(Math.pow(1+r,months)-1):principal/months,cr=price*dp/100+close+rehab,c=noi-d,cc=cr?c*12/cr:0,sd=d?noi/d:0;rows.push({dp,rr,principal,d,cr,c,cc,sd})}));fc.innerHTML='<table><thead><tr><th>Down</th><th>Rate</th><th>Loan</th><th>Cash Needed</th><th>Monthly Debt</th><th>Monthly CF</th><th>CoC</th><th>DSCR</th></tr></thead><tbody>'+rows.map(x=>`<tr><td>${x.dp}%</td><td>${x.rr.toFixed(2)}%</td><td>${money2(x.principal)}</td><td>${money2(x.cr)}</td><td>${money2(x.d)}</td><td>${money2(x.c)}</td><td>${(x.cc*100).toFixed(2)}%</td><td>${x.d?x.sd.toFixed(2):"—"}</td></tr>`).join("")+'</tbody></table>'}
+ const ps=document.getElementById("priceSensitivity");if(ps){ps.innerHTML='<table><thead><tr><th>Purchase Price</th><th>Loan</th><th>Cash Needed</th><th>Monthly CF</th><th>Cap</th><th>CoC</th><th>DSCR</th></tr></thead><tbody>'+[.8,.9,1,1.1,1.2].map(m=>{const p=price*m,l=Math.max(0,p-down),d=paymentFor(l),c=noi-d,cr=Math.max(0,Math.min(down,p))+close+rehab;return `<tr><td>${money2(p)}</td><td>${money2(l)}</td><td>${money2(cr)}</td><td>${money2(c)}</td><td>${(p?noi*12/p*100:0).toFixed(2)}%</td><td>${(cr?c*12/cr*100:0).toFixed(2)}%</td><td>${d? (noi/d).toFixed(2):"—"}</td></tr>`}).join("")+'</tbody></table>'}
+ const asking=n("d_asking")||price,entered=n("d_target_offer"),working=entered||maxPrice||0,diff=asking-working,os=document.getElementById("offerSummary");if(os)os.innerHTML=`<div><span>Seller asking</span><b>${money2(asking)}</b></div><div><span>Calculated max offer</span><b>${money2(maxPrice)}</b></div><div><span>Working offer</span><b>${money2(working)}</b></div><div><span>Gap vs asking</span><b>${money2(diff)} (${asking?(diff/asking*100).toFixed(1):"0.0"}%)</b></div>`;
+ const ot=document.getElementById("offerAnalysisTable");if(ot){const rows=[["Target Cap Rate",maxCap],["Target Cash-on-Cash",maxCoc],["Target DSCR",maxDscr]];ot.innerHTML='<table><thead><tr><th>Target</th><th>Maximum Price</th><th>Gap vs Asking</th><th>Gap %</th></tr></thead><tbody>'+rows.map(([l,v])=>{const g=asking-(v||0);return `<tr><td>${l}</td><td>${money2(v)}</td><td>${money2(g)}</td><td>${asking?(g/asking*100).toFixed(1):"0.0"}%</td></tr>`}).join("")+'</tbody></table>'}
+ const ow=document.getElementById("offerWorksheet");if(ow){const earnest=n("d_earnest"),dd=Math.max(0,Math.round(n("d_dd_days"))),cd=Math.max(0,Math.round(n("d_close_days"))),ft=document.getElementById("d_offer_financing")?.value||"Not specified",cont=document.getElementById("d_contingencies")?.value||"Not specified",dp=price>0?Math.max(0,Math.min(100,down/price)):0;ow.innerHTML=`<div class="offerPackageHeader"><div><div class="sectionTitle" style="margin:0">Offer Package — Legal Offer Form Worksheet</div><div class="muted" style="margin-top:4px">Review the offer details below, then print or prepare the email.</div></div><div class="offerActions"><button class="secondary" onclick="printPurchaseOfferPackage()">Print / Save PDF</button><button class="secondary" onclick="emailPurchaseOfferPackage()">Email Offer Package</button></div></div><div class="offerPackageGrid"><div><span class="muted">Offer price</span><strong>${money2(working)}</strong></div><div><span class="muted">Earnest money</span><strong>${money2(earnest)}</strong></div><div><span class="muted">Due diligence</span><strong>${dd} days</strong></div><div><span class="muted">Closing</span><strong>${cd} days</strong></div><div><span class="muted">Financing</span><strong>${escapeHtml(ft)}</strong></div><div><span class="muted">Estimated total cash</span><strong>${money2(working?working*dp+close+rehab:0)}</strong></div></div><p class="muted" style="margin-top:10px"><b>Contingencies:</b> ${escapeHtml(cont)}</p>`;}
+}function renderOfferTemplatePreview(){
  const ow=document.getElementById("offerWorksheet"); if(!ow)return;
  const state=document.getElementById("d_offer_state")?.value||"TN";
  const template=document.getElementById("d_offer_template")?.value||"tn_residential";
