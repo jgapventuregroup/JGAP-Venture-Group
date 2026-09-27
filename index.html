@@ -49,6 +49,19 @@ nav .flipNav{font-weight:800;border:2px solid #111;background:#fff;}
 <div id="app"></div>
 <script>
 (function(){
+  var started=Date.now(), lastError='';
+  window.addEventListener('error',function(e){lastError=(e.error&&e.error.message)||e.message||'Unknown JavaScript error';});
+  window.addEventListener('unhandledrejection',function(e){lastError=(e.reason&&e.reason.message)||String(e.reason||'Promise rejected');});
+  setTimeout(function(){
+    var app=document.getElementById('app');
+    if(app && !app.children.length){
+      app.innerHTML='<div class="auth"><div class="panel"><h1>JGAP Venture Group</h1><p class="error">The app did not finish starting.</p><p style="font-size:13px">Startup error: '+String(lastError||'No startup error was reported. The app may be loading an outdated deployment.') .replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];})+'</p><p class="muted" style="font-size:12px">This recovery screen is built into the app so a startup failure can be diagnosed without losing your data.</p></div></div>';
+    }
+  },7000);
+})();
+</script>
+<script>
+(function(){
   const KEY='jgap_left_nav_order_v1';
   const DEFAULTS=["navDeals","navRadar","navLeads","navMoney","navDashboard","navProperties","navVendors","navRepairs","navProjects","navLaundromat","navFinances","navDocuments","navLearningBook","navNotes","navTasks","navReports","navInvestments","navUsers"];
   const labels={
