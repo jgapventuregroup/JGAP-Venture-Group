@@ -46,7 +46,11 @@
   }
   function esc(v){return escapeHtml(String(v??''));}
   function rowText(r){return [r.name,r.property_address,r.property_type,r.status,r.neighborhood].map(v=>String(v||'').toLowerCase()).join(' ');}
-  function normalizedStatus(r){return String(r.status||'').toLowerCase()==='closed'?'sold':'for_sale';}
+  function normalizedStatus(r){
+    const s=String(r.status||'').toLowerCase().trim();
+    if(['sold','closed','sale closed','sold - closed'].includes(s))return 'sold';
+    return 'for_sale';
+  }
   function neighborhoodFor(r){if(r.neighborhood)return String(r.neighborhood).trim();const a=String(r.property_address||'').toLowerCase();if(a.includes('kingsport'))return 'Kingsport';if(a.includes('bristol'))return 'Bristol';if(a.includes('bluff city'))return 'Bluff City';if(a.includes('johnson city'))return 'Johnson City';if(a.includes('gray'))return 'Gray';if(a.includes('elizabet'))return 'Elizabethton';return 'Other';}
   function statusLabel(s){return String(s||'lead').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase());}
 
@@ -128,6 +132,7 @@
         'Type: '+esc(r.property_type||'Not entered')+'<br>'+
         'Status: '+esc(statusLabel(r.status))+
         (point.approximate?'<br><span style="color:#667085;font-size:12px">Approximate city location</span>':'');
+      marker.__jgapDealId=r.id;
       marker.bindPopup(popup);
       marker.on('click',()=>selectRow(r.id,true));
       markers.push(marker);
@@ -160,6 +165,12 @@
       return (!q||text.includes(q))&&isType&&isStatus&&isNeighborhood&&isPrice&&isUnits;
     });
     const count=document.getElementById('marketMapCount');
+    const visibleIds=new Set(rows.map(r=>String(r.id)));
+    markers.forEach(m=>{
+      const visible=visibleIds.has(String(m.__jgapDealId));
+      m.setStyle({opacity:visible?1:0,fillOpacity:visible?.9:0});
+      if(!visible && m.isPopupOpen())m.closePopup();
+    });
     if(count)count.textContent=rows.length+' deal'+(rows.length===1?'':'s')+' shown';
     if(!rows.length){
       host.innerHTML='<div class="card"><b>No matching JGAP deals.</b><p class="muted">Change the filters or add a property to the Deal Pipeline.</p></div>';
