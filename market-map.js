@@ -289,6 +289,24 @@
       }).filter(x=>x.properties>0);
       if(entries.length)neighborhoodWindowRows.push({days,entries});
     });
+    const propertyWindowRows=[];
+    [30,90,180,365].forEach(days=>{
+      const cutoff=Date.now()-days*86400000;
+      const entries=[];
+      Object.values(byDeal).forEach(h=>{
+        if(h.length<2)return;
+        const last=h[h.length-1]; let base=null;
+        for(let j=h.length-1;j>=0;j--){if(new Date(h[j].recorded_at).getTime()<=cutoff){base=h[j];break;}}
+        if(!base||base===last)return;
+        const fp=Number(base.price||0),lp=Number(last.price||0),fr=Number(base.monthly_rent||0),lr=Number(last.monthly_rent||0);
+        if(fp<=0||lp<=0)return;
+        entries.push({name:String(last.address||last.property_name||last.deal_name||last.deal_id),price:(lp-fp)/fp*100,rent:fr>0&&lr>0?(lr-fr)/fr*100:null});
+      });
+      if(entries.length)propertyWindowRows.push({days,entries});
+    });
+    const propertyWindowTable=propertyWindowRows.length
+      ? '<div style="margin-top:14px;border:1px solid #e5e7eb;border-radius:8px;background:#fff"><button type="button" class="secondary" style="width:100%;margin:0;text-align:left;border:0;border-radius:8px;padding:10px 12px;font-weight:700" onclick="toggleMarketPropertyWindows(this)">Property growth by time period <span class="muted" style="font-weight:400;font-size:11px">▼ Open</span></button><div style="display:none;padding:0 12px 12px"><div class="muted" style="font-size:12px;margin:4px 0 8px">Only properties with an actual observation at or before the selected cutoff are included.</div>'+propertyWindowRows.map(w=>'<div style="font-weight:700;margin:12px 0 6px">'+w.days+' days</div><div style="overflow:auto"><table class="marketGrowthTable"><thead><tr><th>Property</th><th>Observed Price Change</th><th>Observed Rent Change</th></tr></thead><tbody>'+w.entries.map(x=>'<tr><td><b>'+esc(x.name)+'</b></td><td class="num">'+pct(x.price)+'</td><td class="num">'+pct(x.rent)+'</td></tr>').join('')+'</tbody></table></div>').join('')+'</div></div>'
+      : '';
     const neighborhoodDetailGroups={};
     Object.values(byDeal).forEach(h=>{
       if(h.length<2)return;
@@ -313,7 +331,7 @@
     const recordList=propertyRows.length?'<div style="margin-top:12px;border:1px solid #e5e7eb;border-radius:8px;background:#fff"><button type="button" class="secondary" style="width:100%;margin:0;text-align:left;border:0;border-radius:8px;padding:10px 12px;font-weight:700" onclick="toggleMarketSnapshotList(this)">Record a snapshot <span class="muted" style="font-weight:400;font-size:11px">▼ Open</span></button><div class="marketSnapshotListBody" style="display:none;padding:0 12px 12px"><div class="muted" style="font-size:12px;margin:4px 0 8px">Choose a tracked property. Its current price, rent, status, units, and neighborhood will be ready to record.</div>'+propertyRows.map(r=>'<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #eef1f5"><span><b>'+esc(r.name||r.property_address||'JGAP Deal')+'</b><br><span class="muted" style="font-size:11px">'+esc(r.property_address||'Address not entered')+'</span></span><button class="secondary" type="button" data-snapshot-deal-id="'+r.id+'" style="margin:0" onclick="recordQuickMarketSnapshot(\''+String(r.id).replace(/'/g,"\\'")+'\',this)">Record Snapshot</button></div>').join('')+'</div></div>':'<div class="muted" style="margin-top:10px">No tracked properties are available yet.</div>';
     if(!real){host.innerHTML='<div class="muted">Growth tracking is ready. Use the buttons below to select a tracked property and record its first snapshot. JGAP will calculate growth after a second observation.</div>'+recordList;return;}
     if(!rows.length){host.innerHTML='<div class="muted">'+real+' real market snapshot'+(real===1?'':'s')+' recorded, but no property has two observations yet. Select a property below and record another snapshot later to establish a growth trend.</div>'+recordList;return;}
-    host.innerHTML='<div class="muted" style="font-size:12px;margin-bottom:8px">Growth uses distinct JGAP market observations. Repeated identical snapshots are ignored for growth calculations, while the original records remain stored.</div>'+timeWindowTable+neighborhoodWindowTable+neighborhoodDetailTable+'<div style="overflow:auto"><table class="marketGrowthTable"><thead><tr><th>Neighborhood</th><th>Properties with History</th><th>Snapshots</th><th>Current Avg Price</th><th>Price Change</th><th>Current Avg Rent</th><th>Rent Change</th><th>Direction</th></tr></thead><tbody>'+rows.map(g=>{const p=avg(g.prices),r=avg(g.rents),ap=avg(g.latestPrices),ar=avg(g.latestRents);return '<tr><td><b>'+esc(g.name)+'</b></td><td class="num">'+g.properties+'</td><td class="num">'+g.snapshots+'</td><td class="num">'+(ap===null?'—':money(ap))+'</td><td class="num">'+pct(p)+'</td><td class="num">'+(ar===null?'—':money(ar))+'</td><td class="num">'+pct(r)+'</td><td>'+direction(p,r)+'</td></tr>';}).join('')+'</tbody></table></div>'+propertyGrowthTable+recordList;
+    host.innerHTML='<div class="muted" style="font-size:12px;margin-bottom:8px">Growth uses distinct JGAP market observations. Repeated identical snapshots are ignored for growth calculations, while the original records remain stored.</div>'+timeWindowTable+neighborhoodWindowTable+propertyWindowTable+neighborhoodDetailTable+'<div style="overflow:auto"><table class="marketGrowthTable"><thead><tr><th>Neighborhood</th><th>Properties with History</th><th>Snapshots</th><th>Current Avg Price</th><th>Price Change</th><th>Current Avg Rent</th><th>Rent Change</th><th>Direction</th></tr></thead><tbody>'+rows.map(g=>{const p=avg(g.prices),r=avg(g.rents),ap=avg(g.latestPrices),ar=avg(g.latestRents);return '<tr><td><b>'+esc(g.name)+'</b></td><td class="num">'+g.properties+'</td><td class="num">'+g.snapshots+'</td><td class="num">'+(ap===null?'—':money(ap))+'</td><td class="num">'+pct(p)+'</td><td class="num">'+(ar===null?'—':money(ar))+'</td><td class="num">'+pct(r)+'</td><td>'+direction(p,r)+'</td></tr>';}).join('')+'</tbody></table></div>'+propertyGrowthTable+recordList;
   }
 
   function distanceMiles(a,b){
@@ -349,6 +367,7 @@
       '<div style="display:flex;gap:8px;align-items:end;margin-top:8px;flex-wrap:wrap"><label style="font-size:12px;flex:1;min-width:180px">Neighborhood<input id="marketHistoryNeighborhood" value="'+esc(neighborhoodFor(row))+'"></label><button class="primary" type="button" onclick="recordMarketSnapshot()">Record Snapshot</button><span id="marketHistorySaveStatus" class="muted" style="font-size:11px"></span></div>'+
       '<div style="overflow:auto;margin-top:10px"><table class="marketHistoryTable"><thead><tr><th>Date</th><th>Price</th><th>Rent</th><th>Status</th><th>Units</th><th>Neighborhood</th></tr></thead><tbody>'+ (rows||'<tr><td colspan="6" class="muted">No market snapshots recorded yet.</td></tr>')+'</tbody></table></div></div>';
   }
+  window.toggleMarketPropertyWindows=function(button){const body=button&&button.nextElementSibling;if(!body)return;const open=body.style.display!=='none';body.style.display=open?'none':'block';const span=button.querySelector('span');if(span)span.textContent=open?'▼ Open':'▲ Close';};
   window.toggleMarketNeighborhoodDetail=function(button){const body=button&&button.nextElementSibling;if(!body)return;const open=body.style.display!=='none';body.style.display=open?'none':'block';const span=button.querySelector('span');if(span)span.textContent=open?'▼ Open':'▲ Close';};
   window.toggleMarketSnapshotList=function(button){const body=button&&button.nextElementSibling;if(!body)return;const open=body.style.display!=='none';body.style.display=open?'none':'block';const span=button.querySelector('span');if(span)span.textContent=open?'▼ Open':'▲ Close';};
   window.toggleMarketPropertyGrowth=function(button){const body=button&&button.nextElementSibling;if(!body)return;const open=body.style.display!=='none';body.style.display=open?'none':'block';const span=button.querySelector('span');if(span)span.textContent=open?'▼ Open':'▲ Close';};
