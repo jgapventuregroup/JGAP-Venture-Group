@@ -59,7 +59,7 @@ window.renderAlertsPage=async function(){
   return alertCard("New market observation",'<b>'+esc(name)+'</b> — '+esc(h.neighborhood||d.neighborhood||"Unassigned")+'<br>Price: <b>'+money(h.price)+'</b> · Rent: <b>'+money(h.monthly_rent)+'/mo</b>','Recorded '+new Date(h.recorded_at).toLocaleString(),"new");
  }).filter(Boolean);
  const growthCards=growth.slice(0,12).map(x=>{
-  const d=dealMap[x.id],name=d?.address||"JGAP Property";
+  const d=dealMap[x.id],name=d?.property_address||d?.name||"JGAP Property";
   return alertCard((x.field==="price"?"Price movement":"Rent movement"),'<b>'+esc(name)+'</b> — '+(x.field==="price"?money(x.older.price)+" → "+money(x.newest.price):money(x.older.monthly_rent)+"/mo → "+money(x.newest.monthly_rent)+"/mo")+'<br>Observed change: <b>'+pct(x.ch)+'</b>','Based on recorded JGAP observations from '+new Date(x.older.recorded_at).toLocaleDateString()+" to "+new Date(x.newest.recorded_at).toLocaleDateString(),"growth");
  }).filter(Boolean);
  document.getElementById("jgapAlertsStatus").innerHTML=
