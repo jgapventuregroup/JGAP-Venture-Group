@@ -6,7 +6,7 @@ function pct(v){const n=Number(v);return Number.isFinite(n)?(n>0?"+":"")+n.toFix
 function alertCard(title,body,meta,kind){return '<div class="panel" style="margin:0"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><h3 style="margin:0 0 6px">'+esc(title)+'</h3><div>'+body+'</div></div><span style="font-size:12px;padding:4px 8px;border-radius:999px;background:'+(kind==="growth"?"#eef8ef":"#eef5ff")+'">'+(kind==="growth"?"Growth":"New observation")+'</span></div><div class="muted" style="margin-top:8px;font-size:12px">'+esc(meta)+'</div></div>';}
 window.renderAlertsPage=async function(){
  const app=document.getElementById("app"); if(!app)return;
- app.innerHTML='<div class="pageHead"><div><h1>🔔 Alerts</h1><p class="muted">JGAP Phase 7 — alerts based on recorded property and market activity.</p></div><div><button type="button" class="secondary" onclick="render()">← Dashboard</button></div></div><div class="panel"><div id="jgapAlertsStatus">Loading alerts…</div></div>';
+ app.innerHTML='<div class="pageHead"><div><h1>🔔 Alerts</h1><p class="muted">JGAP Phase 7 — alerts based on recorded property and market activity.</p></div><div><button type="button" class="secondary" onclick="render()">← Dashboard</button></div></div><div class="panel"><div id="jgapAlertsStatus">Starting Alerts…</div></div>';
  async function alertQuery(promise,label){
   return await Promise.race([
     promise,
