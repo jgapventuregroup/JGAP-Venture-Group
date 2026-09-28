@@ -64,7 +64,7 @@ window.renderAlertsPage=async function(){
  const observedMin=observedPrices.length?observedPrices[0]:null;
  const observedMax=observedPrices.length?observedPrices[observedPrices.length-1]:null;
  const targetStates=jgapStates.length?jgapStates:["TN"];
- const targetRadar=recentRadar.filter(r=>String(r.property_type||"").toLowerCase()==="multifamily" && targetStates.includes(String(r.state||"").trim().toUpperCase()));
+ const targetRadar=recentRadar.filter(r=>String(r.property_type||"").toLowerCase()==="multifamily" && targetStates.includes(String(r.state||"").trim().toUpperCase()));\n const targetRadarCount=targetRadar.length;
  const observedPriceMatches=targetRadar.filter(r=>Number(r.asking_price)>0 && observedMin!==null && observedMax!==null && Number(r.asking_price)>=observedMin && Number(r.asking_price)<=observedMax);
  observedPriceMatches.slice(0,12).forEach(r=>{
   const name=r.name||r.address||"Target-range opportunity";
@@ -77,7 +77,7 @@ window.renderAlertsPage=async function(){
   automaticCards.push(alertCard("🎯 JGAP target match",'<b>'+esc(name)+'</b><br>'+esc(loc)+(r.units!=null?' · Units: <b>'+esc(r.units)+'</b>':'')+' · Asking price: <b>'+money(r.asking_price)+'</b>','Matches JGAP target profile: '+targetStates.join(", ")+' multifamily',"new"));
  });
 
- recentRadar.slice(0,12).forEach(r=>{
+ targetRadar.slice(0,12).forEach(r=>{
   const name=r.name||r.address||"Incoming multifamily opportunity";
   const loc=[r.city,r.state,r.postal_code].filter(Boolean).join(", ")||r.address||"Location not provided";
   const body='<b>'+esc(name)+'</b><br>'+esc(loc)+(r.units!=null?' · Units: <b>'+esc(r.units)+'</b>':'')+' · Asking price: <b>'+money(r.asking_price)+'</b>';
