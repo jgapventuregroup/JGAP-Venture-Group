@@ -487,7 +487,7 @@
       </div>
       <div class="panel" style="margin-bottom:16px">
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">
-          <div><b>Growth Tracking</b><div class="muted" style="font-size:12px;margin-top:3px">Phase 6: track neighborhood price and rent changes over time from JGAP's recorded market snapshots.</div></div><span class="pill">Phase 6</span>
+          <div><b>Growth Tracking</b><div class="muted" style="font-size:12px;margin-top:3px">Phase 6: track neighborhood price and rent changes over time from JGAP recorded market snapshots.</div></div><span class="pill">Phase 6</span>
         </div><div id="marketGrowthTracking" style="margin-top:10px"><div class="muted">Loading growth history…</div></div>
       </div>
       <div class="panel" style="margin-bottom:16px">
