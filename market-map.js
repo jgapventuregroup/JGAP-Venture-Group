@@ -295,9 +295,6 @@
       if(entries.length)neighborhoodWindowRows.push({days,entries});
     });
     const latestNeighborhoodWindow=neighborhoodWindowRows[0]?.entries||[];
-    const growthDirectionCards=latestNeighborhoodWindow.length
-      ? '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px">'+latestNeighborhoodWindow.map(g=>{const vals=[g.p,g.r].filter(v=>v!==null),overall=vals.length?vals.reduce((s,v)=>s+v,0)/vals.length:null,dir=overall===null?'→ Building history':overall>.5?'↑ Increasing':overall<-.5?'↓ Decreasing':'→ Stable',detail=overall===null?'':((overall>0?'+':'')+overall.toFixed(1)+'% combined movement');return '<div class="marketIntelBox"><div class="muted" style="font-size:11px">'+esc(g.name)+'</div><b style="font-size:15px">'+dir+'</b><div style="font-size:12px;margin-top:3px">'+detail+'</div><div class="muted" style="font-size:11px;margin-top:3px">'+g.properties+' properties with history · '+neighborhoodWindowRows[0].days+'-day data</div></div>';}).join('')+'</div>'
-      : '';
     const neighborhoodDetailGroups={};
     Object.values(byDeal).forEach(h=>{
       if(h.length<2)return;
