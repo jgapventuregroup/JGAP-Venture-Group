@@ -12,7 +12,6 @@
     'johnson city, tn':[36.313,-82.353],
     'bluff city, tn':[36.474,-82.260],
     'gray, tn':[36.418,-82.477],
-    'elizabethon, tn':[36.349,-82.211],
     'elizabethton, tn':[36.349,-82.211]
   };
   let map=null;
@@ -49,7 +48,8 @@
   function normalizedStatus(r){
     const s=String(r.status||'').toLowerCase().trim();
     if(['sold','closed','sale closed','sold - closed'].includes(s))return 'sold';
-    return 'for_sale';
+    if(['active','for sale','listed','lead','analyzing','offer','under contract','pending'].includes(s))return 'for_sale';
+    return s==='sold'?'sold':'for_sale';
   }
   function neighborhoodFor(r){if(r.neighborhood)return String(r.neighborhood).trim();const a=String(r.property_address||'').toLowerCase();if(a.includes('kingsport'))return 'Kingsport';if(a.includes('bristol'))return 'Bristol';if(a.includes('bluff city'))return 'Bluff City';if(a.includes('johnson city'))return 'Johnson City';if(a.includes('gray'))return 'Gray';if(a.includes('elizabet'))return 'Elizabethton';return 'Other';}
   function statusLabel(s){return String(s||'lead').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase());}
@@ -88,7 +88,7 @@
     if(a.includes('bluff city'))return 'bluff city, tn';
     if(a.includes('johnson city'))return 'johnson city, tn';
     if(a.includes('gray'))return 'gray, tn';
-    if(a.includes('elizabet'))return 'elizabethon, tn';
+    if(a.includes('elizabet'))return 'elizabethton, tn';
     return 'bristol, tn';
   }
   async function geocodeAddress(address){
