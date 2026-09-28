@@ -50,7 +50,17 @@ window.renderAlertsPage=async function(){
   }
  });
  const automaticCards=[];
+ const improvingNeighborhoods={};
+ neighborhoodAlerts.forEach(x=>{improvingNeighborhoods[String(x.n).trim().toLowerCase()]=x;});
  newMultifamily.slice(0,12).forEach(d=>{
+  const name=d.property_address||d.name||"JGAP Property";
+  const n=String(d.neighborhood||"").trim();
+  const improving=improvingNeighborhoods[n.toLowerCase()];
+  if(improving){
+   automaticCards.push(alertCard("🚨 New multifamily in improving neighborhood",'<b>'+esc(name)+'</b><br>'+esc(n)+' — observed rent change: <b>'+pct(improving.change)+'</b>','New JGAP property; neighborhood has at least 365 days of recorded rent history',"growth"));
+  }
+  automaticCards.push(alertCard("🔔 New multifamily property",'<b>'+esc(name)+'</b><br>Asking price: <b>'+money(d.asking_price)+'</b> · Status: <b>'+esc(d.status||"—")+'</b>','Added to JGAP '+new Date(d.created_at).toLocaleString(),"new"));
+ });
   const name=d.property_address||d.name||"JGAP Property";
   automaticCards.push(alertCard("🔔 New multifamily property",'<b>'+esc(name)+'</b><br>Asking price: <b>'+money(d.asking_price)+'</b> · Status: <b>'+esc(d.status||"—")+'</b>','Added to JGAP '+new Date(d.created_at).toLocaleString(),"new"));
  });
@@ -88,8 +98,8 @@ window.renderAlertsPage=async function(){
   '<div class="panel" style="margin:0"><div class="muted">Recent observations</div><h2 style="margin:4px 0">'+newObs.length+'</h2><div class="muted">last 7 days</div></div>'+
   '<div class="panel" style="margin:0"><div class="muted">Growth signals</div><h2 style="margin:4px 0">'+growth.length+'</h2><div class="muted">5%+ observed movement</div></div>'+
   '<div class="panel" style="margin:0"><div class="muted">Properties with history</div><h2 style="margin:4px 0">'+Object.keys(byDeal).length+'</h2><div class="muted">recorded market history</div></div></div>'+
-  '<h3>Automatic Alerts</h3><div style="display:grid;gap:10px">'+(automaticCards.length?automaticCards.join(""):'<div class="muted">No automatic alerts triggered right now.</div>')+'</div><div class="panel" style="margin:14px 0 22px;background:#fbfcfe"><b>Active rules</b><ul style="margin:8px 0 0 18px"><li>New multifamily property added to JGAP within the last 7 days.</li><li>Neighborhood multifamily rent increases of 8%+ with at least 365 days of recorded history.</li></ul><div class="muted" style="margin-top:8px">Rules use recorded JGAP data only. No estimated or annualized short-term trends.</div></div><h3>Recent Market Activity</h3><div style="display:grid;gap:10px">'+(recentCards.length?recentCards.join(""):'<div class="muted">No observations recorded in the last 7 days.</div>')+'</div>'+
+  '<h3>Automatic Alerts</h3><div style="display:grid;gap:10px">'+(automaticCards.length?automaticCards.join(""):'<div class="muted">No automatic alerts triggered right now.</div>')+'</div><div class="panel" style="margin:14px 0 22px;background:#fbfcfe"><b>Active rules</b><ul style="margin:8px 0 0 18px"><li>New multifamily property added to JGAP within the last 7 days.</li><li>Neighborhood multifamily rent increases of 8%+ with at least 365 days of recorded history.</li><li>New multifamily property whose neighborhood is showing that recorded rent-growth signal.</li></ul><div class="muted" style="margin-top:8px">Rules use recorded JGAP data only. No estimated or annualized short-term trends.</div></div><h3>Recent Market Activity</h3><div style="display:grid;gap:10px">'+(recentCards.length?recentCards.join(""):'<div class="muted">No observations recorded in the last 7 days.</div>')+'</div>'+
   '<h3 style="margin-top:22px">Growth Signals</h3><div style="display:grid;gap:10px">'+(growthCards.length?growthCards.join(""):'<div class="muted">No 5%+ recorded price or rent movement yet.</div>')+'</div>'+
-  '<div class="panel" style="margin-top:22px;background:#f8fbff"><b>Phase 7 foundation</b><div class="muted" style="margin-top:5px">These are recorded-data alerts only. Listing-source alerts, radius rules, and neighborhood-improvement triggers will be added in later Phase 7 steps.</div></div>';
+  '<div class="panel" style="margin-top:22px;background:#f8fbff"><b>Phase 7 foundation</b><div class="muted" style="margin-top:5px">These are recorded-data alerts only. Listing-source alerts and radius-based alerts will be added in later Phase 7 steps. This rule uses JGAP neighborhood names until property coordinates are available.</div></div>';
 };
 })();
