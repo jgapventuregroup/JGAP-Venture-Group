@@ -79,9 +79,18 @@ window.renderAlertsPage=function(){
   var byNeighborhood={};
   history.forEach(function(h){var n=String(h.neighborhood||"").trim();if(!n)return;(byNeighborhood[n]||(byNeighborhood[n]=[])).push(h);});
   Object.keys(byNeighborhood).forEach(function(n){var rows=byNeighborhood[n];if(rows.length<2)return;var first=rows[0],last=rows[rows.length-1],days=(new Date(last.recorded_at)-new Date(first.recorded_at))/86400000;if(days<365)return;var old=Number(first.monthly_rent),now=Number(last.monthly_rent);if(isFinite(old)&&old>0&&isFinite(now)){var change=(now-old)/old*100;if(change>=8)growth.push(card("📈 Neighborhood rent growth","<b>"+esc(n)+"</b><br>Observed rent change: <b>"+pct(change)+"</b>","At least 365 days of recorded JGAP history"));}});
+  var recent=deals.slice(0,10);
+  var recentCards=recent.map(function(d){return card("🧭 Recent Market Activity",'<b>'+esc(d.property_address||d.name||"JGAP property")+'</b><br>Asking price: <b>'+money(d.asking_price)+'</b> · Type: <b>'+esc(d.property_type||"—")+'</b> · Status: <b>'+esc(d.status||"—")+'</b>',"Recorded "+new Date(d.created_at).toLocaleString());});
+  var historyDeals={};
+  history.forEach(function(h){historyDeals[h.deal_id]=true;});
+  var historyCards=multi.filter(function(d){return historyDeals[d.id];}).slice(0,10).map(function(d){return card("📊 Property with Market History",'<b>'+esc(d.property_address||d.name||"JGAP property")+'</b><br>Asking price: <b>'+money(d.asking_price)+'</b> · Units: <b>'+esc(d.units==null?"—":d.units)+'</b>',"Historical observations available in JGAP");});
+  var priceRange=minPrice!==null&&maxPrice!==null?"Current JGAP multifamily asking-price range: <b>"+money(minPrice)+" to "+money(maxPrice)+"</b>":"Current JGAP multifamily asking-price range: <b>Not enough asking-price data yet</b>";
   var html='<div class="sectionTitle">Active Alerts</div><div style="display:grid;gap:10px">'+(alerts.length?alerts.join(""):'<div class="muted">No new targeted multifamily opportunities right now.</div>')+'</div>';
+  html+='<h3 style="margin-top:22px">Recent Market Activity</h3><div style="display:grid;gap:10px">'+(recentCards.length?recentCards.join(""):'<div class="muted">No recent market activity recorded yet.</div>')+'</div>';
   html+='<h3 style="margin-top:22px">Growth Signals</h3><div style="display:grid;gap:10px">'+(growth.length?growth.join(""):'<div class="muted">No 8%+ recorded rent-growth signals yet.</div>')+'</div>';
-  html+='<h3 style="margin-top:22px">Active Rules</h3><div class="muted">Target market: Tennessee · Northeast Tennessee city targeting · Multifamily only · Deal Radar priority scoring · JGAP market-history signals.</div>';
+  html+='<h3 style="margin-top:22px">Properties with History</h3><div style="display:grid;gap:10px">'+(historyCards.length?historyCards.join(""):'<div class="muted">No properties have enough market-history observations yet.</div>')+'</div>';
+  html+='<h3 style="margin-top:22px">Asking-Price Comparison</h3><div class="panel">'+priceRange+'</div>';
+  html+='<h3 style="margin-top:22px">Active Rules</h3><div class="muted">Target market: Tennessee · Northeast Tennessee city targeting · Multifamily only · Deal Radar priority scoring · JGAP market-history signals · Rent growth requires at least 365 days of recorded history.</div>';
   status.className="panel";status.innerHTML=html;
   Array.prototype.forEach.call(status.querySelectorAll(".radar-analyze-btn"),function(btn){
     btn.addEventListener("click",function(){window.openRadarInAnalyzer(btn.getAttribute("data-radar-id"));});
