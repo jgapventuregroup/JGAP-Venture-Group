@@ -165,6 +165,17 @@
       return (!q||text.includes(q))&&isType&&isStatus&&isNeighborhood&&isPrice&&isUnits;
     });
     const count=document.getElementById('marketMapCount');
+    const summary=document.getElementById('marketMapSummary');
+    if(summary){
+      const priced=rows.map(r=>Number(r.asking_price||r.purchase_price||0)).filter(v=>v>0);
+      const units=rows.map(r=>Number(r.units||0)).filter(v=>v>0);
+      const ppu=rows.map(r=>{const p=Number(r.asking_price||r.purchase_price||0),u=Number(r.units||0);return p>0&&u>0?p/u:0}).filter(v=>v>0);
+      const avg=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:0;
+      summary.innerHTML='<div><span>Properties</span><b>'+rows.length+'</b></div>'+
+        '<div><span>Avg Asking</span><b>'+money(avg(priced))+'</b></div>'+
+        '<div><span>Avg Units</span><b>'+((avg(units)||0).toFixed(1))+'</b></div>'+
+        '<div><span>Avg Price / Unit</span><b>'+money(avg(ppu))+'</b></div>';
+    }
     const visibleIds=new Set(rows.map(r=>String(r.id)));
     markers.forEach(m=>{
       const visible=visibleIds.has(String(m.__jgapDealId));
@@ -525,6 +536,13 @@ const neighborhoodWindowTable=neighborhoodWindowRows.length
       </div>
       <div class="panel" style="margin-bottom:16px">
         <div id="marketSnapshotToast" style="position:fixed;top:18px;right:18px;z-index:99999;display:none;padding:13px 18px;border-radius:10px;background:#1f7a3d;color:#fff;font-weight:800;box-shadow:0 4px 18px #0003">✓ SNAPSHOT RECORDED</div><div id="marketSnapshotNotice" class="panel" style="margin-top:16px;display:none;background:#f3fbf5;border:1px solid #b7dfc0;color:#245b2d;font-weight:600"></div><div><b>Property Intelligence Workspace</b><div id="marketMapSelectedDetails" style="margin-top:10px"><div class="muted">Select a property on the map or from the list to see its JGAP details.</div></div></div>
+      </div>
+      <div class="panel" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+          <div><b>Filtered Market Snapshot</b><div class="muted" style="font-size:12px;margin-top:3px">Updates automatically as you change the Market Map filters.</div></div>
+          <span id="marketMapCount" class="pill">0 deals shown</span>
+        </div>
+        <div id="marketMapSummary" class="stats" style="grid-template-columns:repeat(4,1fr);margin-top:12px"></div>
       </div>
       <div class="marketMapWrap">
         <div class="panel" style="padding:10px"><div id="jgapMarketMap" class="marketMapCanvas"><div style="padding:20px" class="muted">Loading map…</div></div></div>
