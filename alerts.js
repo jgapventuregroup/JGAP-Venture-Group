@@ -8,7 +8,7 @@ window.renderAlertsPage=async function(){
  const app=document.getElementById("app"); if(!app)return;
  app.innerHTML='<div class="panel"><h2>🔔 Alerts</h2><p class="muted">JGAP Phase 7 — alerts based on recorded property and market activity.</p><div id="jgapAlertsStatus">Loading alerts…</div></div>';
  const [{data:deals,error:de},{data:history,error:he}]=await Promise.all([
-  sb.from("deals").select("id,address,city,state,deal_type,status,asking_price,monthly_rent,units,neighborhood,updated_at,created_at").order("updated_at",{ascending:false}),
+  sb.from("deals").select("id,name,property_address,property_county,offer_state,property_type,status,asking_price,monthly_rent,units,neighborhood,created_at").order("created_at",{ascending:false}),
   sb.from("market_history").select("deal_id,recorded_at,price,monthly_rent,neighborhood").order("recorded_at",{ascending:false})
  ]);
  if(de||he){document.getElementById("jgapAlertsStatus").innerHTML='<div class="error">Could not load alert data.</div>';return;}
@@ -30,7 +30,7 @@ window.renderAlertsPage=async function(){
  const dealMap={}; (deals||[]).forEach(d=>dealMap[d.id]=d);
  const recentCards=newObs.slice(0,12).map(h=>{
   const d=dealMap[h.deal_id]; if(!d)return "";
-  const name=d.address||"JGAP Property";
+  const name=d.property_address||d.name||"JGAP Property";
   return alertCard("New market observation",'<b>'+esc(name)+'</b> — '+esc(h.neighborhood||d.neighborhood||"Unassigned")+'<br>Price: <b>'+money(h.price)+'</b> · Rent: <b>'+money(h.monthly_rent)+'/mo</b>','Recorded '+new Date(h.recorded_at).toLocaleString(),"new");
  }).filter(Boolean);
  const growthCards=growth.slice(0,12).map(x=>{
