@@ -217,7 +217,18 @@
     if(error){console.error('JGAP Market Growth load failed:',error);host.innerHTML='<div class="error">Growth history could not be loaded: '+esc(error.message||'database error')+'</div>';return;}
     const byDeal={};
     (data||[]).forEach(h=>{if(!h.recorded_at)return;(byDeal[h.deal_id]||(byDeal[h.deal_id]=[])).push(h);});
-    Object.values(byDeal).forEach(h=>h.sort((a,b)=>new Date(a.recorded_at)-new Date(b.recorded_at)));
+    Object.keys(byDeal).forEach(k=>{
+      byDeal[k].sort((a,b)=>new Date(a.recorded_at)-new Date(b.recorded_at));
+      byDeal[k]=byDeal[k].filter((h,i,arr)=>{
+        if(i===0)return true;
+        const p=arr[i-1];
+        return String(h.price??'')!==String(p.price??'') ||
+          String(h.monthly_rent??'')!==String(p.monthly_rent??'') ||
+          String(h.status??'')!==String(p.status??'') ||
+          String(h.units??'')!==String(p.units??'') ||
+          String(h.neighborhood??'')!==String(p.neighborhood??'');
+      });
+    });
     const groups={};
     Object.values(byDeal).forEach(h=>{if(h.length<2)return;const first=h[0],last=h[h.length-1],n=String(last.neighborhood||first.neighborhood||'Other').trim()||'Other';if(!groups[n])groups[n]={name:n,properties:0,snapshots:0,prices:[],rents:[],latestPrices:[],latestRents:[]};const g=groups[n];g.properties++;g.snapshots+=h.length;const fp=Number(first.price||0),lp=Number(last.price||0),fr=Number(first.monthly_rent||0),lr=Number(last.monthly_rent||0);if(fp>0&&lp>0){g.prices.push((lp-fp)/fp*100);g.latestPrices.push(lp);}if(fr>0&&lr>0){g.rents.push((lr-fr)/fr*100);g.latestRents.push(lr);}});
     const real=Object.values(byDeal).reduce((s,h)=>s+h.length,0),rows=Object.values(groups).sort((a,b)=>a.name.localeCompare(b.name)),avg=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:null,pct=v=>v===null?'—':(v>0?'+':'')+v.toFixed(1)+'%';
@@ -260,7 +271,7 @@
     const recordList=propertyRows.length?'<div style="margin-top:12px"><b style="font-size:13px">Record a snapshot</b><div class="muted" style="font-size:12px;margin:4px 0 8px">Choose a tracked property. Its current price, rent, status, units, and neighborhood will be ready to record.</div>'+propertyRows.map(r=>'<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #eef1f5"><span><b>'+esc(r.name||r.property_address||'JGAP Deal')+'</b><br><span class="muted" style="font-size:11px">'+esc(r.property_address||'Address not entered')+'</span></span><button class="secondary" type="button" data-snapshot-deal-id="'+r.id+'" style="margin:0" onclick="recordQuickMarketSnapshot(\''+String(r.id).replace(/'/g,"\\'")+'\',this)">Record Snapshot</button></div>').join('')+'</div>':'<div class="muted" style="margin-top:10px">No tracked properties are available yet.</div>';
     if(!real){host.innerHTML='<div class="muted">Growth tracking is ready. Use the buttons below to select a tracked property and record its first snapshot. JGAP will calculate growth after a second observation.</div>'+recordList;return;}
     if(!rows.length){host.innerHTML='<div class="muted">'+real+' real market snapshot'+(real===1?'':'s')+' recorded, but no property has two observations yet. Select a property below and record another snapshot later to establish a growth trend.</div>'+recordList;return;}
-    host.innerHTML='<div class="muted" style="font-size:12px;margin-bottom:8px">Growth uses properties with at least two JGAP market snapshots. Initial baseline observations are included; missing history is never estimated.</div>'+timeWindowTable+'<div style="overflow:auto"><table class="marketGrowthTable"><thead><tr><th>Neighborhood</th><th>Properties with History</th><th>Snapshots</th><th>Current Avg Price</th><th>Price Change</th><th>Current Avg Rent</th><th>Rent Change</th><th>Direction</th></tr></thead><tbody>'+rows.map(g=>{const p=avg(g.prices),r=avg(g.rents),ap=avg(g.latestPrices),ar=avg(g.latestRents);return '<tr><td><b>'+esc(g.name)+'</b></td><td class="num">'+g.properties+'</td><td class="num">'+g.snapshots+'</td><td class="num">'+(ap===null?'—':money(ap))+'</td><td class="num">'+pct(p)+'</td><td class="num">'+(ar===null?'—':money(ar))+'</td><td class="num">'+pct(r)+'</td><td>'+direction(p,r)+'</td></tr>';}).join('')+'</tbody></table></div>'+propertyGrowthTable+recordList;
+    host.innerHTML='<div class="muted" style="font-size:12px;margin-bottom:8px">Growth uses distinct JGAP market observations. Repeated identical snapshots are ignored for growth calculations, while the original records remain stored.</div>'+timeWindowTable+'<div style="overflow:auto"><table class="marketGrowthTable"><thead><tr><th>Neighborhood</th><th>Properties with History</th><th>Snapshots</th><th>Current Avg Price</th><th>Price Change</th><th>Current Avg Rent</th><th>Rent Change</th><th>Direction</th></tr></thead><tbody>'+rows.map(g=>{const p=avg(g.prices),r=avg(g.rents),ap=avg(g.latestPrices),ar=avg(g.latestRents);return '<tr><td><b>'+esc(g.name)+'</b></td><td class="num">'+g.properties+'</td><td class="num">'+g.snapshots+'</td><td class="num">'+(ap===null?'—':money(ap))+'</td><td class="num">'+pct(p)+'</td><td class="num">'+(ar===null?'—':money(ar))+'</td><td class="num">'+pct(r)+'</td><td>'+direction(p,r)+'</td></tr>';}).join('')+'</tbody></table></div>'+propertyGrowthTable+recordList;
   }
 
   function distanceMiles(a,b){
