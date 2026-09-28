@@ -30,7 +30,7 @@ window.renderAlertsPage=async function(){
  }catch(e){he={message:e.message};}
  try{
    const r=await alertQuery(
-     sb.from("radar_opportunities").select("id,name,source,source_url,property_type,address,city,state,postal_code,units,asking_price,status,first_seen_at,last_seen_at").eq("status","new").order("first_seen_at",{ascending:false}).limit(100),
+     sb.from("radar_opportunities").select("id,name,source,source_url,property_type,address,city,state,postal_code,units,asking_price,cap_rate,dscr,status,first_seen_at,last_seen_at").eq("status","new").order("first_seen_at",{ascending:false}).limit(100),
      "Deal Radar query"
    );
    radar=r.data||[]; re=r.error||null;
