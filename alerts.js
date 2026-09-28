@@ -85,12 +85,17 @@ window.renderAlertsPage=function(){
   history.forEach(function(h){historyDeals[h.deal_id]=true;});
   var historyCards=multi.filter(function(d){return historyDeals[d.id];}).slice(0,10).map(function(d){return card("📊 Property with Market History",'<b>'+esc(d.property_address||d.name||"JGAP property")+'</b><br>Asking price: <b>'+money(d.asking_price)+'</b> · Units: <b>'+esc(d.units==null?"—":d.units)+'</b>',"Historical observations available in JGAP");});
   var priceRange=minPrice!==null&&maxPrice!==null?"Current JGAP multifamily asking-price range: <b>"+money(minPrice)+" to "+money(maxPrice)+"</b>":"Current JGAP multifamily asking-price range: <b>Not enough asking-price data yet</b>";
-  var html='<div class="sectionTitle">Active Alerts</div><div style="display:grid;gap:10px">'+(alerts.length?alerts.join(""):'<div class="muted">No new targeted multifamily opportunities right now.</div>')+'</div>';
-  html+='<h3 style="margin-top:22px">Recent Market Activity</h3><div style="display:grid;gap:10px">'+(recentCards.length?recentCards.join(""):'<div class="muted">No recent market activity recorded yet.</div>')+'</div>';
-  html+='<h3 style="margin-top:22px">Growth Signals</h3><div style="display:grid;gap:10px">'+(growth.length?growth.join(""):'<div class="muted">No 8%+ recorded rent-growth signals yet.</div>')+'</div>';
-  html+='<h3 style="margin-top:22px">Properties with History</h3><div style="display:grid;gap:10px">'+(historyCards.length?historyCards.join(""):'<div class="muted">No properties have enough market-history observations yet.</div>')+'</div>';
-  html+='<h3 style="margin-top:22px">Asking-Price Comparison</h3><div class="panel">'+priceRange+'</div>';
-  html+='<h3 style="margin-top:22px">Active Rules</h3><div class="muted">Target market: Tennessee · Northeast Tennessee city targeting · Multifamily only · Deal Radar priority scoring · JGAP market-history signals · Rent growth requires at least 365 days of recorded history.</div>';
+  function dropdown(title,body,open){
+    return '<details class="panel" style="margin:0"'+(open?' open':'')+'><summary style="cursor:pointer;font-weight:700;font-size:17px;padding:2px 0">'+title+' <span class="muted" style="float:right;font-size:12px">Click to '+(open?'collapse':'expand')+'</span></summary><div style="margin-top:14px">'+body+'</div></details>';
+  }
+  var html='<div style="display:grid;gap:10px">';
+  html+=dropdown("🚨 Active Alerts",'<div style="display:grid;gap:10px">'+(alerts.length?alerts.join(""):'<div class="muted">No new targeted multifamily opportunities right now.</div>')+'</div>',true);
+  html+=dropdown("🧭 Recent Market Activity",'<div style="display:grid;gap:10px">'+(recentCards.length?recentCards.join(""):'<div class="muted">No recent market activity recorded yet.</div>')+'</div>',false);
+  html+=dropdown("📈 Growth Signals",'<div style="display:grid;gap:10px">'+(growth.length?growth.join(""):'<div class="muted">No 8%+ recorded rent-growth signals yet.</div>')+'</div>',false);
+  html+=dropdown("📊 Properties with History",'<div style="display:grid;gap:10px">'+(historyCards.length?historyCards.join(""):'<div class="muted">No properties have enough market-history observations yet.</div>')+'</div>',false);
+  html+=dropdown("💰 Asking-Price Comparison",'<div class="panel" style="margin:0">'+priceRange+'</div>',false);
+  html+=dropdown("⚙️ Active Rules",'<div class="muted">Target market: Tennessee · Northeast Tennessee city targeting · Multifamily only · Deal Radar priority scoring · JGAP market-history signals · Rent growth requires at least 365 days of recorded history.</div>',false);
+  html+='</div>';
   status.className="panel";status.innerHTML=html;
   Array.prototype.forEach.call(status.querySelectorAll(".radar-analyze-btn"),function(btn){
     btn.addEventListener("click",function(){window.openRadarInAnalyzer(btn.getAttribute("data-radar-id"));});
