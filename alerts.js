@@ -64,11 +64,16 @@ window.renderAlertsPage=function(){
   var alerts=[];
   targetRadar.slice(0,12).forEach(function(r){
    var loc=[r.city,r.state,r.postal_code].filter(Boolean).join(", ")||r.address||"Location not provided";
-   var id=esc(r.id);
-   alerts.push(card("📡 New Deal Radar opportunity",'<b>'+esc(r.name||r.address||"Multifamily opportunity")+'</b><br>'+esc(loc)+(r.units!=null?" · Units: <b>"+esc(r.units)+"</b>":"")+" · Asking price: <b>"+money(r.asking_price)+'</b><div style="margin-top:10px"><button class="primary" type="button" data-radar-id="'+id+'" onclick="openRadarInAnalyzer(this.getAttribute(\'data-radar-id\'))">Analyze in Deal Analyzer</button>'+(r.source_url?'<a class="secondary" target="_blank" rel="noopener" href="'+esc(r.source_url)+'" style="margin-left:8px">Open Listing</a>':"")+'</div>',"Priority "+r.radarScore+"/100"+(r.radarReasons.length?" · "+r.radarReasons.join(" · "):""));
+   var body='<b>'+esc(r.name||r.address||"Multifamily opportunity")+'</b><br>'+esc(loc)+(r.units!=null?" · Units: <b>"+esc(r.units)+"</b>":"")+" · Asking price: <b>"+money(r.asking_price)+"</b>";
+   body+='<div style="margin-top:10px"><button class="primary radar-analyze-btn" type="button" data-radar-id="'+esc(r.id)+'">Analyze in Deal Analyzer</button>';
+   if(r.source_url) body+='<a class="secondary" target="_blank" rel="noopener" href="'+esc(r.source_url)+'" style="margin-left:8px">Open Listing</a>';
+   body+='</div>';
+   alerts.push(card("📡 New Deal Radar opportunity",body,"Priority "+r.radarScore+"/100"+(r.radarReasons.length?" · "+r.radarReasons.join(" · "):"")));
   });
   multi.slice(0,12).forEach(function(d){
-   alerts.push(card("🔔 New multifamily property",'<b>'+esc(d.property_address||d.name||"JGAP Property")+'</b><br>Asking price: <b>'+money(d.asking_price)+'</b> · Status: <b>'+esc(d.status||"—")+'</b><div style="margin-top:10px"><button class="primary" type="button" data-radar-id="deal:'+esc(d.id)+'" onclick="openRadarInAnalyzer(this.getAttribute(\'data-radar-id\'))">Analyze in Deal Analyzer</button></div>","Added to JGAP "+new Date(d.created_at).toLocaleString()));
+   var body='<b>'+esc(d.property_address||d.name||"JGAP Property")+'</b><br>Asking price: <b>'+money(d.asking_price)+'</b> · Status: <b>'+esc(d.status||"—")+'</b>';
+   body+='<div style="margin-top:10px"><button class="primary radar-analyze-btn" type="button" data-radar-id="deal:'+esc(d.id)+'">Analyze in Deal Analyzer</button></div>';
+   alerts.push(card("🔔 New multifamily property",body,"Added to JGAP "+new Date(d.created_at).toLocaleString()));
   });
   var growth=[];
   var byNeighborhood={};
@@ -78,6 +83,9 @@ window.renderAlertsPage=function(){
   html+='<h3 style="margin-top:22px">Growth Signals</h3><div style="display:grid;gap:10px">'+(growth.length?growth.join(""):'<div class="muted">No 8%+ recorded rent-growth signals yet.</div>')+'</div>';
   html+='<h3 style="margin-top:22px">Active Rules</h3><div class="muted">Target market: Tennessee · Northeast Tennessee city targeting · Multifamily only · Deal Radar priority scoring · JGAP market-history signals.</div>';
   status.className="panel";status.innerHTML=html;
+  Array.prototype.forEach.call(status.querySelectorAll(".radar-analyze-btn"),function(btn){
+    btn.addEventListener("click",function(){window.openRadarInAnalyzer(btn.getAttribute("data-radar-id"));});
+  });
  }).catch(function(e){status.innerHTML='<div class="error"><b>Could not load alert data.</b><div style="margin-top:8px;font-size:13px">'+esc(e.message||String(e))+'</div></div>';});
 };
 })();
