@@ -480,7 +480,7 @@
       </div>
       <div class="panel" style="margin-bottom:16px">
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">
-          <div><b>Neighborhood Analysis</b><div class="muted" style="font-size:12px;margin-top:3px">Phase 5: rent and sales statistics from JGAP's entered multifamily deal data. No outside estimates are added.</div></div>
+          <div><b>Neighborhood Analysis</b><div class="muted" style="font-size:12px;margin-top:3px">Phase 5: rent and sales statistics from JGAP entered multifamily deal data. No outside estimates are added.</div></div>
           <span class="pill">All tracked multifamily deals</span>
         </div>
         <div id="marketNeighborhoodAnalysis" style="margin-top:10px"><div class="muted">Calculating neighborhood statistics…</div></div>
