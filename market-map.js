@@ -401,6 +401,18 @@ const neighborhoodWindowTable=neighborhoodWindowRows.length
     if(error){console.error(error);if(s)s.textContent='Could not save snapshot: '+(error.message||'database error');return;}
     await loadMarketHistory(dealId); renderSelectedDetails();
   };
+  window.openMarketMapDealInAnalyzer=function(id){
+    const row=allRows.find(r=>r.id===id);
+    if(!row || typeof window.renderDealAnalyzer!=='function')return;
+    window.renderDealAnalyzer({
+      id:row.id,name:row.name||row.property_address||'JGAP Deal',
+      property_type:row.property_type||'multifamily',property_address:row.property_address||'',
+      units:row.units??'',purchase_price:row.asking_price??row.purchase_price??'',
+      asking_price:row.asking_price??row.purchase_price??'',target_offer_price:row.target_offer_price??'',
+      monthly_rent:row.monthly_rent??'',status:row.status||'analyzing',
+      notes:'Opened from JGAP Market Map.'
+    });
+  };
   function renderSelectedDetails(){
     const host=document.getElementById('marketMapSelectedDetails'); if(!host)return;
     const row=allRows.find(r=>r.id===window.__jgapMarketMapSelectedId);
@@ -413,7 +425,7 @@ const neighborhoodWindowTable=neighborhoodWindowRows.length
     const rentSearch={property_address:(row.property_address||'')+' apartments rents'};
     host.innerHTML=
       '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap"><div><b style="font-size:17px">'+esc(row.name||'JGAP Deal')+'</b><div class="muted" style="margin-top:3px">'+esc(row.property_address||'Address not entered')+'</div></div><span class="pill">Location Intelligence</span></div>'+
-      '<div class="stats" style="grid-template-columns:repeat(4,1fr);margin-top:14px"><div><span>Asking</span><b>'+money(asking)+'</b></div><div><span>JGAP Target</span><b>'+money(target)+'</b></div><div><span>Purchase</span><b>'+money(purchase)+'</b></div><div><span>Type</span><b style="font-size:14px">'+esc(row.property_type||'Not entered')+'</b></div></div>'+
+      '<div class="stats" style="grid-template-columns:repeat(4,1fr);margin-top:14px"><div><span>Asking</span><b>'+money(asking)+'</b></div><div><span>JGAP Target</span><b>'+money(target)+'</b></div><div><span>Purchase</span><b>'+money(purchase)+'</b></div><div><span>Type</span><b style="font-size:14px">'+esc(row.property_type||'Not entered')+'</b></div></div>'+\n      '<div style="margin-top:12px"><button class="primary" type="button" onclick="openMarketMapDealInAnalyzer(\\''+esc(row.id)+'\\')">Analyze This Property → Deal Analyzer</button></div>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">'+
       '<div class="marketIntelBox"><b>Nearby JGAP properties</b><div class="muted" style="font-size:12px;margin:4px 0 8px">Existing Pipeline deals within 5 miles.</div>'+(nearbyRows.length?nearbyRows.map(x=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-top:1px solid #eef1f5"><span><b>'+esc(x.name||x.address||'JGAP Deal')+'</b><br><span class="muted" style="font-size:11px">'+esc(x.address||'')+'</span></span><span class="pill">'+x.distance.toFixed(1)+' mi</span></div>').join(''):'<div class="muted">No other mapped JGAP deals within 5 miles.</div>')+'</div>'+
       '<div class="marketIntelBox"><b>Property-specific research</b><div class="muted" style="font-size:12px;margin:4px 0 8px">External research stays outside underwriting until you verify it.</div><div class="toolbar"><a class="secondary" target="_blank" rel="noopener" href="'+searchUrl('https://www.google.com/search?q=',row)+'">Web research</a><a class="secondary" target="_blank" rel="noopener" href="'+searchUrl('https://www.google.com/search?q=',compSearch)+'">Comparable sales</a><a class="secondary" target="_blank" rel="noopener" href="'+searchUrl('https://www.google.com/search?q=',rentSearch)+'">Rent research</a></div></div></div>'+
