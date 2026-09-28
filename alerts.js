@@ -7,36 +7,32 @@ function alertCard(title,body,meta,kind){return '<div class="panel" style="margi
 window.renderAlertsPage=async function(){
  const app=document.getElementById("app"); if(!app)return;
  app.innerHTML='<div class="pageHead"><div><h1>🔔 Alerts</h1><p class="muted">JGAP Phase 7 — alerts based on recorded property and market activity.</p></div><div><button type="button" class="secondary" onclick="render()">← Dashboard</button></div></div><div class="panel"><div id="jgapAlertsStatus">Loading alerts…</div></div>';
- const [{data:deals,error:de},{data:history,error:he}]=await Promise.all([
-  sb.from("deals").select("id,name,property_address,property_county,offer_state,property_type,status,asking_price,monthly_rent,units,neighborhood,created_at").order("created_at",{ascending:false}),
-  sb.from("market_history").select("deal_id,recorded_at,price,monthly_rent,neighborhood").order("recorded_at",{ascending:false})
- ]);
- if(de||he){const details=[de&&("Deals query: "+(de.message||"Unknown database error")),he&&("Market history query: "+(he.message||"Unknown database error"))].filter(Boolean).join("<br>");// Phase 7 automatic alert rules: only trigger from actual recorded JGAP data.
- const now=Date.now();
- const newMultifamily=(deals||[]).filter(d=>String(d.property_type||"").toLowerCase()==="multifamily" && now-new Date(d.created_at).getTime()<=7*86400000);
- const neighborhoodAlerts=[];
- const byNeighborhood={};
- (history||[]).forEach(h=>{const n=String(h.neighborhood||"").trim();if(n)(byNeighborhood[n]??=[]).push(h);});
- Object.entries(byNeighborhood).forEach(([n,rows])=>{
-   const sorted=[...rows].sort((a,b)=>new Date(a.recorded_at)-new Date(b.recorded_at));
-   const first=sorted[0], latest=sorted[sorted.length-1];
-   const days=(new Date(latest.recorded_at)-new Date(first.recorded_at))/86400000;
-   if(days<365 || sorted.length<2)return;
-   if(Number.isFinite(Number(first.monthly_rent))&&Number(first.monthly_rent)!==0&&Number.isFinite(Number(latest.monthly_rent))){
-     const change=(Number(latest.monthly_rent)-Number(first.monthly_rent))/Number(first.monthly_rent)*100;
-     if(change>=8) neighborhoodAlerts.push({n,change,days});
-   }
- });
- const automaticCards=[];
- newMultifamily.slice(0,12).forEach(d=>{
-   const name=d.property_address||d.name||"JGAP Property";
-   automaticCards.push(alertCard("🔔 New multifamily property",'<b>'+esc(name)+'</b><br>Asking price: <b>'+money(d.asking_price)+'</b> · Status: <b>'+esc(d.status||"—")+'</b>','Added to JGAP '+new Date(d.created_at).toLocaleString(),"new"));
- });
- neighborhoodAlerts.slice(0,12).forEach(x=>{
-   automaticCards.push(alertCard("📈 Neighborhood rent growth",'<b>'+esc(x.n)+'</b><br>Observed rent change: <b>'+pct(x.change)+'</b>','Based on at least 365 days of recorded JGAP history',"growth"));
- });
-
- document.getElementById("jgapAlertsStatus").innerHTML='<div class="error"><b>Could not load alert data.</b><div style="margin-top:8px;font-size:13px">' + details + '</div></div>';return;}
+ async function alertQuery(promise,label){
+  return await Promise.race([
+    promise,
+    new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+" timed out after 10 seconds")),10000))
+  ]);
+ }
+ let deals=[],history=[],de=null,he=null;
+ try{
+   const r=await alertQuery(
+     sb.from("deals").select("id,name,property_address,property_county,offer_state,property_type,status,asking_price,monthly_rent,units,neighborhood,created_at").order("created_at",{ascending:false}).limit(500),
+     "Deals query"
+   );
+   deals=r.data||[]; de=r.error||null;
+ }catch(e){de={message:e.message};}
+ try{
+   const r=await alertQuery(
+     sb.from("market_history").select("deal_id,recorded_at,price,monthly_rent,neighborhood").order("recorded_at",{ascending:false}).limit(1000),
+     "Market history query"
+   );
+   history=r.data||[]; he=r.error||null;
+ }catch(e){he={message:e.message};}
+ if(de||he){
+   const details=[de&&("Deals query: "+(de.message||"Unknown database error")),he&&("Market history query: "+(he.message||"Unknown database error"))].filter(Boolean).join("<br>");
+   document.getElementById("jgapAlertsStatus").innerHTML='<div class="error"><b>Could not load alert data.</b><div style="margin-top:8px;font-size:13px">'+details+'</div></div>';
+   return;
+ }
  const byDeal={}; (history||[]).forEach(h=>(byDeal[h.deal_id]??=[]).push(h));
  const newObs=(history||[]).filter(h=>Date.now()-new Date(h.recorded_at).getTime()<=7*86400000);
  const growth=[];
