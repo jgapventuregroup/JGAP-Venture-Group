@@ -65,7 +65,6 @@ window.renderAlertsPage=async function(){
   const source=r.source?('Source: '+r.source+' · '):'';
   automaticCards.push(alertCard("📡 New Deal Radar opportunity",body,source+'First seen '+new Date(r.first_seen_at||r.last_seen_at).toLocaleString(),"new"));
  });
-
  const improvingNeighborhoods={};
  neighborhoodAlerts.forEach(x=>{improvingNeighborhoods[String(x.n).trim().toLowerCase()]=x;});
  newMultifamily.slice(0,12).forEach(d=>{
@@ -75,9 +74,6 @@ window.renderAlertsPage=async function(){
   if(improving){
    automaticCards.push(alertCard("🚨 New multifamily in improving neighborhood",'<b>'+esc(name)+'</b><br>'+esc(n)+' — observed rent change: <b>'+pct(improving.change)+'</b>','New JGAP property; neighborhood has at least 365 days of recorded rent history',"growth"));
   }
-  automaticCards.push(alertCard("🔔 New multifamily property",'<b>'+esc(name)+'</b><br>Asking price: <b>'+money(d.asking_price)+'</b> · Status: <b>'+esc(d.status||"—")+'</b>','Added to JGAP '+new Date(d.created_at).toLocaleString(),"new"));
- });
-  const name=d.property_address||d.name||"JGAP Property";
   automaticCards.push(alertCard("🔔 New multifamily property",'<b>'+esc(name)+'</b><br>Asking price: <b>'+money(d.asking_price)+'</b> · Status: <b>'+esc(d.status||"—")+'</b>','Added to JGAP '+new Date(d.created_at).toLocaleString(),"new"));
  });
  neighborhoodAlerts.slice(0,12).forEach(x=>{
