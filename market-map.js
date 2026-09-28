@@ -271,13 +271,24 @@
     await loadMarketGrowth();
     await window.selectRow(id,false);
     const notice=document.getElementById('marketSnapshotNotice');
-    if(notice){notice.textContent='Snapshot Recorded ✓ — the new market-history entry is shown below.';notice.style.display='block';}
+    if(notice){
+      notice.textContent='✓ SNAPSHOT RECORDED — Market History updated.';
+      notice.style.display='block';
+    }
+    const toast=document.getElementById('marketSnapshotToast');
+    if(toast){
+      toast.textContent='✓ SNAPSHOT RECORDED';
+      toast.style.display='block';
+      clearTimeout(window.__jgapSnapshotToastTimer);
+      window.__jgapSnapshotToastTimer=setTimeout(()=>{toast.style.display='none';},5000);
+    }
     const details=document.getElementById('marketMapSelectedDetails');
     if(details)details.scrollIntoView({behavior:'smooth',block:'start'});
     const freshButton=document.querySelector('#marketGrowthTracking [data-snapshot-deal-id="'+id+'"]');
     if(freshButton){
-      freshButton.disabled=true;freshButton.textContent='Snapshot Recorded ✓';
-      setTimeout(()=>{if(document.body.contains(freshButton)){freshButton.disabled=false;freshButton.textContent='Record Snapshot';}},2500);
+      freshButton.disabled=true;
+      freshButton.textContent='✓ SNAPSHOT RECORDED';
+      setTimeout(()=>{if(document.body.contains(freshButton)){freshButton.disabled=false;freshButton.textContent='Record Snapshot';}},5000);
     }
   };
   window.recordMarketSnapshot=async function(){
@@ -389,7 +400,7 @@
         </div><div id="marketGrowthTracking" style="margin-top:10px"><div class="muted">Loading growth history…</div></div>
       </div>
       <div class="panel" style="margin-bottom:16px">
-        <div id="marketSnapshotNotice" class="panel" style="margin-top:16px;display:none;background:#f3fbf5;border:1px solid #b7dfc0;color:#245b2d;font-weight:600"></div><div><b>Property Intelligence Workspace</b><div id="marketMapSelectedDetails" style="margin-top:10px"><div class="muted">Select a property on the map or from the list to see its JGAP details.</div></div></div>
+        <div id="marketSnapshotToast" style="position:fixed;top:18px;right:18px;z-index:99999;display:none;padding:13px 18px;border-radius:10px;background:#1f7a3d;color:#fff;font-weight:800;box-shadow:0 4px 18px #0003">✓ SNAPSHOT RECORDED</div><div id="marketSnapshotNotice" class="panel" style="margin-top:16px;display:none;background:#f3fbf5;border:1px solid #b7dfc0;color:#245b2d;font-weight:600"></div><div><b>Property Intelligence Workspace</b><div id="marketMapSelectedDetails" style="margin-top:10px"><div class="muted">Select a property on the map or from the list to see its JGAP details.</div></div></div>
       </div>
       <div class="marketMapWrap">
         <div class="panel" style="padding:10px"><div id="jgapMarketMap" class="marketMapCanvas"><div style="padding:20px" class="muted">Loading map…</div></div></div>
