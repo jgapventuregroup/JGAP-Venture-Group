@@ -63,8 +63,17 @@ window.renderAlertsPage=async function(){
  const observedPrices=(deals||[]).filter(d=>String(d.property_type||"").toLowerCase()==="multifamily" && Number(d.asking_price)>0).map(d=>Number(d.asking_price)).sort((a,b)=>a-b);
  const observedMin=observedPrices.length?observedPrices[0]:null;
  const observedMax=observedPrices.length?observedPrices[observedPrices.length-1]:null;
+ const jgapCities=[...new Set((deals||[]).filter(d=>String(d.property_type||"").toLowerCase()==="multifamily").map(d=>{
+   const a=String(d.property_address||"").trim();
+   const parts=a.split(",").map(x=>x.trim()).filter(Boolean);
+   return parts.length>=2?parts[parts.length-2].toUpperCase():"";
+ }).filter(Boolean))];
  const targetStates=jgapStates.length?jgapStates:["TN"];
- const targetRadar=recentRadar.filter(r=>String(r.property_type||"").toLowerCase()==="multifamily" && targetStates.includes(String(r.state||"").trim().toUpperCase()));\n const targetRadarCount=targetRadar.length;
+ const targetRadar=recentRadar.filter(r=>{
+   if(String(r.property_type||"").toLowerCase()!=="multifamily") return false;
+   if(!targetStates.includes(String(r.state||"").trim().toUpperCase())) return false;
+   return !jgapCities.length || jgapCities.includes(String(r.city||"").trim().toUpperCase());
+ });\n const targetRadarCount=targetRadar.length;
  const observedPriceMatches=targetRadar.filter(r=>Number(r.asking_price)>0 && observedMin!==null && observedMax!==null && Number(r.asking_price)>=observedMin && Number(r.asking_price)<=observedMax);
  observedPriceMatches.slice(0,12).forEach(r=>{
   const name=r.name||r.address||"Target-range opportunity";
@@ -74,7 +83,7 @@ window.renderAlertsPage=async function(){
  targetRadar.slice(0,12).forEach(r=>{
   const name=r.name||r.address||"Target-match opportunity";
   const loc=[r.city,r.state,r.postal_code].filter(Boolean).join(", ")||r.address||"Location not provided";
-  automaticCards.push(alertCard("🎯 JGAP target match",'<b>'+esc(name)+'</b><br>'+esc(loc)+(r.units!=null?' · Units: <b>'+esc(r.units)+'</b>':'')+' · Asking price: <b>'+money(r.asking_price)+'</b>','Matches JGAP target profile: '+targetStates.join(", ")+' multifamily',"new"));
+  automaticCards.push(alertCard("🎯 JGAP target match",'<b>'+esc(name)+'</b><br>'+esc(loc)+(r.units!=null?' · Units: <b>'+esc(r.units)+'</b>':'')+' · Asking price: <b>'+money(r.asking_price)+'</b>','Matches JGAP target profile: '+targetStates.join(", ")+' multifamily'+(jgapCities.length?' in '+jgapCities.join(", "):""),"new"));
  });
 
  targetRadar.slice(0,12).forEach(r=>{
@@ -129,7 +138,7 @@ window.renderAlertsPage=async function(){
   '<div class="panel" style="margin:0"><div class="muted">Recent observations</div><h2 style="margin:4px 0">'+newObs.length+'</h2><div class="muted">last 7 days</div></div>'+
   '<div class="panel" style="margin:0"><div class="muted">Growth signals</div><h2 style="margin:4px 0">'+growth.length+'</h2><div class="muted">5%+ observed movement</div></div>'+
   '<div class="panel" style="margin:0"><div class="muted">Properties with history</div><h2 style="margin:4px 0">'+Object.keys(byDeal).length+'</h2><div class="muted">recorded market history</div></div></div>'+
-  '<h3>Automatic Alerts</h3><div style="display:grid;gap:10px">'+(automaticCards.length?automaticCards.join(""):'<div class="muted">No automatic alerts triggered right now.</div>')+'</div><div class="panel" style="margin:14px 0 22px;background:#fbfcfe"><b>Active rules</b><ul style="margin:8px 0 0 18px"><li>New multifamily property added to JGAP within the last 7 days.</li><li>New multifamily opportunity received by Deal Radar within the last 7 days.</li><li>Deal Radar opportunity matching the state and multifamily profile represented in JGAP deal history.</li><li>Deal Radar opportunity whose asking price falls inside JGAP's observed multifamily asking-price range.</li><li>Neighborhood multifamily rent increases of 8%+ with at least 365 days of recorded history.</li><li>New multifamily property whose neighborhood is showing that recorded rent-growth signal.</li></ul><div class="muted" style="margin-top:8px">Rules use recorded JGAP data only. No estimated or annualized short-term trends.</div></div><h3>Recent Market Activity</h3><div style="display:grid;gap:10px">'+(recentCards.length?recentCards.join(""):'<div class="muted">No observations recorded in the last 7 days.</div>')+'</div>'+
+  '<h3>Automatic Alerts</h3><div style="display:grid;gap:10px">'+(automaticCards.length?automaticCards.join(""):'<div class="muted">No automatic alerts triggered right now.</div>')+'</div><div class="panel" style="margin:14px 0 22px;background:#fbfcfe"><b>Active rules</b><ul style="margin:8px 0 0 18px"><li>New multifamily property added to JGAP within the last 7 days.</li><li>New multifamily opportunity received by Deal Radar within the last 7 days.</li><li>Deal Radar opportunity matching the states and cities represented in JGAP's multifamily deal history.</li><li>Deal Radar opportunity whose asking price falls inside JGAP's observed multifamily asking-price range.</li><li>Neighborhood multifamily rent increases of 8%+ with at least 365 days of recorded history.</li><li>New multifamily property whose neighborhood is showing that recorded rent-growth signal.</li></ul><div class="muted" style="margin-top:8px">Rules use recorded JGAP data only. No estimated or annualized short-term trends.</div></div><h3>Recent Market Activity</h3><div style="display:grid;gap:10px">'+(recentCards.length?recentCards.join(""):'<div class="muted">No observations recorded in the last 7 days.</div>')+'</div>'+
   '<h3 style="margin-top:22px">Growth Signals</h3><div style="display:grid;gap:10px">'+(growthCards.length?growthCards.join(""):'<div class="muted">No 5%+ recorded price or rent movement yet.</div>')+'</div>'+
   '<div class="panel" style="margin-top:22px;background:#f8fbff"><b>Phase 7 foundation</b><div class="muted" style="margin-top:5px">These are recorded-data alerts only. Listing-source alerts and radius-based alerts will be added in later Phase 7 steps. This rule uses JGAP neighborhood names until property coordinates are available.</div></div>';
 };
