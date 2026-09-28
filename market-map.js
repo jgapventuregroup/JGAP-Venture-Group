@@ -265,6 +265,33 @@
       });
       if(changes.length){const p=changes.map(x=>x.p),r=changes.map(x=>x.r).filter(x=>x!==null);windowRows.push({days,count:changes.length,p:avg(p),r:avg(r)});}
     });
+    const neighborhoodWindowRows=[];
+    [30,90,180,365].forEach(days=>{
+      const cutoff=Date.now()-days*86400000;
+      const groupsByNeighborhood={};
+      Object.values(byDeal).forEach(h=>{
+        if(h.length<2)return;
+        const last=h[h.length-1];
+        let base=null;
+        for(let j=h.length-1;j>=0;j--){if(new Date(h[j].recorded_at).getTime()<=cutoff){base=h[j];break;}}
+        if(!base||base===last)return;
+        const n=String(last.neighborhood||base.neighborhood||'Other').trim()||'Other';
+        const fp=Number(base.price||0),lp=Number(last.price||0),fr=Number(base.monthly_rent||0),lr=Number(last.monthly_rent||0);
+        if(fp<=0||lp<=0)return;
+        const g=(groupsByNeighborhood[n]||(groupsByNeighborhood[n]={properties:0,price:[],rent:[]}));
+        g.properties++;
+        g.price.push((lp-fp)/fp*100);
+        if(fr>0&&lr>0)g.rent.push((lr-fr)/fr*100);
+      });
+      const entries=Object.entries(groupsByNeighborhood).map(([name,g])=>{
+        const p=avg(g.price),r=avg(g.rent);
+        return {name,properties:g.properties,p,r};
+      }).filter(x=>x.properties>0);
+      if(entries.length)neighborhoodWindowRows.push({days,entries});
+    });
+    const neighborhoodWindowTable=neighborhoodWindowRows.length
+      ? '<div style="margin-top:14px"><b style="font-size:13px">Neighborhood growth by time period</b><div class="muted" style="font-size:12px;margin:4px 0 8px">Shows actual recorded price and rent changes by neighborhood. A period appears only when at least one property has a real snapshot at or before that cutoff.</div>'+neighborhoodWindowRows.map(w=>'<div style="margin-top:10px"><b style="font-size:12px">'+w.days+' days</b><div style="overflow:auto"><table class="marketGrowthTable"><thead><tr><th>Neighborhood</th><th>Properties with History</th><th>Avg Price Change</th><th>Avg Rent Change</th></tr></thead><tbody>'+w.entries.map(x=>'<tr><td><b>'+esc(x.name)+'</b></td><td class="num">'+x.properties+'</td><td class="num">'+pct(x.p)+'</td><td class="num">'+pct(x.r)+'</td></tr>').join('')+'</tbody></table></div></div>').join('')+'</div>'
+      : '';
     const timeWindowTable=windowRows.length
       ? '<div style="margin-top:14px"><b style="font-size:13px">Growth by time period</b><div class="muted" style="font-size:12px;margin:4px 0 8px">Only includes a period when JGAP has an actual snapshot at or before that cutoff. It never stretches shorter history into a longer period or estimates missing data.</div><div style="overflow:auto"><table class="marketGrowthTable"><thead><tr><th>Period</th><th>Properties with History</th><th>Avg Price Change</th><th>Avg Rent Change</th></tr></thead><tbody>'+windowRows.map(w=>'<tr><td><b>'+w.days+' days</b></td><td class="num">'+w.count+'</td><td class="num">'+pct(w.p)+'</td><td class="num">'+pct(w.r)+'</td></tr>').join('')+'</tbody></table></div></div>'
       : '';
