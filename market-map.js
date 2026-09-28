@@ -258,7 +258,7 @@
         const last=h[h.length-1];
         let base=null;
         for(let i=h.length-1;i>=0;i--){if(new Date(h[i].recorded_at).getTime()<=cutoff){base=h[i];break;}}
-        if(!base)base=h[0];
+        if(!base)return;
         if(base===last)return;
         const fp=Number(base.price||0),lp=Number(last.price||0),fr=Number(base.monthly_rent||0),lr=Number(last.monthly_rent||0);
         if(fp>0&&lp>0)changes.push({p:(lp-fp)/fp*100,r:fr>0&&lr>0?(lr-fr)/fr*100:null});
@@ -266,7 +266,7 @@
       if(changes.length){const p=changes.map(x=>x.p),r=changes.map(x=>x.r).filter(x=>x!==null);windowRows.push({days,count:changes.length,p:avg(p),r:avg(r)});}
     });
     const timeWindowTable=windowRows.length
-      ? '<div style="margin-top:14px"><b style="font-size:13px">Growth by time period</b><div class="muted" style="font-size:12px;margin:4px 0 8px">Uses the closest available snapshot at or before each period when JGAP has enough history. It does not estimate missing history.</div><div style="overflow:auto"><table class="marketGrowthTable"><thead><tr><th>Period</th><th>Properties with History</th><th>Avg Price Change</th><th>Avg Rent Change</th></tr></thead><tbody>'+windowRows.map(w=>'<tr><td><b>'+w.days+' days</b></td><td class="num">'+w.count+'</td><td class="num">'+pct(w.p)+'</td><td class="num">'+pct(w.r)+'</td></tr>').join('')+'</tbody></table></div></div>'
+      ? '<div style="margin-top:14px"><b style="font-size:13px">Growth by time period</b><div class="muted" style="font-size:12px;margin:4px 0 8px">Only includes a period when JGAP has an actual snapshot at or before that cutoff. It never stretches shorter history into a longer period or estimates missing data.</div><div style="overflow:auto"><table class="marketGrowthTable"><thead><tr><th>Period</th><th>Properties with History</th><th>Avg Price Change</th><th>Avg Rent Change</th></tr></thead><tbody>'+windowRows.map(w=>'<tr><td><b>'+w.days+' days</b></td><td class="num">'+w.count+'</td><td class="num">'+pct(w.p)+'</td><td class="num">'+pct(w.r)+'</td></tr>').join('')+'</tbody></table></div></div>'
       : '';
     const recordList=propertyRows.length?'<div style="margin-top:12px"><b style="font-size:13px">Record a snapshot</b><div class="muted" style="font-size:12px;margin:4px 0 8px">Choose a tracked property. Its current price, rent, status, units, and neighborhood will be ready to record.</div>'+propertyRows.map(r=>'<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #eef1f5"><span><b>'+esc(r.name||r.property_address||'JGAP Deal')+'</b><br><span class="muted" style="font-size:11px">'+esc(r.property_address||'Address not entered')+'</span></span><button class="secondary" type="button" data-snapshot-deal-id="'+r.id+'" style="margin:0" onclick="recordQuickMarketSnapshot(\''+String(r.id).replace(/'/g,"\\'")+'\',this)">Record Snapshot</button></div>').join('')+'</div>':'<div class="muted" style="margin-top:10px">No tracked properties are available yet.</div>';
     if(!real){host.innerHTML='<div class="muted">Growth tracking is ready. Use the buttons below to select a tracked property and record its first snapshot. JGAP will calculate growth after a second observation.</div>'+recordList;return;}
