@@ -38,6 +38,16 @@ function scoreRadar(r,minPrice,maxPrice){
   return {score:score,reasons:reasons};
 }
 
+window.__jgapRadarAnalyzerQueue=window.__jgapRadarAnalyzerQueue||{};
+window.openRadarInAnalyzer=function(id){
+  var r=window.__jgapRadarAnalyzerQueue&&window.__jgapRadarAnalyzerQueue[id];
+  if(!r){alert("That Deal Radar opportunity is no longer loaded. Refresh Alerts and try again.");return;}
+  if(typeof window.renderDealAnalyzer!=="function"){alert("Deal Analyzer is not available yet. Please refresh JGAP and try again.");return;}
+  var fullAddress=[r.address,[r.city,r.state,r.postal_code].filter(Boolean).join(", ")].filter(Boolean).join(", ");
+  var notes=[r.source?r.source+" listing":"",r.source_url?r.source_url:""].filter(Boolean).join("\n");
+  window.renderDealAnalyzer({status:"analyzing",name:r.name||r.address||"Deal Radar Opportunity",property_type:"multifamily",property_address:fullAddress,property_county:"",offer_state:r.state||"TN",purchase_price:r.asking_price,asking_price:r.asking_price,target_offer_price:null,units:r.units,monthly_rent:r.monthly_rent,monthly_operating_expenses:r.monthly_operating_expenses,vacancy_rate:r.vacancy_rate,notes:notes,source_url:r.source_url||"",source:r.source||""});
+};
+
 window.renderAlertsPage=function(){
   var app=document.getElementById("app");
   if(!app)return;
@@ -130,6 +140,7 @@ window.renderAlertsPage=function(){
     });
 
     targetRadar.forEach(function(r){
+      window.__jgapRadarAnalyzerQueue[r.id]=r;
       var s=scoreRadar(r,observedMin,observedMax);
       r.radarScore=s.score;r.radarReasons=s.reasons;
     });
@@ -157,7 +168,7 @@ window.renderAlertsPage=function(){
     var automatic=[];
     targetRadar.slice(0,12).forEach(function(r){
       var loc=[r.city,r.state,r.postal_code].filter(Boolean).join(", ")||r.address||"Location not provided";
-      automatic.push(card("📡 New Deal Radar opportunity",'<b>'+esc(r.name||r.address||"Multifamily opportunity")+'</b><br>'+esc(loc)+(r.units!=null?" · Units: <b>"+esc(r.units)+"</b>":"")+" · Asking price: <b>"+money(r.asking_price)+"</b>","Score "+r.radarScore+"/100 · "+(r.radarReasons.length?r.radarReasons.join(" · "):"No strong recorded signal yet"),"new"));
+      automatic.push(card("📡 New Deal Radar opportunity",'<b>'+esc(r.name||r.address||"Multifamily opportunity")+'</b><br>'+esc(loc)+(r.units!=null?" · Units: <b>"+esc(r.units)+"</b>":"")+" · Asking price: <b>"+money(r.asking_price)+"</b><div style="margin-top:10px"><button type="button" class="primary" onclick="openRadarInAnalyzer(\''+r.id+'\')">Analyze in Deal Analyzer</button>'+(r.source_url?'<a class="secondary" target="_blank" rel="noopener" href="'+esc(r.source_url)+'">Open Listing</a>':"")+'</div>","Score "+r.radarScore+"/100 · "+(r.radarReasons.length?r.radarReasons.join(" · "):"No strong recorded signal yet"),"new"));
     });
     newMultifamily.slice(0,12).forEach(function(d){
       automatic.push(card("🔔 New multifamily property",'<b>'+esc(d.property_address||d.name||"JGAP Property")+'</b><br>Asking price: <b>'+money(d.asking_price)+'</b> · Status: <b>'+esc(d.status||"—")+'</b>','Added to JGAP '+new Date(d.created_at).toLocaleString(),"new"));
