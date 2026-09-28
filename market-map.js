@@ -222,7 +222,7 @@
     const real=Object.values(byDeal).reduce((s,h)=>s+h.length,0),rows=Object.values(groups).sort((a,b)=>a.name.localeCompare(b.name)),avg=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:null,pct=v=>v===null?'—':(v>0?'+':'')+v.toFixed(1)+'%';
     const direction=(p,r)=>{const v=[p,r].filter(x=>x!==null);if(!v.length)return '<span class="marketGrowthFlat">Building history</span>';const a=v.reduce((s,x)=>s+x,0)/v.length;return a>.5?'<span class="marketGrowthUp">↑ Increasing</span>':a<-.5?'<span class="marketGrowthDown">↓ Decreasing</span>':'<span class="marketGrowthFlat">→ Stable</span>';};
     const propertyRows=allRows.filter(r=>String(r.property_type||'').toLowerCase().includes('multifamily')||Number(r.monthly_rent||0)>0).slice(0,12);
-    const recordList=propertyRows.length?'<div style="margin-top:12px"><b style="font-size:13px">Record a snapshot</b><div class="muted" style="font-size:12px;margin:4px 0 8px">Choose a tracked property. Its current price, rent, status, units, and neighborhood will be ready to record.</div>'+propertyRows.map(r=>'<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #eef1f5"><span><b>'+esc(r.name||r.property_address||'JGAP Deal')+'</b><br><span class="muted" style="font-size:11px">'+esc(r.property_address||'Address not entered')+'</span></span><button class="secondary" type="button" style="margin:0" onclick="recordQuickMarketSnapshot(\''+String(r.id).replace(/'/g,"\\'")+'\',this)">Record Snapshot</button></div>').join('')+'</div>':'<div class="muted" style="margin-top:10px">No tracked properties are available yet.</div>';
+    const recordList=propertyRows.length?'<div style="margin-top:12px"><b style="font-size:13px">Record a snapshot</b><div class="muted" style="font-size:12px;margin:4px 0 8px">Choose a tracked property. Its current price, rent, status, units, and neighborhood will be ready to record.</div>'+propertyRows.map(r=>'<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #eef1f5"><span><b>'+esc(r.name||r.property_address||'JGAP Deal')+'</b><br><span class="muted" style="font-size:11px">'+esc(r.property_address||'Address not entered')+'</span></span><button class="secondary" type="button" data-snapshot-deal-id="\'+r.id+'\'" style="margin:0" onclick="recordQuickMarketSnapshot(\''+String(r.id).replace(/'/g,"\\'")+'\',this)">Record Snapshot</button></div>').join('')+'</div>':'<div class="muted" style="margin-top:10px">No tracked properties are available yet.</div>';
     if(!real){host.innerHTML='<div class="muted">Growth tracking is ready. Use the buttons below to select a tracked property and record its first snapshot. JGAP will calculate growth after a second observation.</div>'+recordList;return;}
     if(!rows.length){host.innerHTML='<div class="muted">'+real+' real market snapshot'+(real===1?'':'s')+' recorded, but no property has two observations yet. Select a property below and record another snapshot later to establish a growth trend.</div>'+recordList;return;}
     host.innerHTML='<div class="muted" style="font-size:12px;margin-bottom:8px">Growth uses properties with at least two user-recorded snapshots. Initial seeded snapshots are excluded.</div><div style="overflow:auto"><table class="marketGrowthTable"><thead><tr><th>Neighborhood</th><th>Properties with History</th><th>Snapshots</th><th>Price Change</th><th>Rent Change</th><th>Direction</th></tr></thead><tbody>'+rows.map(g=>{const p=avg(g.prices),r=avg(g.rents);return '<tr><td><b>'+esc(g.name)+'</b></td><td class="num">'+g.properties+'</td><td class="num">'+g.snapshots+'</td><td class="num">'+pct(p)+'</td><td class="num">'+pct(r)+'</td><td>'+direction(p,r)+'</td></tr>';}).join('')+'</tbody></table></div>'+recordList;
@@ -270,6 +270,15 @@
     if(error){console.error('JGAP quick market snapshot failed:',error);if(button){button.disabled=false;button.textContent='Retry Snapshot';}return;}
     await loadMarketGrowth();
     await window.selectRow(id,false);
+    const notice=document.getElementById('marketSnapshotNotice');
+    if(notice){notice.textContent='Snapshot Recorded ✓ — the new market-history entry is shown below.';notice.style.display='block';}
+    const details=document.getElementById('marketMapSelectedDetails');
+    if(details)details.scrollIntoView({behavior:'smooth',block:'start'});
+    const freshButton=document.querySelector('#marketGrowthTracking [data-snapshot-deal-id="'+id+'"]');
+    if(freshButton){
+      freshButton.disabled=true;freshButton.textContent='Snapshot Recorded ✓';
+      setTimeout(()=>{if(document.body.contains(freshButton)){freshButton.disabled=false;freshButton.textContent='Record Snapshot';}},2500);
+    }
   };
   window.recordMarketSnapshot=async function(){
     const dealId=window.__jgapMarketMapSelectedId, row=allRows.find(r=>r.id===dealId); if(!row)return;
@@ -380,7 +389,7 @@
         </div><div id="marketGrowthTracking" style="margin-top:10px"><div class="muted">Loading growth history…</div></div>
       </div>
       <div class="panel" style="margin-bottom:16px">
-        <div><b>Property Intelligence Workspace</b><div id="marketMapSelectedDetails" style="margin-top:10px"><div class="muted">Select a property on the map or from the list to see its JGAP details.</div></div></div>
+        <div id="marketSnapshotNotice" class="panel" style="margin-top:16px;display:none;background:#f3fbf5;border:1px solid #b7dfc0;color:#245b2d;font-weight:600"></div><div><b>Property Intelligence Workspace</b><div id="marketMapSelectedDetails" style="margin-top:10px"><div class="muted">Select a property on the map or from the list to see its JGAP details.</div></div></div>
       </div>
       <div class="marketMapWrap">
         <div class="panel" style="padding:10px"><div id="jgapMarketMap" class="marketMapCanvas"><div style="padding:20px" class="muted">Loading map…</div></div></div>
