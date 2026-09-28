@@ -294,7 +294,7 @@
       (gap!==null?'<div class="muted" style="margin-top:10px;font-size:12px">JGAP target is '+money(gap)+' below asking. Deal economics remain in the Deal Analyzer.</div>':'');
   }
   window.saveMarketMapResearch=function(){if(window.__jgapMarketMapSelectedId)saveResearch(window.__jgapMarketMapSelectedId);};
-  async window.selectRow=async function(id,fromMarker){
+  window.selectRow=async function(id,fromMarker){
     window.__jgapMarketMapSelectedId=id;
     renderRows();
     await loadMarketHistory(id);
