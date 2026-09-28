@@ -106,7 +106,8 @@ const targetRadar=recentRadar.filter(r=>{
    if(!targetCenters.length) return jgapCities.includes(city);
    const center=cityCenters[city];
    return center ? targetCenters.some(t=>milesBetween(t,center)<=radarMarketRadiusMiles) : jgapCities.includes(city);
- });\n const scoredRadar=targetRadar.map(r=>({...r,...radarScore(r,observedMin,observedMax)})).sort((a,b)=>b.score-a.score);
+ });
+ const scoredRadar=targetRadar.map(r=>({...r,...radarScore(r,observedMin,observedMax)})).sort((a,b)=>b.score-a.score);
  const targetRadarCount=targetRadar.length;
  const observedPriceMatches=scoredRadar.filter(r=>Number(r.asking_price)>0 && observedMin!==null && observedMax!==null && Number(r.asking_price)>=observedMin && Number(r.asking_price)<=observedMax);
  observedPriceMatches.slice(0,12).forEach(r=>{
