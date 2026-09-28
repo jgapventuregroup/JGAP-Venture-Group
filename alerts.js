@@ -6,12 +6,12 @@ function pct(v){const n=Number(v);return Number.isFinite(n)?(n>0?"+":"")+n.toFix
 function alertCard(title,body,meta,kind){return '<div class="panel" style="margin:0"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><h3 style="margin:0 0 6px">'+esc(title)+'</h3><div>'+body+'</div></div><span style="font-size:12px;padding:4px 8px;border-radius:999px;background:'+(kind==="growth"?"#eef8ef":"#eef5ff")+'">'+(kind==="growth"?"Growth":"New observation")+'</span></div><div class="muted" style="margin-top:8px;font-size:12px">'+esc(meta)+'</div></div>';}
 window.renderAlertsPage=async function(){
  const app=document.getElementById("app"); if(!app)return;
- app.innerHTML='<div class="panel"><h2>🔔 Alerts</h2><p class="muted">JGAP Phase 7 — alerts based on recorded property and market activity.</p><div id="jgapAlertsStatus">Loading alerts…</div></div>';
+ app.innerHTML='<div class="pageHead"><div><h1>🔔 Alerts</h1><p class="muted">JGAP Phase 7 — alerts based on recorded property and market activity.</p></div><div><button type="button" class="secondary" onclick="render()">← Dashboard</button></div></div><div class="panel"><div id="jgapAlertsStatus">Loading alerts…</div></div>';
  const [{data:deals,error:de},{data:history,error:he}]=await Promise.all([
   sb.from("deals").select("id,name,property_address,property_county,offer_state,property_type,status,asking_price,monthly_rent,units,neighborhood,created_at").order("created_at",{ascending:false}),
   sb.from("market_history").select("deal_id,recorded_at,price,monthly_rent,neighborhood").order("recorded_at",{ascending:false})
  ]);
- if(de||he){document.getElementById("jgapAlertsStatus").innerHTML='<div class="error">Could not load alert data.</div>';return;}
+ if(de||he){const details=[de&&("Deals query: "+(de.message||"Unknown database error")),he&&("Market history query: "+(he.message||"Unknown database error"))].filter(Boolean).join("<br>");document.getElementById("jgapAlertsStatus").innerHTML='<div class="error"><b>Could not load alert data.</b><div style="margin-top:8px;font-size:13px">' + details + '</div></div>';return;}
  const byDeal={}; (history||[]).forEach(h=>(byDeal[h.deal_id]??=[]).push(h));
  const newObs=(history||[]).filter(h=>Date.now()-new Date(h.recorded_at).getTime()<=7*86400000);
  const growth=[];
