@@ -69,10 +69,33 @@ window.renderAlertsPage=async function(){
    return parts.length>=2?parts[parts.length-2].toUpperCase():"";
  }).filter(Boolean))];
  const targetStates=jgapStates.length?jgapStates:["TN"];
+ const radarMarketRadiusMiles=50;
+ const cityCenters={
+   "KINGSPORT":[36.548434,-82.561819],
+   "BRISTOL":[36.569135,-82.197489],
+   "BLUFF CITY":[36.474271,-82.260969],
+   "JOHNSON CITY":[36.313440,-82.353473],
+   "BLOUNTVILLE":[36.5337,-82.3268],
+   "ELIZABETHTON":[36.3487,-82.2107],
+   "GREENEVILLE":[36.1632,-82.8307],
+   "ROGERSVILLE":[36.4109,-82.9996],
+   "MORRISTOWN":[36.21398,-83.29489]
+ };
+ const milesBetween=(a,b)=>{
+   const R=3958.7613, toRad=v=>v*Math.PI/180;
+   const dLat=toRad(b[0]-a[0]), dLon=toRad(b[1]-a[1]);
+   const la1=toRad(a[0]), la2=toRad(b[0]);
+   const h=Math.sin(dLat/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;
+   return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));
+ };
+ const targetCenters=jgapCities.map(c=>cityCenters[c]).filter(Boolean);
  const targetRadar=recentRadar.filter(r=>{
    if(String(r.property_type||"").toLowerCase()!=="multifamily") return false;
    if(!targetStates.includes(String(r.state||"").trim().toUpperCase())) return false;
-   return !jgapCities.length || jgapCities.includes(String(r.city||"").trim().toUpperCase());
+   const city=String(r.city||"").trim().toUpperCase();
+   if(!targetCenters.length) return jgapCities.includes(city);
+   const center=cityCenters[city];
+   return center ? targetCenters.some(t=>milesBetween(t,center)<=radarMarketRadiusMiles) : jgapCities.includes(city);
  });\n const targetRadarCount=targetRadar.length;
  const observedPriceMatches=targetRadar.filter(r=>Number(r.asking_price)>0 && observedMin!==null && observedMax!==null && Number(r.asking_price)>=observedMin && Number(r.asking_price)<=observedMax);
  observedPriceMatches.slice(0,12).forEach(r=>{
@@ -138,8 +161,8 @@ window.renderAlertsPage=async function(){
   '<div class="panel" style="margin:0"><div class="muted">Recent observations</div><h2 style="margin:4px 0">'+newObs.length+'</h2><div class="muted">last 7 days</div></div>'+
   '<div class="panel" style="margin:0"><div class="muted">Growth signals</div><h2 style="margin:4px 0">'+growth.length+'</h2><div class="muted">5%+ observed movement</div></div>'+
   '<div class="panel" style="margin:0"><div class="muted">Properties with history</div><h2 style="margin:4px 0">'+Object.keys(byDeal).length+'</h2><div class="muted">recorded market history</div></div></div>'+
-  '<h3>Automatic Alerts</h3><div style="display:grid;gap:10px">'+(automaticCards.length?automaticCards.join(""):'<div class="muted">No automatic alerts triggered right now.</div>')+'</div><div class="panel" style="margin:14px 0 22px;background:#fbfcfe"><b>Active rules</b><ul style="margin:8px 0 0 18px"><li>New multifamily property added to JGAP within the last 7 days.</li><li>New multifamily opportunity received by Deal Radar within the last 7 days.</li><li>Deal Radar opportunity matching the states and cities represented in JGAP's multifamily deal history.</li><li>Deal Radar opportunity whose asking price falls inside JGAP's observed multifamily asking-price range.</li><li>Neighborhood multifamily rent increases of 8%+ with at least 365 days of recorded history.</li><li>New multifamily property whose neighborhood is showing that recorded rent-growth signal.</li></ul><div class="muted" style="margin-top:8px">Rules use recorded JGAP data only. No estimated or annualized short-term trends.</div></div><h3>Recent Market Activity</h3><div style="display:grid;gap:10px">'+(recentCards.length?recentCards.join(""):'<div class="muted">No observations recorded in the last 7 days.</div>')+'</div>'+
+  '<h3>Automatic Alerts</h3><div style="display:grid;gap:10px">'+(automaticCards.length?automaticCards.join(""):'<div class="muted">No automatic alerts triggered right now.</div>')+'</div><div class="panel" style="margin:14px 0 22px;background:#fbfcfe"><b>Active rules</b><ul style="margin:8px 0 0 18px"><li>New multifamily property added to JGAP within the last 7 days.</li><li>New multifamily opportunity received by Deal Radar within the last 7 days.</li><li>Deal Radar opportunity within the configured JGAP market radius of cities represented in JGAP's multifamily deal history.</li><li>Deal Radar opportunity whose asking price falls inside JGAP's observed multifamily asking-price range.</li><li>Neighborhood multifamily rent increases of 8%+ with at least 365 days of recorded history.</li><li>New multifamily property whose neighborhood is showing that recorded rent-growth signal.</li></ul><div class="muted" style="margin-top:8px">Rules use recorded JGAP data only. No estimated or annualized short-term trends.</div></div><h3>Recent Market Activity</h3><div style="display:grid;gap:10px">'+(recentCards.length?recentCards.join(""):'<div class="muted">No observations recorded in the last 7 days.</div>')+'</div>'+
   '<h3 style="margin-top:22px">Growth Signals</h3><div style="display:grid;gap:10px">'+(growthCards.length?growthCards.join(""):'<div class="muted">No 5%+ recorded price or rent movement yet.</div>')+'</div>'+
-  '<div class="panel" style="margin-top:22px;background:#f8fbff"><b>Phase 7 foundation</b><div class="muted" style="margin-top:5px">These are recorded-data alerts only. Listing-source alerts and radius-based alerts will be added in later Phase 7 steps. This rule uses JGAP neighborhood names until property coordinates are available.</div></div>';
+  '<div class="panel" style="margin-top:22px;background:#f8fbff"><b>Phase 7 foundation</b><div class="muted" style="margin-top:5px">These are recorded-data alerts only. Listing-source alerts will be added in later Phase 7 steps. Radius targeting is currently a 50-mile starting radius using city-center coordinates when available. This rule uses JGAP neighborhood names until property coordinates are available.</div></div>';
 };
 })();
