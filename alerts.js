@@ -69,9 +69,31 @@ window.openRadarInAnalyzer=function(id){
  var payload={status:"analyzing",name:r.name||r.address||"Deal Radar Opportunity",property_type:r.property_type||"multifamily",property_address:address,property_county:r.property_county||"",offer_state:r.state||"TN",purchase_price:r.purchase_price||r.asking_price,asking_price:r.asking_price,units:r.units,monthly_rent:r.monthly_rent,monthly_operating_expenses:r.monthly_operating_expenses,vacancy_rate:r.vacancy_rate,arv:r.arv,projected_sale_price:r.projected_sale_price,rehab_cost:r.rehab_cost,closing_costs:r.closing_costs,financing_costs:r.financing_costs,holding_months:r.holding_months,monthly_holding_costs:r.monthly_holding_costs,selling_cost_percent:r.selling_cost_percent,notes:[r.source?r.source+" listing":"",r.source_url||""].filter(Boolean).join("\n")};
  window.renderDealAnalyzer(payload);
 };
+window.importRadarOpportunity=async function(){
+ var f=document.getElementById("radarImportForm");if(!f)return;
+ var msg=document.getElementById("radarImportMsg");
+ var get=function(id){var e=document.getElementById(id);return e?e.value.trim():"";};
+ var name=get("radarImportName"),address=get("radarImportAddress"),city=get("radarImportCity"),state=get("radarImportState").toUpperCase()||"TN";
+ var source=get("radarImportSource"),url=get("radarImportUrl"),type=get("radarImportType")||"multifamily";
+ var units=Number(get("radarImportUnits"))||null,price=Number(get("radarImportPrice"))||null,rent=Number(get("radarImportRent"))||null;
+ if(!name||!address||!city||!price){if(msg)msg.textContent="Name, address, city, and asking price are required.";return;}
+ if(!/TN|TENNESSEE/.test(state)){if(msg)msg.textContent="Deal Radar is currently limited to Tennessee target markets.";return;}
+ var userRes=await sb.auth.getUser();var uid=userRes.data&&userRes.data.user?userRes.data.user.id:null;
+ if(!uid){if(msg)msg.textContent="Please sign in again.";return;}
+ var mem=await sb.from("company_members").select("company_id").eq("user_id",uid).limit(1).maybeSingle();
+ if(mem.error||!mem.data){if(msg)msg.textContent="Could not determine your JGAP company access.";return;}
+ var externalId="manual:"+btoa(unescape(encodeURIComponent(address+"|"+price))).replace(/[^A-Za-z0-9_-]/g,"").slice(0,120);
+ var now=new Date().toISOString();
+ var row={company_id:mem.data.company_id,name:name,source:source||"Manual",source_url:url||null,external_id:externalId,property_type:type,address:address,city:city,state:state,units:units,asking_price:price,monthly_rent:rent,status:"new",first_seen_at:now,last_seen_at:now,notes:"Manually imported into JGAP Deal Radar."};
+ var ins=await sb.from("radar_opportunities").upsert(row,{onConflict:"company_id,source,external_id"});
+ if(ins.error){if(msg)msg.textContent="Import failed: "+ins.error.message;return;}
+ if(msg)msg.textContent="Opportunity added to Deal Radar. Refreshing...";
+ f.reset();if(document.getElementById("radarImportState"))document.getElementById("radarImportState").value="TN";
+ setTimeout(window.renderAlertsPage,400);
+};
 window.renderAlertsPage=function(){
  var main=document.querySelector("main");if(!main)main=document.getElementById("app");if(!main)return;
- main.innerHTML='<div class="pageHead"><div><h1>Alerts</h1><p class="muted">Deal Radar, multifamily opportunities, market history and rent-growth signals.</p></div><button class="secondary" onclick="render()">← Dashboard</button></div><div id="jgapAlertsStatus" class="panel">Loading alerts...</div>';
+ main.innerHTML='<div class="pageHead"><div><h1>Alerts</h1><p class="muted">Deal Radar, multifamily opportunities, market history and rent-growth signals.</p></div><button class="secondary" onclick="render()">← Dashboard</button></div><div class="panel"><h3 style="margin-top:0">📥 Add Listing to Deal Radar</h3><p class="muted">Enter a listing you found online. JGAP will save it as a new Radar opportunity for screening.</p><form id="radarImportForm" onsubmit="event.preventDefault();importRadarOpportunity()" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px"><input id="radarImportName" placeholder="Property name" required><input id="radarImportAddress" placeholder="Street address" required><input id="radarImportCity" placeholder="City" required><input id="radarImportState" value="TN" placeholder="State" required><input id="radarImportSource" placeholder="Source (LoopNet, Crexi, etc.)"><input id="radarImportUrl" placeholder="Listing URL"><select id="radarImportType"><option value="multifamily">Multifamily</option><option value="duplex">Duplex</option><option value="triplex">Triplex</option><option value="quadplex">Quadplex</option><option value="apartment">Apartment</option></select><input id="radarImportUnits" type="number" min="1" placeholder="Units"><input id="radarImportPrice" type="number" min="0" step="1" placeholder="Asking price" required><input id="radarImportRent" type="number" min="0" step="1" placeholder="Monthly rent"><button class="primary" type="submit">Add to Deal Radar</button></form><div id="radarImportMsg" class="muted" style="margin-top:8px"></div></div><div id="jgapAlertsStatus" class="panel">Loading alerts...</div>';
  var status=document.getElementById("jgapAlertsStatus");
  var timeout=function(p){return Promise.race([p,new Promise(function(_,rej){setTimeout(function(){rej(new Error("Request timed out. Check Supabase and refresh JGAP."));},10000);})]);};
  Promise.all([
