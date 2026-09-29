@@ -446,9 +446,14 @@ async function selectLearningBookChapter(id){
 
 function openLearningBookLesson(id){
   const l=(window.__learningBookLessons||[]).find(x=>x.id===id);if(!l)return;
-  const host=document.getElementById('learningBookLessonEditor');if(!host)return;window.__learningBookCurrentLessonId=id;
-  loadLearningBookWorkbook(id).then(w=>{if(window.__learningBookCurrentLessonId!==id)return;const wrap=document.createElement('div');wrap.innerHTML=learningBookActionSheet((window.__learningBookChapters||[]).find(c=>c.id===window.__learningBookCurrentId),l,w);host.appendChild(wrap.firstElementChild);});
-  host.innerHTML='<div class="panel" style="border:2px solid #d9e3ef"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><div><div class="muted">Lesson '+l.lesson_number+'</div><h3 style="margin:3px 0">'+escapeHtml(l.lesson_title)+'</h3></div><label style="font-size:13px"><input id="learningBookLessonDone" type="checkbox" '+(l.completed?'checked':'')+'> Mark lesson complete</label></div><div id="learningBookLessonContent" contenteditable="true" spellcheck="true" style="min-height:320px;border:1px solid #ccd5e2;border-radius:9px;padding:18px;background:#fff;outline:none;line-height:1.7;font-size:16px;margin-top:12px">'+(l.content_html||'')+learningBookActionSheet((window.__learningBookChapters||[]).find(c=>c.id===window.__learningBookCurrentId),l)+'</div><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap"><span id="learningBookLessonStatus" class="muted">Edit and save this lesson.</span><button class="primary" onclick="saveLearningBookLesson()">Save Lesson</button></div></div>';
+  const host=document.getElementById('learningBookLessonEditor');if(!host)return;
+  window.__learningBookCurrentLessonId=id;
+  host.innerHTML='<div class="panel" style="border:2px solid #d9e3ef"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><div><div class="muted">Lesson '+l.lesson_number+'</div><h3 style="margin:3px 0">'+escapeHtml(l.lesson_title)+'</h3></div><label style="font-size:13px"><input id="learningBookLessonDone" type="checkbox" '+(l.completed?'checked':'')+'> Mark lesson complete</label></div><div id="learningBookLessonContent" contenteditable="true" spellcheck="true" style="min-height:320px;border:1px solid #ccd5e2;border-radius:9px;padding:18px;background:#fff;outline:none;line-height:1.7;font-size:16px;margin-top:12px">'+(l.content_html||'')+'</div><div id="learningBookWorkbookHost"></div><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap"><span id="learningBookLessonStatus" class="muted">Edit and save this lesson.</span><button class="primary" onclick="saveLearningBookLesson()">Save Lesson</button></div></div>';
+  loadLearningBookWorkbook(id).then(w=>{
+    if(window.__learningBookCurrentLessonId!==id)return;
+    const wb=document.getElementById('learningBookWorkbookHost');if(!wb)return;
+    wb.innerHTML=learningBookActionSheet((window.__learningBookChapters||[]).find(c=>c.id===window.__learningBookCurrentId),l,w);
+  });
 }
 
 async function saveLearningBookLesson(){
