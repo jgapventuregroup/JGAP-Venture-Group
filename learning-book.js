@@ -181,6 +181,25 @@ function learningBookActionSheet(chapter,lesson){
     '</div>';
 }
 
+async function loadLearningBookWorkbook(lessonId){
+  const {data:{user}}=await sb.auth.getUser();if(!user)return null;
+  const {data,error}=await sb.from('learning_book_workbook').select('*').eq('user_id',user.id).eq('lesson_id',lessonId).maybeSingle();
+  if(error){console.warn('Workbook load:',error);return null;} return data||null;
+}
+async function saveLearningBookWorkbook(lessonId,chapterId){
+  const {data:{user}}=await sb.auth.getUser();if(!user)return;
+  const get=id=>document.querySelector('[data-lb-note="'+id+'"]')?.innerHTML||'';
+  const checklist={};document.querySelectorAll('[data-lb-check]').forEach(x=>checklist[x.dataset.lbCheck]=!!x.checked);
+  const payload={user_id:user.id,chapter_id:chapterId,lesson_id:lessonId,learned_notes:get('learned'),verify_notes:get('verify'),decision_notes:get('decision'),action_notes:get('action'),checklist,updated_at:new Date().toISOString()};
+  const {error}=await sb.from('learning_book_workbook').upsert(payload,{onConflict:'user_id,lesson_id'});
+  if(error){alert('Could not save workbook: '+error.message);return;}
+  const status=document.getElementById('lbWorkbookStatus');if(status)status.textContent='Workbook saved '+new Date().toLocaleTimeString();
+}
+function learningBookActionSheet(chapter,lesson,w){
+  const title=lesson?.lesson_title||chapter?.chapter_title||'This lesson',safe=escapeHtml(title),x=w||{},checks=x.checklist||{};
+  const note=(k,p)=>'<div contenteditable="true" data-lb-note="'+k+'" style="min-height:78px;margin-top:6px;border:1px solid #ccd5e2;border-radius:9px;padding:10px;background:#fff">'+(x[k+'_notes']||p)+'</div>';
+  return '<div class="lbActionSheet" style="margin-top:18px;padding:18px;border:1px solid #d8e3ef;border-radius:12px;background:#f8fbff"><b style="font-size:18px">JGAP Deal Workbook</b><p class="muted">Turn <b>'+safe+'</b> into an investor action.</p><div class="detailGrid" style="grid-template-columns:1fr 1fr;gap:12px"><div><b>What I learned</b>'+note('learned','Write the 1–3 most important things you learned.')+'</div><div><b>What I need to verify</b>'+note('verify','List numbers, documents, assumptions or facts you cannot verify yet.')+'</div></div><div style="margin-top:14px"><b>Action checklist</b>'+[['explain','I can explain this concept without guessing.'],['numbers','I identified the numbers or documents that matter.'],['questions','I recorded questions that need an answer.'],['action','I completed one real-world action related to this lesson.']].map((z,i)=>'<label style="display:block;margin-top:'+(i?6:8)+'px"><input type="checkbox" data-lb-check="'+z[0]+'" '+(checks[z[0]]?'checked':'')+'> '+z[1]+'</label>').join('')+'</div><div style="margin-top:14px"><b>JGAP Decision Checkpoint</b>'+note('decision','What would make me continue, investigate, negotiate, or walk away?')+'</div><div style="margin-top:14px"><b>Next Action</b>'+note('action','What will you do next, and by when?')+'</div><div style="margin-top:12px"><span id="lbWorkbookStatus" class="muted">Not saved yet.</span> <button class="primary" type="button" onclick="saveLearningBookWorkbook(window.__learningBookCurrentLessonId,window.__learningBookCurrentId)">Save Workbook</button></div></div>';
+}
 async function renderLearningBookPage(){
  const {data:{user}}=await sb.auth.getUser();if(!user){authView();return;}
  shell();const main=document.querySelector('.layout>main');if(!main)return;
@@ -428,6 +447,7 @@ async function selectLearningBookChapter(id){
 function openLearningBookLesson(id){
   const l=(window.__learningBookLessons||[]).find(x=>x.id===id);if(!l)return;
   const host=document.getElementById('learningBookLessonEditor');if(!host)return;window.__learningBookCurrentLessonId=id;
+  loadLearningBookWorkbook(id).then(w=>{if(window.__learningBookCurrentLessonId!==id)return;const wrap=document.createElement('div');wrap.innerHTML=learningBookActionSheet((window.__learningBookChapters||[]).find(c=>c.id===window.__learningBookCurrentId),l,w);host.appendChild(wrap.firstElementChild);});
   host.innerHTML='<div class="panel" style="border:2px solid #d9e3ef"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><div><div class="muted">Lesson '+l.lesson_number+'</div><h3 style="margin:3px 0">'+escapeHtml(l.lesson_title)+'</h3></div><label style="font-size:13px"><input id="learningBookLessonDone" type="checkbox" '+(l.completed?'checked':'')+'> Mark lesson complete</label></div><div id="learningBookLessonContent" contenteditable="true" spellcheck="true" style="min-height:320px;border:1px solid #ccd5e2;border-radius:9px;padding:18px;background:#fff;outline:none;line-height:1.7;font-size:16px;margin-top:12px">'+(l.content_html||'')+learningBookActionSheet((window.__learningBookChapters||[]).find(c=>c.id===window.__learningBookCurrentId),l)+'</div><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap"><span id="learningBookLessonStatus" class="muted">Edit and save this lesson.</span><button class="primary" onclick="saveLearningBookLesson()">Save Lesson</button></div></div>';
 }
 
