@@ -71,7 +71,7 @@ window.renderAlertsPage=function(){
    var breakEven=sellPct<1?totalCost/(1-sellPct):null;
    if(breakEven!==null&&sale>0){r.arvCushion=sale-breakEven;r.arvCushionPct=(sale-breakEven)/breakEven;r.radarReasons.push("ARV cushion "+(r.arvCushionPct*100).toFixed(1)+"%");}
  }
- r.radarScore=s.score;r.radarReasons=s.reasons;window.__jgapRadarAnalyzerQueue[r.id]=r;
+ r.radarScore=s.score;r.radarReasons=s.reasons.slice();if(r.arvCushionPct!=null)r.radarReasons.push("ARV cushion "+(r.arvCushionPct*100).toFixed(1)+"%");window.__jgapRadarAnalyzerQueue[r.id]=r;
 });
   multi.slice(0,12).forEach(function(d){window.__jgapRadarAnalyzerQueue["deal:"+d.id]=d;});
   var alerts=[];
