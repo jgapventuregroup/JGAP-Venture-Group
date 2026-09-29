@@ -494,13 +494,13 @@ function filterLearningBookChapters(){
 
 function learningBookChapterOverviewHtml(html){
   const source=html||'';
-  const h3=source.match(/<h3[^>]*>\\s*Chapter\\s+Overview\\s*<\\/h3>/i);
+  const h3=source.match(/<h3[^>]*>\s*Chapter\s+Overview\s*<\/h3>/i);
   const start=h3?h3.index+h3[0].length:0;
   const rest=source.slice(start);
-  const next=rest.search(/<h4\\b/i);
+  const next=rest.search(/<h4\b/i);
   const overview=(next>=0?rest.slice(0,next):rest).trim();
   if(overview)return overview;
-  const firstH4=source.search(/<h4\\b/i);
+  const firstH4=source.search(/<h4\b/i);
   const intro=source.slice(0,firstH4>=0?firstH4:source.length).replace(/<h3[^>]*>.*?<\\/h3>/i,'').trim();
   return intro||'<span class="muted">No chapter overview yet.</span>';
 }
