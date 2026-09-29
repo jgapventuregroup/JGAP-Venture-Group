@@ -209,13 +209,13 @@ async function seedLearningBookLessonRows(userId){
     if((existing||[]).some(x=>x.chapter_id===c.id))continue;
     let blocks=[];
     const html=c.content_html||'';
-    const re=/<h4[^>]*>([\\s\\S]*?)<\\/h4>/gi;
+    const re=/<h4[^>]*>([\s\S]*?)<\/h4>/gi;
     let m,starts=[];
     while((m=re.exec(html)))starts.push({index:m.index,end:re.lastIndex,title:m[1].replace(/<[^>]+>/g,'').trim()});
     if(starts.length){
       const intro=html.slice(0,starts[0].index);
       if(intro.replace(/<[^>]+>/g,'').trim())blocks.push({title:'Chapter Introduction',html:intro});
-      starts.forEach((s,i)=>{const end=i+1<starts.length?starts[i+1].index:html.length;blocks.push({title:s.title.replace(/^\\d+\\.\\s*/,''),html:html.slice(s.end,end)});});
+      starts.forEach((s,i)=>{const end=i+1<starts.length?starts[i+1].index:html.length;blocks.push({title:s.title.replace(/^\d+\.\s*/,''),html:html.slice(s.end,end)});});
     }else if(html.replace(/<[^>]+>/g,'').trim()){
       blocks=[{title:c.chapter_title,html:html}];
     }else{
