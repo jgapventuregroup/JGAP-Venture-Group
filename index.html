@@ -2431,6 +2431,7 @@ sb.auth.onAuthStateChange((event)=>{ if(event==='TOKEN_REFRESHED') return; windo
 <script>
 // JGAP in-app browser history: keep browser Back inside the app and keep
 // the address bar on the actual app URL. Navigation creates real app history entries.
+document.addEventListener('DOMContentLoaded', function(){
 (function(){
   const APP_URL = window.location.href;
   window.__JGAP_APP_URL = APP_URL;
@@ -2493,6 +2494,7 @@ sb.auth.onAuthStateChange((event)=>{ if(event==='TOKEN_REFRESHED') return; windo
     try{ fn.apply(window,st.args||[]); } finally { window.__jgapHistoryHandling=false; }
   });
 })();
+});
 </script>
 
 <script>
