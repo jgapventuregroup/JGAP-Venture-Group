@@ -1291,15 +1291,15 @@ async function ensureDealChecklist(dealId){
  await sb.from("deal_checklist_items").insert(rows);
 }
 async function loadDealChecklist(dealId){
- const host=document.getElementById("dealChecklistItems"),summary=document.getElementById("dealChecklistSummary");
+ const host=document.getElementById("dealChecklist"),summary=document.getElementById("dealChecklistMsg");
  if(!host||!summary)return;
  if(!dealId){summary.textContent="Save the deal first to activate the checklist.";host.innerHTML="";return;}
  await ensureDealChecklist(dealId);
  const q=await sb.from("deal_checklist_items").select("id,category,title,status,due_date,notes").eq("deal_id",dealId).order("category").order("created_at");
  if(q.error){summary.innerHTML='<span class="error">'+escapeHtml(q.error.message)+'</span>';return;}
- const rows=q.data||[],done=rows.filter(x=>x.status==="complete").length;
+ const rows=q.data||[],done=rows.filter(x=>x.status==="completed").length;
  summary.innerHTML="<b>"+done+" of "+rows.length+" complete</b>";
- host.innerHTML=rows.map(x=>'<div style="display:flex;gap:10px;align-items:center;padding:9px;border:1px solid #e5e7eb;border-radius:8px;background:#fff"><input type="checkbox" '+(x.status==="complete"?"checked":"")+' onchange="updateDealChecklistItem(\''+x.id+'\',this.checked)"><div style="flex:1"><b>'+escapeHtml(x.title)+'</b><div class="muted" style="font-size:12px">'+escapeHtml(x.category)+'</div></div></div>').join("");
+ host.innerHTML=rows.map(x=>'<div style="display:flex;gap:10px;align-items:flex-start;padding:9px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;margin-bottom:7px"><input type="checkbox" '+(x.status==="completed"?"checked":"")+' onchange="updateDealChecklistItem(\\''+x.id+'\\',this.checked)"><div style="flex:1"><b>'+escapeHtml(x.title)+'</b><div class="muted" style="font-size:12px">'+escapeHtml(x.category)+(x.due_date?' · Due '+escapeHtml(x.due_date):'')+'</div>'+(x.notes?'<div style="font-size:12px;margin-top:3px">'+escapeHtml(x.notes)+'</div>':'')+'</div></div>').join("");
 }
 async function updateDealChecklistItem(id,complete){
  const {data:item,error:loadError}=await sb.from("deal_checklist_items").select("due_date,notes").eq("id",id).single();
