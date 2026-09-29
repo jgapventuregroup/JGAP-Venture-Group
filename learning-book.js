@@ -501,7 +501,7 @@ function learningBookChapterOverviewHtml(html){
   const overview=(next>=0?rest.slice(0,next):rest).trim();
   if(overview)return overview;
   const firstH4=source.search(/<h4\b/i);
-  const intro=source.slice(0,firstH4>=0?firstH4:source.length).replace(/<h3[^>]*>.*?<\\/h3>/i,'').trim();
+  const intro=source.slice(0,firstH4>=0?firstH4:source.length).replace(/<h3[^>]*>.*?<\/h3>/i,'').trim();
   return intro||'<span class="muted">No chapter overview yet.</span>';
 }
 
