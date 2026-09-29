@@ -1625,6 +1625,30 @@ async function updateProjectTask(taskId,projectId,status,priority,assigned,due){
  const {error}=await sb.rpc('update_current_user_project_task',{p_task_id:taskId,p_status:status,p_priority:priority,p_assigned_to:assigned||null,p_due_date:due||null,p_description:null});
  if(error){alert(error.message);return;} await loadProjects(); setTimeout(()=>toggleProjectTasks(projectId),150);
 }
+async function toggleProjectDueDiligence(projectId){
+ const host=document.getElementById('dd_'+projectId); if(!host)return;
+ if(host.style.display==='block'){host.style.display='none';return;} host.style.display='block';
+ const {data,error}=await sb.from('project_due_diligence').select('*').eq('project_id',projectId).order('created_at');
+ if(error){host.innerHTML='<div class="error">'+escapeHtml(error.message)+'</div>';return;}
+ const rows=data||[];
+ host.innerHTML=`<div class="panel"><div class="grid"><div><div class="muted">Open checks</div><div class="metric">${rows.filter(x=>x.status!=='completed').length}</div></div><div><div class="muted">Completed</div><div class="metric">${rows.filter(x=>x.status==='completed').length}</div></div></div><div style="overflow:auto;margin-top:12px">${rows.length?'<table class="table"><thead><tr><th>Check</th><th>Status</th><th>Notes</th></tr></thead><tbody>'+rows.map(d=>`<tr><td><b>${escapeHtml(d.item)}</b></td><td><select onchange="updateProjectDueDiligence('${d.id}','${projectId}',this.value,'${encodeURIComponent(d.notes||'')}')"><option ${d.status==='open'?'selected':''}>open</option><option ${d.status==='in_progress'?'selected':''}>in_progress</option><option ${d.status==='completed'?'selected':''}>completed</option><option ${d.status==='blocked'?'selected':''}>blocked</option></select></td><td>${escapeHtml(d.notes||'—')}</td></tr>`).join('')+'</tbody></table>':'<p class="muted">No due-diligence checks yet.</p>'}</div><div class="sectionTitle" style="margin-top:16px">Add Due-Diligence Check</div><div class="formGrid"><label>Check / Item<input id="dd_item_${projectId}" placeholder="Inspection, title, permits, utilities..."></label><label>Notes<input id="dd_notes_${projectId}" placeholder="Optional notes"></label></div><button class="primary" onclick="addProjectDueDiligence('${projectId}')">Add Check</button></div>`;
+}
+async function addProjectDueDiligence(projectId){
+ const item=(document.getElementById('dd_item_'+projectId)?.value||'').trim();
+ const notes=(document.getElementById('dd_notes_'+projectId)?.value||'').trim()||null;
+ if(!item){alert('Enter a due-diligence item.');return;}
+ const {error}=await sb.rpc('create_current_user_project_due_diligence',{p_project_id:projectId,p_item:item,p_notes:notes});
+ if(error){alert(error.message);return;}
+ await loadProjects(); setTimeout(()=>toggleProjectDueDiligence(projectId),150);
+}
+async function updateProjectDueDiligence(id,projectId,status,encodedNotes){
+ const notes=decodeURIComponent(encodedNotes||'');
+ const {error}=await sb.rpc('update_current_user_project_due_diligence',{p_id:id,p_status:status,p_notes:notes||null});
+ if(error){alert(error.message);return;}
+ await loadProjects(); setTimeout(()=>toggleProjectDueDiligence(projectId),150);
+}
+
+
 async function toggleProjectResults(projectId){
  const host=document.getElementById('results_'+projectId); if(!host)return;
  if(host.style.display==='block'){host.style.display='none';return;} host.style.display='block';
