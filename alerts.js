@@ -36,6 +36,23 @@ function radarScore(r,minPrice,maxPrice){
  return {score:score,reasons:reasons};
 }
 window.__jgapRadarAnalyzerQueue={};
+window.promoteJgapDealToRadar=async function(id){
+ var btn=document.querySelector('[data-promote-radar-id="'+CSS.escape(id)+'"]');
+ if(btn)btn.disabled=true;
+ var q=await sb.from("deals").select("id,company_id,name,property_address,property_county,offer_state,property_type,units,asking_price,monthly_rent,monthly_operating_expenses,vacancy_rate,status").eq("id",id).maybeSingle();
+ if(q.error||!q.data){alert(q.error?.message||"Could not load the JGAP deal.");if(btn)btn.disabled=false;return;}
+ var d=q.data;
+ var cityState=String(d.property_address||"").split(",");
+ var city=(cityState.length>1?cityState[cityState.length-2]:"").trim();
+ var state=String(d.offer_state||"TN").toUpperCase();
+ var externalId="jgap-deal:"+d.id;
+ var row={company_id:d.company_id,name:d.name||d.property_address||"JGAP Deal",source:"JGAP",source_url:"",external_id:externalId,property_type:d.property_type||"multifamily",address:d.property_address||"",city:city,state:state,units:d.units||null,asking_price:d.asking_price||null,monthly_rent:d.monthly_rent||null,monthly_operating_expenses:d.monthly_operating_expenses||null,vacancy_rate:d.vacancy_rate||null,status:"new",first_seen_at:new Date().toISOString(),last_seen_at:new Date().toISOString(),notes:"Promoted from JGAP saved deal for Radar workflow testing."};
+ var ins=await sb.from("radar_opportunities").upsert(row,{onConflict:"company_id,source,external_id"});
+ if(ins.error){alert("Could not add to Deal Radar: "+ins.error.message);if(btn)btn.disabled=false;return;}
+ if(btn){btn.textContent="In Deal Radar";btn.disabled=true;}
+ alert("Added to Deal Radar. Refresh Alerts to see it.");
+};
+
 window.saveRadarAsDeal=function(id){
  var r=window.__jgapRadarAnalyzerQueue[id];
  if(!r){alert("Refresh Alerts and try again.");return;}
@@ -103,7 +120,7 @@ window.renderAlertsPage=function(){
   });
   multi.slice(0,12).forEach(function(d){
    var body='<b>'+esc(d.property_address||d.name||"JGAP Property")+'</b><br>Asking price: <b>'+money(d.asking_price)+'</b> · Status: <b>'+esc(d.status||"—")+'</b>';
-   body+='<div style="margin-top:10px"><button class="primary radar-analyze-btn" type="button" data-radar-id="deal:'+esc(d.id)+'">Analyze in Deal Analyzer</button></div>';
+   body+='<div style="margin-top:10px"><button class="primary radar-analyze-btn" type="button" data-radar-id="deal:'+esc(d.id)+'">Analyze in Deal Analyzer</button><button class="secondary radar-promote-btn" type="button" data-promote-radar-id="'+esc(d.id)+'" style="margin-left:8px">Add to Deal Radar</button></div>';
    alerts.push(card("🔔 New multifamily property",body,"Added to JGAP "+new Date(d.created_at).toLocaleString()));
   });
   var growth=[];
@@ -133,6 +150,9 @@ window.renderAlertsPage=function(){
   });
   Array.prototype.forEach.call(status.querySelectorAll(".radar-save-btn"),function(btn){
     btn.addEventListener("click",function(){window.saveRadarAsDeal(btn.getAttribute("data-radar-id"));});
+  });
+  Array.prototype.forEach.call(status.querySelectorAll(".radar-promote-btn"),function(btn){
+    btn.addEventListener("click",function(){window.promoteJgapDealToRadar(btn.getAttribute("data-promote-radar-id"));});
   });
  }).catch(function(e){status.innerHTML='<div class="error"><b>Could not load alert data.</b><div style="margin-top:8px;font-size:13px">'+esc(e.message||String(e))+'</div></div>';});
 };
