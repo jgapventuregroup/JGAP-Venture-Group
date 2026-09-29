@@ -1041,8 +1041,24 @@ function calcDeal(){
  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
  set("r_loan",money2(loan));set("r_debt",money2(debt));const arv=n("d_arv"),holdingMonths=Math.max(0,Math.round(n("d_holding_months"))),monthlyHold=n("d_monthly_holding"),sellingPct=Math.min(100,Math.max(0,n("d_selling_cost_pct")))/100,financingCosts=n("d_financing_costs"),projectedSale=n("d_projected_sale")||arv;const flipCost=price+rehab+close+financingCosts+(holdingMonths*monthlyHold),flipSale=projectedSale,flipProfit=flipSale-(flipCost+flipSale*sellingPct),seventyArv=arv>0?arv*.70:null,equityCreated=arv>0?arv-flipCost:null;set("r_arv",arv>0?money2(arv):"—");set("r_flip_cost",arv>0?money2(flipCost):"—");set("r_flip_sale",arv>0?money2(flipSale):"—");set("r_flip_profit",arv>0?money2(flipProfit):"—");set("r_70_arv",seventyArv?money2(seventyArv):"—");set("r_equity_created",equityCreated!==null?money2(equityCreated):"—");set("r_income",money2(income));set("r_noi",money2(noi));set("r_anoi",money2(anoi));set("r_cf",money2(cf));set("r_cap",(cap*100).toFixed(2)+"%");set("r_coc",(coc*100).toFixed(2)+"%");set("r_dscr",debt?dscr.toFixed(2):"—");set("r_be",(be*100).toFixed(1)+"%");set("r_cash",money2(cash));
  const tc=n("d_target_coc")/100,tp=n("d_target_cap")/100,tdv=document.getElementById("d_target_dscr")?.value,td=tdv===""?null:Number(tdv);
- const meets=coc>=tc&&cap>=tp&&(td===null||dscr>=td);set("r_target",meets?"Meets all entered targets":"Below one or more entered targets");
- const st=document.getElementById("dealStatus");if(st)st.innerHTML=`<b>${meets?"Entered targets met":"Below one or more entered targets"}</b><p class="muted">Cap rate ${(cap*100).toFixed(2)}% vs ${(tp*100).toFixed(1)}% • Cash-on-cash ${(coc*100).toFixed(2)}% vs ${(tc*100).toFixed(1)}%${td===null?" • DSCR not required for this analysis":" • DSCR "+dscr.toFixed(2)+" vs "+td.toFixed(2)}. These are calculations from your inputs, not an investment recommendation.</p>`;
+ const underwritingIssues=[];
+ if(price<=0)underwritingIssues.push("Purchase price is missing or zero.");
+ if(rent<=0)underwritingIssues.push("Monthly rent / gross revenue is missing or zero.");
+ if(exp<=0)underwritingIssues.push("Monthly operating expenses are zero or missing; returns may be overstated until real/estimated OpEx is entered.");
+ if(structure!=="none" && price>0 && down>price)underwritingIssues.push("Down payment exceeds the purchase price.");
+ if(structure!=="none" && rate<0)underwritingIssues.push("Interest rate cannot be negative.");
+ if(structure!=="none" && term<=0)underwritingIssues.push("Loan term is missing.");
+ const underwritingComplete=underwritingIssues.length===0;
+ const meets=coc>=tc&&cap>=tp&&(td===null||dscr>=td);
+ set("r_target",!underwritingComplete?"Incomplete underwriting":(meets?"Meets all entered targets":"Below one or more entered targets"));
+ const st=document.getElementById("dealStatus");
+ if(st){
+   if(!underwritingComplete){
+     st.innerHTML=`<b>⚠️ Underwriting incomplete</b><p class="muted">The analyzer is still showing the calculated metrics, but target/price conclusions should not be treated as complete until the missing inputs are addressed.</p><ul style="margin:8px 0 0 18px">${underwritingIssues.map(x=>`<li>${x}</li>`).join("")}</ul><p class="muted" style="margin-bottom:0">Current cap rate, cash-on-cash, DSCR, and cash flow are mathematical results from the numbers entered.</p>`;
+   }else{
+     st.innerHTML=`<b>${meets?"Entered targets met":"Below one or more entered targets"}</b><p class="muted">Cap rate ${(cap*100).toFixed(2)}% vs ${(tp*100).toFixed(1)}% • Cash-on-cash ${(coc*100).toFixed(2)}% vs ${(tc*100).toFixed(1)}%${td===null?" • DSCR not required for this analysis":" • DSCR "+dscr.toFixed(2)+" vs "+td.toFixed(2)}. These are calculations from your inputs, not an investment recommendation.</p>`;
+   }
+ }
  const solve=condition=>{let lo=0,hi=Math.max(price*4,1000000);for(let i=0;i<80;i++){const p=(lo+hi)/2,d=paymentFor(Math.max(0,p-down));if(condition(p,d))lo=p;else hi=p}return lo};
  const maxCap=tp>0&&anoi>0?anoi/tp:null,maxCoc=tc>0?solve((p,d)=>{const c=Math.max(0,Math.min(down,p))+close+rehab;return c>0&&((noi-d)*12/c)>=tc}):null,maxDscr=td!==null&&td>0?solve((p,d)=>d>0?noi/d>=td:true):null,minCf=n("d_min_cf"),maxCf=minCf>0?solve((p,d)=>noi-d>=minCf):null;
  const vals=[maxCap,maxCoc,maxDscr,maxCf].filter(v=>typeof v==="number"&&v>0&&Number.isFinite(v)),maxPrice=vals.length?Math.min(...vals):null,buffer=Math.min(100,Math.max(0,n("d_offer_buffer")))/100,targetOffer=maxPrice===null?null:maxPrice*(1-buffer),show=v=>v===null?"—":money2(v);
