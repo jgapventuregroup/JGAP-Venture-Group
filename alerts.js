@@ -12,14 +12,14 @@ function distanceMiles(a,b){
  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
 var centers={
- KINGSPORT:[36.548434,-82.561819],BRISTOL:[36.569135,-82.197489],BLUFFCITY:[36.474271,-82.260969],
+ KINGSPORT:[36.548434,-82.561819],BRISTOL:[36.569135,-82.197489],BRISTOLVA:[36.6112,-82.1792],BLUFFCITY:[36.474271,-82.260969],
  JOHNSONCITY:[36.313440,-82.353473],BLOUNTVILLE:[36.5337,-82.3268],ELIZABETHTON:[36.3487,-82.2107],
  GREENEVILLE:[36.1632,-82.8307],ROGERSVILLE:[36.4109,-82.9996],MORRISTOWN:[36.21398,-83.29489]
 };
 function normalizeCity(v){return String(v||"").toUpperCase().replace(/[^A-Z]/g,"");}
 function inTarget(r){
  var state=String(r.state||"TN").toUpperCase();
- if(state!=="TN")return false;
+ if(state!=="TN"&&state!=="VA")return false;
  var city=normalizeCity(r.city);
  if(centers[city])return true;
  var address=String(r.address||"").toUpperCase();
@@ -79,7 +79,7 @@ window.importRadarOpportunity=async function(){
  var source=get("radarImportSource"),url=get("radarImportUrl"),type=get("radarImportType")||"multifamily";
  var units=Number(get("radarImportUnits"))||null,price=Number(get("radarImportPrice"))||null,rent=Number(get("radarImportRent"))||null;
  if(!name||!address||!city||!price){if(msg)msg.textContent="Name, address, city, and asking price are required.";return;}
- if(!/TN|TENNESSEE/.test(state)){if(msg)msg.textContent="Deal Radar is currently limited to Tennessee target markets.";return;}
+ if(!/TN|TENNESSEE|VA|VIRGINIA/.test(state)){if(msg)msg.textContent="Deal Radar is currently limited to JGAP target markets.";return;}
  var userRes=await sb.auth.getUser();var uid=userRes.data&&userRes.data.user?userRes.data.user.id:null;
  if(!uid){if(msg)msg.textContent="Please sign in again.";return;}
  var mem=await sb.from("company_members").select("company_id").eq("user_id",uid).limit(1).maybeSingle();
