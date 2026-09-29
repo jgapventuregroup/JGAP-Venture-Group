@@ -70,6 +70,13 @@ window.renderAlertsPage=function(){
    totalCost+=Number(match.rehab_cost)||0; totalCost+=Number(match.closing_costs)||0; totalCost+=Number(match.financing_costs)||0;
    totalCost+=(Number(match.holding_months)||0)*(Number(match.monthly_holding_costs)||0);
    var breakEven=sellPct<1?totalCost/(1-sellPct):null;
+   r.purchase_price=Number(match.purchase_price)||Number(r.asking_price);
+   r.monthly_rent=Number(match.monthly_rent)||Number(r.monthly_rent)||0;
+   r.monthly_operating_expenses=Number(match.monthly_operating_expenses)||0;
+   r.vacancy_rate=Number(match.vacancy_rate)||0;
+   r.rehab_cost=Number(match.rehab_cost)||0;r.closing_costs=Number(match.closing_costs)||0;
+   r.financing_costs=Number(match.financing_costs)||0;r.holding_months=Number(match.holding_months)||0;
+   r.monthly_holding_costs=Number(match.monthly_holding_costs)||0;r.selling_cost_percent=Number(match.selling_cost_percent)||0;
    r.arv=Number(match.arv);r.projected_sale_price=sale;r.seventyArvCeiling=r.arv*.70;
    if(breakEven!==null&&sale>0){r.arvBreakEven=breakEven;r.arvCushion=sale-breakEven;r.arvCushionPct=(sale-breakEven)/breakEven;}
  }
