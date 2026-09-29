@@ -169,7 +169,7 @@ async function seedLearningBookLessons(userId){
 function learningBookActionSheet(chapter,lesson){
   const title=lesson?.lesson_title||chapter?.chapter_title||'This lesson';
   const safe=escapeHtml(title);
-  return '<div class="lbActionSheet" style="margin-top:18px;padding:18px;border:1px solid #d8e3ef;border-radius:12px;background:#f8fbff">'+
+  return '<div class="lbActionSheet" style="margin-top:18px;padding:18px;border:1px solid #d8e3ef;border-radius:12px;background:#f8fbff">'+exercise+
     '<div style="font-weight:800;font-size:18px">JGAP Action Sheet</div>'+ 
     '<p class="muted" style="margin:6px 0 14px">Turn <b>'+safe+'</b> into an investor action.</p>'+
     '<div class="detailGrid" style="grid-template-columns:1fr 1fr;gap:12px">'+
@@ -195,8 +195,63 @@ async function saveLearningBookWorkbook(lessonId,chapterId){
   if(error){alert('Could not save workbook: '+error.message);return;}
   const status=document.getElementById('lbWorkbookStatus');if(status)status.textContent='Workbook saved '+new Date().toLocaleTimeString();
 }
+function jgapDealExerciseOne(lesson){
+  if(!lesson || !/Reading the Numbers/i.test(lesson.lesson_title||"")) return "";
+  const key="jgap_deal_exercise_1";
+  return '<div class="lbDealExercise" style="margin-top:18px;padding:18px;border:2px solid #b8cbe0;border-radius:12px;background:#fff">'+
+    '<div style="font-weight:800;font-size:20px">JGAP Deal Exercise #1 — Underwrite the Property</div>'+
+    '<p class="muted" style="margin:6px 0 14px">Work the deal from the facts first. Enter your answers, then use <b>Check My Work</b>. The same worksheet is designed to print cleanly for the hard-copy JGAP book.</p>'+
+    '<div class="stats" style="margin-top:10px">'+
+      '<div><span>Purchase Price</span><b>$250,000</b></div><div><span>Units</span><b>4</b></div>'+
+      '<div><span>Monthly Gross Rent</span><b>$4,000</b></div><div><span>Monthly Operating Expenses</span><b>$1,500</b></div>'+
+      '<div><span>Rehab</span><b>$25,000</b></div><div><span>Down Payment</span><b>20%</b></div>'+
+      '<div><span>Vacancy Assumption</span><b>5%</b></div><div><span>Loan Assumption</span><b>7% / 30 years</b></div>'+
+    '</div>'+
+    '<div class="formGrid" style="margin-top:14px">'+
+      '<label>Monthly Effective Income<input id="lbex_income" type="number" step="0.01" placeholder="Your answer"></label>'+
+      '<label>Monthly NOI<input id="lbex_noi" type="number" step="0.01" placeholder="Your answer"></label>'+
+      '<label>Annual NOI<input id="lbex_anoi" type="number" step="0.01" placeholder="Your answer"></label>'+
+      '<label>Cap Rate %<input id="lbex_cap" type="number" step="0.01" placeholder="Your answer"></label>'+
+      '<label>Loan Amount<input id="lbex_loan" type="number" step="0.01" placeholder="Your answer"></label>'+
+      '<label>Monthly Debt Service<input id="lbex_debt" type="number" step="0.01" placeholder="Your answer"></label>'+
+      '<label>Total Cash Required<input id="lbex_cash" type="number" step="0.01" placeholder="Your answer"></label>'+
+      '<label>Monthly Cash Flow<input id="lbex_cf" type="number" step="0.01" placeholder="Your answer"></label>'+
+      '<label>Cash-on-Cash %<input id="lbex_coc" type="number" step="0.01" placeholder="Your answer"></label>'+
+      '<label>Maximum Price at 8% CoC<input id="lbex_max" type="number" step="0.01" placeholder="Your answer"></label>'+
+      '<label>5% Offer Buffer<input id="lbex_offer" type="number" step="0.01" placeholder="Your answer"></label>'+
+    '</div>'+
+    '<div style="margin-top:14px"><b>Decision Checkpoint</b><div style="margin-top:6px"><label>What would you verify before making an offer?<textarea id="lbex_decision" rows="4" placeholder="List the documents, rents, expenses, financing terms, condition items, and comparable sales you would verify."></textarea></label></div></div>'+
+    '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="primary" onclick="checkJGAPDealExerciseOne()">Check My Work</button><button type="button" class="secondary" onclick="clearJGAPDealExerciseOne()">Clear Exercise</button></div>'+
+    '<div id="lbex_result" class="muted" style="margin-top:10px"></div>'+
+    '<details class="lbExerciseAnswerKey" style="margin-top:14px"><summary><b>Answer Key</b> — open after completing the exercise</summary>'+
+      '<div style="margin-top:10px"><p><b>Monthly effective income:</b> $3,800</p><p><b>Monthly NOI:</b> $2,300</p><p><b>Annual NOI:</b> $27,600</p><p><b>Cap rate:</b> 11.04%</p><p><b>Loan amount:</b> $200,000</p><p><b>Monthly debt service:</b> about $1,330.60</p><p><b>Total cash required:</b> $75,000</p><p><b>Monthly cash flow:</b> about $969.40</p><p><b>Cash-on-cash:</b> about 15.51%</p><p><b>Maximum price at 8% CoC:</b> about $320,524.70 using the stated financing and $25,000 rehab assumption</p><p><b>5% offer-buffer price:</b> about $304,498.47</p></div>'+
+    '</details>'+
+    '</div>';
+}
+window.checkJGAPDealExerciseOne=function(){
+  const v=id=>Number(document.getElementById(id)?.value||0);
+  const r=.07/12,n=360,loan=200000;
+  const debt=loan*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
+  const income=4000*.95,noi=income-1500,anoi=noi*12,cash=50000+25000,cf=noi-debt,coc=cf*12/cash,cap=anoi/250000;
+  let lo=0,hi=1000000;
+  for(let i=0;i<90;i++){const p=(lo+hi)/2,d=(p*.8)*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1),cc=(noi-d)*12/(p*.2+25000);if(cc>=.08)lo=p;else hi=p;}
+  const max=lo,offer=max*.95;
+  const expected={lbex_income:income,lbex_noi:noi,lbex_anoi:anoi,lbex_cap:cap*100,lbex_loan:loan,lbex_debt:debt,lbex_cash:cash,lbex_cf:cf,lbex_coc:coc*100,lbex_max:max,lbex_offer:offer};
+  const labels={lbex_income:"Effective income",lbex_noi:"Monthly NOI",lbex_anoi:"Annual NOI",lbex_cap:"Cap rate",lbex_loan:"Loan amount",lbex_debt:"Debt service",lbex_cash:"Cash required",lbex_cf:"Cash flow",lbex_coc:"Cash-on-cash",lbex_max:"Max 8% CoC price",lbex_offer:"5% buffer price"};
+  let correct=0,total=Object.keys(expected).length,miss=[];
+  Object.entries(expected).forEach(([id,x])=>{const got=v(id),tol=Math.max(1,Math.abs(x)*.01);if(Math.abs(got-x)<=tol)correct++;else miss.push(labels[id]);});
+  const out=document.getElementById("lbex_result");
+  if(out)out.innerHTML=correct===total?"<b>✓ Exercise complete.</b> Your answers are within the 1% checking tolerance. Now review the verification questions before treating the deal as underwritten.":"<b>"+correct+"/"+total+" calculations matched.</b> Review: "+miss.join(", ")+". The answer key below shows the modeled results.";
+  try{localStorage.setItem("jgap_deal_exercise_1",JSON.stringify(Object.fromEntries(Object.keys(expected).map(id=>[id,document.getElementById(id)?.value||""]))));}catch(e){}
+};
+window.clearJGAPDealExerciseOne=function(){
+  const ids=["lbex_income","lbex_noi","lbex_anoi","lbex_cap","lbex_loan","lbex_debt","lbex_cash","lbex_cf","lbex_coc","lbex_max","lbex_offer","lbex_decision"];
+  ids.forEach(id=>{const e=document.getElementById(id);if(e)e.value="";});
+  const out=document.getElementById("lbex_result");if(out)out.textContent="";
+  try{localStorage.removeItem("jgap_deal_exercise_1");}catch(e){}
+};
 function learningBookActionSheet(chapter,lesson,w){
-  const title=lesson?.lesson_title||chapter?.chapter_title||'This lesson',safe=escapeHtml(title),x=w||{},checks=x.checklist||{};
+  const title=lesson?.lesson_title||chapter?.chapter_title||'This lesson',safe=escapeHtml(title),x=w||{},checks=x.checklist||{}; const exercise=jgapDealExerciseOne(lesson);
   const note=(k,p)=>'<div contenteditable="true" data-lb-note="'+k+'" style="min-height:78px;margin-top:6px;border:1px solid #ccd5e2;border-radius:9px;padding:10px;background:#fff">'+(x[k+'_notes']||p)+'</div>';
   return '<div class="lbActionSheet" style="margin-top:18px;padding:18px;border:1px solid #d8e3ef;border-radius:12px;background:#f8fbff"><b style="font-size:18px">JGAP Deal Workbook</b><p class="muted">Turn <b>'+safe+'</b> into an investor action.</p><div class="detailGrid" style="grid-template-columns:1fr 1fr;gap:12px"><div><b>What I learned</b>'+note('learned','Write the 1–3 most important things you learned.')+'</div><div><b>What I need to verify</b>'+note('verify','List numbers, documents, assumptions or facts you cannot verify yet.')+'</div></div><div style="margin-top:14px"><b>Action checklist</b>'+[['explain','I can explain this concept without guessing.'],['numbers','I identified the numbers or documents that matter.'],['questions','I recorded questions that need an answer.'],['action','I completed one real-world action related to this lesson.']].map((z,i)=>'<label style="display:block;margin-top:'+(i?6:8)+'px"><input type="checkbox" data-lb-check="'+z[0]+'" '+(checks[z[0]]?'checked':'')+'> '+z[1]+'</label>').join('')+'</div><div style="margin-top:14px"><b>JGAP Decision Checkpoint</b>'+note('decision','What would make me continue, investigate, negotiate, or walk away?')+'</div><div style="margin-top:14px"><b>Next Action</b>'+note('action','What will you do next, and by when?')+'</div><div style="margin-top:12px"><span id="lbWorkbookStatus" class="muted">Not saved yet.</span> <button class="primary" type="button" onclick="saveLearningBookWorkbook(window.__learningBookCurrentLessonId,window.__learningBookCurrentId)">Save Workbook</button></div></div>';
 }
