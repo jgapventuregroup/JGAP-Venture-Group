@@ -886,7 +886,7 @@ async function renderDealsPage(){
  const groups={}; stages.forEach(x=>groups[x]=[]); (deals||[]).forEach(d=>{if(!groups[d.status])groups[d.status]=[];groups[d.status].push(d);});
  msg.textContent=(deals||[]).length+" saved deal"+((deals||[]).length===1?"":"s");
  grid.innerHTML=stages.map(stage=>`<div class="panel pipelineStage" data-stage="${stage}"><button type="button" class="pipelineStageToggle" onclick="togglePipelineStage('${stage}')" aria-expanded="${stage==="lead"?"true":"false"}"><span><b>${labels[stage]}</b> <span class="muted">(${groups[stage].length})</span></span><span class="pipelineStageIcon" id="pipelineIcon_${stage}">${stage==="lead"?"−":"+"}</span></button><div class="pipelineStageContent" id="pipelineContent_${stage}" style="display:${stage==="lead"?"block":"none"}">${groups[stage].length?groups[stage].map(d=>`<div class="card" style="margin:10px 0;cursor:pointer" onclick="openDeal('${d.id}')"><b>${escapeHtml(d.name||"Untitled Deal")}</b><div class="muted">${escapeHtml(d.property_type||"")}</div><strong>${money2(d.purchase_price)}</strong></div>`).join(""):'<div class="muted">No deals</div>'}</div></div>`).join("");
- function togglePipelineStage(stage){
+ window.togglePipelineStage=function(stage){
    const content=document.getElementById("pipelineContent_"+stage);
    const icon=document.getElementById("pipelineIcon_"+stage);
    const button=content?.previousElementSibling;
@@ -895,7 +895,7 @@ async function renderDealsPage(){
    content.style.display=open?"none":"block";
    icon.textContent=open?"+":"−";
    button.setAttribute("aria-expanded",open?"false":"true");
- }
+ };
  const cards=grid.querySelectorAll(".card"); const flatDeals=[]; stages.forEach(stage=>groups[stage].forEach(d=>flatDeals.push(d))); cards.forEach((card,i)=>{const d=flatDeals[i];if(!d)return;const key="jgap_snapshot_"+d.id;let saved={};try{saved=JSON.parse(localStorage.getItem(key)||"{}");}catch(e){saved={note:localStorage.getItem(key)||""};}const wrap=document.createElement("div");wrap.style.cssText="margin-top:8px;padding-top:8px;border-top:1px solid #ddd";wrap.onclick=function(ev){ev.stopPropagation();};const title=document.createElement("div");title.textContent="Quick Snapshot";title.style.cssText="font-size:12px;font-weight:700;margin-bottom:5px";const select=document.createElement("select");select.style.cssText="width:100%;margin-bottom:5px";["Not Reviewed","Looked At","Tried","Opened","Good Fit","Not a Good Fit"].forEach(function(x){const o=document.createElement("option");o.value=x;o.textContent=x;if((saved.status||"Not Reviewed")===x)o.selected=true;select.appendChild(o);});const note=document.createElement("input");note.type="text";note.placeholder="Quick note...";note.value=saved.note||"";note.style.cssText="width:100%;box-sizing:border-box;margin-bottom:5px";const save=document.createElement("button");save.type="button";save.className="secondary";save.style.cssText="padding:5px 9px;font-size:12px";save.textContent="Save Snapshot";save.onclick=function(ev){ev.stopPropagation();const data={status:select.value,note:note.value};localStorage.setItem(key,JSON.stringify(data));save.textContent="Saved";setTimeout(function(){save.textContent="Save Snapshot";},900);};wrap.appendChild(title);wrap.appendChild(select);wrap.appendChild(note);wrap.appendChild(save);card.appendChild(wrap);});
 }
 async function openDeal(id){
