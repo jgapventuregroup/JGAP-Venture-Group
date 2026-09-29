@@ -200,6 +200,142 @@ function emailLearningBook(){const subject=encodeURIComponent("JGAP Real Estate 
 
 
 /* === JGAP LEARNING BOOK — CHAPTER → LESSON SYSTEM === */
+
+const JGAP_ADDITIONAL_BOOK_LESSONS={
+20:[
+ {title:"Reading the Numbers",html:"<p>Before deciding whether a property is a deal, separate <b>facts</b> from <b>assumptions</b>. Facts include verified rents, tax bills, insurance quotes, utility bills, leases, and actual loan terms. Assumptions include future rent, vacancy, repairs, appreciation, and exit value.</p><ul><li>Build the income side from unit-by-unit evidence.</li><li>Normalize recurring operating expenses.</li><li>Keep one-time repairs and capital expenditures separate.</li><li>Calculate NOI before debt service.</li><li>Then test the proposed financing and cash flow.</li></ul><p><b>JGAP rule:</b> never let a seller's pro forma become your underwriting without verification.</p>"} ,
+ {title:"From Listing to Underwriting",html:"<p>Start with the listing, but finish with primary documents. Compare asking price with current income, realistic market rents, physical condition, and comparable sales. Record every assumption in the Deal Analyzer so another person could reproduce the conclusion.</p><p>Run at least three views: <b>as-is</b>, <b>stabilized</b>, and <b>stress case</b>. A property that only works under optimistic assumptions should not be treated as though those assumptions are facts.</p>"}
+],
+21:[
+ {title:"Building a Pro Forma",html:"<p>A pro forma is a forward-looking operating model. Start with current verified income, then make each adjustment explicit rather than hiding it inside a single projected number.</p><ol><li>Gross potential rent.</li><li>Vacancy and credit loss.</li><li>Other income.</li><li>Operating expenses.</li><li>NOI.</li><li>Debt service.</li><li>Cash flow before taxes.</li></ol><p>Document the source for every major assumption and keep historical and projected numbers visibly separate.</p>"} ,
+ {title:"Stress-Testing the Pro Forma",html:"<p>Change one assumption at a time: lower rents, higher vacancy, higher insurance, higher repairs, or a higher interest rate. Then run a combined downside case. The goal is not to predict the future; it is to learn how much room the deal has before the economics break.</p>"}
+],
+22:[
+ {title:"Understanding Financing",html:"<p>Financing changes both the return and the risk of an investment. Compare loan amount, interest rate, amortization, term, fees, reserves, prepayment provisions, and required equity—not just the advertised rate.</p><p>Calculate annual debt service and compare it with NOI. Then determine how much cash must actually be invested at closing, including closing costs and required reserves.</p>"} ,
+ {title:"Match the Loan to the Deal",html:"<p>A short-term loan can create refinance risk; a high-leverage loan can increase cash-on-cash return while reducing monthly cushion; an adjustable rate can introduce payment uncertainty. Choose financing based on the property's business plan and risk capacity, not one isolated metric.</p>"}
+],
+23:[
+ {title:"Estimating Rehab Costs",html:"<p>Rehab estimates should be built from a written scope of work. Break the project into trades and line items: roofing, HVAC, plumbing, electrical, kitchens, baths, flooring, paint, exterior, site work, permits, cleanup, and contingency.</p><p>Use contractor bids when possible and keep a separate contingency for unknown conditions. Never confuse your own unpaid labor with cash that must be available to complete the project.</p>"} ,
+ {title:"Value Creation vs. Spending",html:"<p>Every rehab dollar should have a reason. Some work protects the asset, some improves rentability, and some may increase value. Compare the expected benefit with the cost and schedule. Cosmetic work that does not improve rent, occupancy, durability, or resale should be questioned.</p>"}
+],
+24:[
+ {title:"Holding Costs",html:"<p>Holding costs are the costs that continue while a property is being renovated, marketed, leased, or stabilized. Include interest, taxes, insurance, utilities, lawn care, security, permits, and other recurring costs.</p><p>Build a month-by-month timeline. A project that takes six months instead of three can materially change the required cash and return.</p>"} ,
+ {title:"Protect the Cash Budget",html:"<p>Set aside funds for overruns and delays before starting work. Track budgeted, committed, paid, and remaining amounts. A rehab budget is not complete until it also explains how long the money must remain tied up.</p>"}
+],
+25:[
+ {title:"Due Diligence",html:"<p>Due diligence is the process of proving that the deal you think you are buying is actually the deal you are buying. Review leases, rent roll, income, expenses, title, taxes, insurance, physical condition, zoning, permits, utilities, environmental concerns, and financing.</p><p>Create a written checklist with a responsible person and deadline for each item.</p>"} ,
+ {title:"Verify Before You Waive",html:"<p>Do not rely on verbal answers when a document can verify the issue. If a material fact cannot be verified, record the uncertainty and model the downside. Your due-diligence file should show what was requested, what was received, what was inspected, and what remains unresolved.</p>"}
+],
+26:[
+ {title:"Identifying Red Flags",html:"<p>Common red flags include unsupported rents, unexplained expense gaps, deferred maintenance, insurance problems, unpaid taxes, title issues, unauthorized units, code concerns, tenant disputes, unusual concessions, and financial records that do not reconcile.</p><p>A red flag is not automatically a deal killer. It is a signal that requires investigation and a quantified response.</p>"} ,
+ {title:"Red Flags in the Numbers",html:"<p>Look for unusually low expenses, sudden rent jumps, occupancy that does not match the rent roll, missing utility costs, inconsistent tax records, or projected income that is far above current collections. Ask what evidence supports each unusual number.</p>"}
+],
+27:[
+ {title:"Using the Deal Analyzer",html:"<p>Enter the asking price separately from the JGAP offer price. Then enter verified rents, vacancy, expenses, financing, rehab, and closing costs. The analyzer should answer a specific question: <b>what happens if we buy this property on these terms?</b></p><p>Save the assumptions and notes so the analysis can be revisited after new information arrives.</p>"} ,
+ {title:"Walk Away When the Numbers Say Walk Away",html:"<p>Set a maximum price or required terms before negotiations. If the seller will not meet the economics, record the reason and move on. A disciplined investor protects capital by rejecting deals that do not meet the underwriting standard.</p>"}
+],
+28:[
+ {title:"Getting Financing",html:"<p>Prepare a lender package before making an offer whenever possible. Include personal financial information requested by the lender, property details, purchase price, requested loan amount, operating information, rehab budget, and a clear explanation of the business plan.</p>"} ,
+ {title:"Compare Financing Offers",html:"<p>Compare total cost and structure: rate, points, fees, amortization, maturity, reserves, guarantees, prepayment penalties, closing timeline, and underwriting conditions. A lower rate is not automatically a lower total cost.</p>"}
+],
+29:[
+ {title:"Working With Lenders",html:"<p>Give lenders complete and consistent information. If a number changes, update the lender promptly. Ask what conditions must be satisfied before closing and what could delay funding.</p>"} ,
+ {title:"Build a Lender Network",html:"<p>Maintain a record of lender type, loan size, geography, property type, leverage, rates, fees, required reserves, and contact history. Over time, this becomes a financing database that helps JGAP move faster without relying on one lender.</p>"}
+],
+30:[
+ {title:"Property Inspections",html:"<p>An inspection is an information-gathering process, not a substitute for your own underwriting. Review structure, roof, HVAC, electrical, plumbing, moisture, drainage, safety systems, appliances, and visible defects.</p>"} ,
+ {title:"Turn Inspection Findings Into Dollars",html:"<p>Convert material findings into repair estimates, reserves, or negotiation items. Separate immediate safety issues from deferred maintenance and optional improvements. Then rerun the deal analysis using realistic costs.</p>"}
+],
+31:[
+ {title:"Understanding Appraisals",html:"<p>An appraisal is an independent valuation report prepared for a stated purpose and scope. Review the comparable sales, adjustments, property description, condition, and assumptions rather than treating the final value as unquestionable.</p>"} ,
+ {title:"When Value and Price Differ",html:"<p>If the appraisal differs from your purchase price or underwriting value, identify why. A difference can reflect condition, comparable selection, income assumptions, market changes, or property-specific issues. Reconcile the difference before committing additional capital.</p>"}
+],
+32:[
+ {title:"Closing the Purchase",html:"<p>Closing is where the contract, financing, title work, insurance, funds, and transfer documents come together. Review the final settlement figures against your approved budget and loan terms before signing.</p>"} ,
+ {title:"The Closing File",html:"<p>Keep the signed purchase agreement, amendments, closing disclosure or settlement statement, deed, title documents, loan documents, insurance, inspection reports, appraisal, and receipts together. A complete closing file makes future accounting, refinancing, tax work, and resale easier.</p>"}
+],
+33:[
+ {title:"After Closing",html:"<p>The first weeks after closing should establish control. Confirm insurance, utilities, locks, leases, rent instructions, vendor contacts, emergency procedures, accounting categories, and property records.</p>"} ,
+ {title:"Stabilize the Property",html:"<p>Identify the first 30-day priorities: safety, habitability, rent collection, urgent repairs, tenant communication, and documentation. Do not immediately spend money on cosmetic improvements while basic operations are unresolved.</p>"}
+],
+34:[
+ {title:"Property Management",html:"<p>Property management is a system, not a single person. Define leasing, screening, rent collection, maintenance, inspections, accounting, communication, and emergency responsibilities. Decide which tasks JGAP performs and which are delegated.</p>"} ,
+ {title:"Management Economics",html:"<p>Compare management fees with the value of time, expertise, response speed, and reduced owner workload. The objective is reliable operations that allow the owner to focus on acquisitions and higher-value decisions.</p>"}
+],
+35:[
+ {title:"Tenant Operations",html:"<p>Good tenant management starts with consistent screening, clear expectations, lawful lease terms, prompt communication, and documented maintenance procedures. Apply the same written standards to comparable applicants and situations.</p>"} ,
+ {title:"Tenant Retention",html:"<p>Retention can reduce turnover costs and vacancy. Respond to legitimate maintenance issues, communicate clearly about renewals, and keep the property safe and functional. Measure turnover cost rather than assuming retention is always cheaper.</p>"}
+],
+36:[
+ {title:"Leases",html:"<p>A lease defines the rights and obligations of the landlord and tenant. Track rent, deposit, term, renewal, utilities, maintenance responsibilities, late fees, notices, and other material provisions.</p>"} ,
+ {title:"Lease Administration",html:"<p>Keep a lease summary for every unit and calendar important dates. Never rely on memory for expirations, renewal notices, inspections, or rent changes. Use the actual lease and applicable law when making decisions.</p>"}
+],
+37:[
+ {title:"Rent Collection",html:"<p>Rent collection should be predictable, documented, and easy to reconcile. Establish a standard due date, payment method, receipt process, delinquency workflow, and reporting routine consistent with the lease and applicable law.</p>"} ,
+ {title:"Managing Delinquency",html:"<p>Act early when rent becomes delinquent. Document communications, follow the lease and applicable legal notice requirements, and avoid informal side agreements that create inconsistent records or unequal treatment.</p>"}
+],
+38:[
+ {title:"Repairs and Maintenance",html:"<p>Maintenance protects the asset and the tenant experience. Separate emergency, urgent, routine, and capital work. Track work orders from request through completion, cost, vendor, and payment.</p>"} ,
+ {title:"Preventive Maintenance",html:"<p>Use recurring inspections and service schedules for roofs, HVAC, plumbing, electrical systems, smoke and carbon-monoxide devices, exterior drainage, and other property-specific systems. Preventive work can reduce surprises, although it does not eliminate them.</p>"}
+],
+39:[
+ {title:"Contractors",html:"<p>Use written scopes, clear prices, payment milestones, insurance and licensing checks where applicable, and documented change orders. Avoid paying the entire contract before work is complete unless the arrangement has a specific, justified reason.</p>"} ,
+ {title:"Controlling Rehab Projects",html:"<p>Track original budget, approved changes, amount paid, remaining balance, completion percentage, and inspection notes. Require photos and receipts where useful. A contractor relationship should be professional, documented, and based on the agreed scope.</p>"}
+],
+40:[
+ {title:"Keeping Financial Records",html:"<p>Every property should have a clean financial trail. Reconcile bank activity, record rent by unit, categorize expenses consistently, retain invoices and receipts, and separate capital improvements from ordinary operating costs.</p>"} ,
+ {title:"Build the Monthly Property Report",html:"<p>A useful monthly report shows income, operating expenses, debt service, cash flow, occupancy, delinquency, major repairs, capital projects, and cash reserves. Consistent reporting turns property management data into decision-making information.</p>"}
+],
+41:[
+ {title:"Scaling the Portfolio",html:"<p>Scaling means building repeatable systems before adding volume. Standardize underwriting, lender packages, due diligence, closing files, property management, accounting, and reporting.</p>"} ,
+ {title:"Avoid Buying Yourself a Job",html:"<p>Every new property adds work unless systems and people absorb it. Track owner hours, recurring tasks, and bottlenecks. Delegate repeatable work so the owner's role increasingly becomes capital allocation, negotiation, oversight, and strategy.</p>"}
+],
+42:[
+ {title:"Multifamily Investing",html:"<p>Multifamily properties offer multiple income streams under one roof, but they also concentrate physical and tenant-management complexity. Underwrite each unit, common areas, utilities, taxes, insurance, maintenance, and turnover.</p>"} ,
+ {title:"Multifamily Value",html:"<p>For income-producing property, changes in NOI can affect value. Increasing durable NOI through better operations can therefore matter more than simply making the property look nicer. Verify that projected improvements are realistic and sustainable.</p>"}
+],
+43:[
+ {title:"Reinvesting Cash Flow",html:"<p>Cash flow can be distributed, reserved, or reinvested. Before reinvesting, maintain appropriate property reserves and account for known repairs, taxes, insurance, debt obligations, and upcoming capital needs.</p>"} ,
+ {title:"Capital Allocation",html:"<p>Compare possible uses of available cash: reserves, debt reduction, rehab, another acquisition, or a business investment. Use the JGAP plan and required liquidity—not emotion—to determine how much capital can safely be committed.</p>"}
+],
+44:[
+ {title:"Partnerships",html:"<p>A partnership should define contributions, ownership, decision rights, distributions, guarantees, responsibilities, dispute procedures, and exit rights before money is committed. Put the agreement in writing with qualified legal advice.</p>"} ,
+ {title:"Choose Roles, Not Just People",html:"<p>Successful partnerships require complementary responsibilities and clear accountability. Decide who sources deals, who manages money, who handles operations, who signs contracts, and how disagreements are resolved.</p>"}
+],
+45:[
+ {title:"Building Business Systems",html:"<p>A system is a repeatable process with an owner, inputs, steps, outputs, and a way to measure performance. Document recurring JGAP tasks such as lead intake, underwriting, lender outreach, due diligence, property management, and bookkeeping.</p>"} ,
+ {title:"Automation and Delegation",html:"<p>Automate repetitive data movement where reliable, delegate tasks that require people, and keep human review for high-consequence decisions. The goal is leverage: more assets and opportunities without proportionally more owner hours.</p>"}
+],
+46:[
+ {title:"Moving Into Other Investments",html:"<p>Once the real-estate operating system is stable, evaluate other assets or businesses using the same discipline: understand the revenue model, expenses, capital required, financing, risks, operator requirements, and exit options.</p>"} ,
+ {title:"Business Acquisition Lens",html:"<p>For an operating business, focus on normalized cash flow, owner dependence, customer concentration, equipment condition, lease terms, employee requirements, working capital, and seller financing possibilities. Do not confuse reported revenue with owner-available cash.</p>"}
+],
+47:[
+ {title:"Refinancing",html:"<p>Refinancing replaces or restructures existing debt. Compare the new loan's rate, fees, term, amortization, cash-out amount, prepayment costs, and expected change in cash flow. Calculate the break-even period for refinance costs.</p>"} ,
+ {title:"Refinance Risk",html:"<p>Do not assume a future refinance is guaranteed. Appraisal value, lender standards, rates, property performance, borrower finances, and market conditions can change. Underwrite the current deal so it remains survivable if the refinance takes longer or provides less proceeds than expected.</p>"}
+],
+48:[
+ {title:"BRRRR",html:"<p>BRRRR means Buy, Rehab, Rent, Refinance, Repeat. The strategy depends on buying at a basis that leaves room for renovation and refinance, completing durable improvements, stabilizing the rental, and obtaining financing based on the resulting property and borrower.</p>"} ,
+ {title:"BRRRR Failure Points",html:"<p>Common failure points include paying too much, underestimating rehab, overestimating ARV, missing holding costs, assuming rents without evidence, and assuming refinance proceeds before lender terms are known. Model the entire cycle before buying.</p>"}
+],
+49:[
+ {title:"House Flipping",html:"<p>Flipping is a project business. Profit depends on acquisition basis, rehab cost, financing, holding time, selling costs, and actual resale price. Include transaction costs on both sides and a realistic contingency.</p>"} ,
+ {title:"Flip Timeline",html:"<p>Build a schedule from contract to closing: acquisition, permits, demolition, rough work, finishes, punch list, marketing, buyer due diligence, and resale closing. Delays consume cash through interest, taxes, insurance, utilities, and opportunity cost.</p>"}
+],
+50:[
+ {title:"Value-Add Investing",html:"<p>Value-add investing seeks to improve a property's income, operating efficiency, condition, or usefulness. Start by identifying the specific problem and the measurable economic result before spending money.</p>"} ,
+ {title:"Underwrite the Value Creation",html:"<p>For each project, record cost, expected rent or expense change, stabilization time, added risk, and exit implications. After completion, compare actual results with the original thesis so future decisions improve.</p>"}
+],
+51:[
+ {title:"Commercial Real Estate",html:"<p>Commercial real estate can involve different leases, financing, valuation, due diligence, and tenant risks than residential property. Learn the property's lease structure, income sources, expenses, rollover schedule, zoning, environmental issues, and capital requirements.</p>"} ,
+ {title:"Commercial Underwriting",html:"<p>Review tenant-by-tenant income, lease expirations, reimbursements, operating expenses, capital needs, debt terms, and exit assumptions. Commercial deals can be highly sensitive to a small number of tenants, so concentration and rollover risk deserve explicit attention.</p>"}
+],
+52:[
+ {title:"Laundromat and Other Business Investments",html:"<p>A laundromat or other small business should be underwritten as an operating company, not like a rental property. Examine revenue by machine or service, utility costs, payroll, repairs, lease terms, equipment age, maintenance history, cash controls, competition, and normalized owner benefit.</p>"} ,
+ {title:"Seller Financing and Operator Leverage",html:"<p>Seller financing can reduce the amount of cash required at closing, but the terms still matter: price, down payment, rate, amortization, maturity, security, default provisions, and whether a balloon payment is required. For any business acquisition, also determine who will operate the business and how much owner time it really requires.</p>"}
+]
+};
+
 async function seedLearningBookLessonRows(userId){
   const {data:chapters,error}=await sb.from('learning_book_chapters').select('id,chapter_number,chapter_title,content_html,source_file_name').eq('user_id',userId).order('chapter_number');
   if(error||!chapters)return;
