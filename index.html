@@ -1984,7 +1984,7 @@ async function loadDashboardPrimeRate(forceRefresh=false){
 }
 
 
-async function renderDocumentsPageLegacy(){
+async function renderDocumentsPageLegacy(context={}){
   shell();
   const main=document.getElementById('main');
   main.innerHTML=`<div class="pageHead"><div><h1>Documents</h1><p class="muted">Secure company document storage for properties, deals, flips, leases and business records.</p></div></div>
@@ -1998,7 +1998,15 @@ async function renderDocumentsPageLegacy(){
   <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div><h2>Document Library</h2><p class="muted">Only authorized JGAP members can access these files.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><input id="docSearch" placeholder="Search documents..." oninput="loadJGAPDocuments()" style="max-width:220px"><select id="docTypeFilter" onchange="loadJGAPDocuments()" style="max-width:170px"><option value="">All Types</option><option>General</option><option>Lease</option><option>Purchase</option><option>Insurance</option><option>Mortgage</option><option>Tax</option><option>Repair</option><option>Flip</option><option>Receipt</option><option>Other</option></select><select id="docFilter" onchange="loadJGAPDocuments()" style="max-width:220px"><option value="">All Properties</option></select><select id="docDealFilter" onchange="loadJGAPDocuments()" style="max-width:220px"><option value="">All Deals</option></select></div></div><div id="docList" class="list"><div class="empty">Loading documents...</div></div></div>`;
   const {data:props}=await sb.from('properties').select('id,address_line1,city,state,postal_code').order('name');
   const selects=[document.getElementById('docProperty'),document.getElementById('docFilter')];
-  (props||[]).forEach(x=>selects.forEach((sel,i)=>{const o=document.createElement('option');o.value=x.id;o.textContent=[x.address_line1,x.city,x.state,x.postal_code].filter(Boolean).join(', ')||'Property';sel.appendChild(o)}));
+  (props||[]).forEach(x=>selects.forEach(sel=>{const o=document.createElement('option');o.value=x.id;o.textContent=[x.address_line1,x.city,x.state,x.postal_code].filter(Boolean).join(', ')||'Property';sel.appendChild(o)}));
+  const {data:deals}=await sb.from('deals').select('id,name').order('created_at',{ascending:false});
+  const dealSelects=[document.getElementById('docDeal'),document.getElementById('docDealFilter')];
+  (deals||[]).forEach(d=>dealSelects.forEach((sel,idx)=>{const o=document.createElement('option');o.value=d.id;o.textContent=d.name||'Untitled Deal';sel.appendChild(o)}));
+  if(context.dealId){
+    const dealInput=document.getElementById('docDeal'),dealFilter=document.getElementById('docDealFilter');
+    if(dealInput) dealInput.value=context.dealId;
+    if(dealFilter) dealFilter.value=context.dealId;
+  }
   await loadJGAPDocuments();
 }
 async function uploadJGAPDocument(){
