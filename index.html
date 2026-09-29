@@ -1267,7 +1267,10 @@ function renderDealWorkflow(status){
 function setDealStage(stage){
  const sel=document.getElementById('d_status'); if(sel)sel.value=stage;
  renderDealWorkflow(stage);
- const msg=document.getElementById('dealSaveMsg'); if(msg)msg.innerHTML='<span class="muted">Stage changed. Click Save Deal to keep it.</span>';
+ const checklist=document.getElementById('dealDueDiligence');
+ if(checklist) checklist.style.display=(stage==="due_diligence"||stage==="under_contract")?"block":"block";
+ const msg=document.getElementById('dealSaveMsg'); if(msg)msg.innerHTML='<span class="muted">Stage changed to <b>'+escapeHtml(stage.replaceAll("_"," "))+'</b>. Click Save Deal to keep it.</span>';
+ if((stage==="due_diligence"||stage==="under_contract")&&msg?.dataset.id)loadDealChecklist(msg.dataset.id);
 }
 
 function openDealDocuments(){const dealId=document.getElementById('dealSaveMsg')?.dataset.id;if(!dealId){alert('Save the deal first so its documents can be linked to it.');return;} window.renderDocumentsPage({dealId});}
