@@ -27,6 +27,7 @@ function inTarget(r){
  return false;
 }
 function radarDataQuality(r){var issues=[];if(!(Number(r.asking_price)>0))issues.push("asking price missing");if(!(Number(r.monthly_rent)>0))issues.push("rent missing");if(!(Number(r.units)>0))issues.push("units missing");if(!(Number(r.monthly_operating_expenses)>0))issues.push("OpEx missing");return issues;}
+function radarUnderwritingStatus(r){var issues=radarDataQuality(r),arv=Number(r.arv);if(!(arv>0))issues.push("ARV not established");return {ready:issues.length===0,issues:issues};}
 function radarScore(r,minPrice,maxPrice){
  var score=0,reasons=[],price=Number(r.asking_price),units=Number(r.units),cap=Number(r.cap_rate),dscr=Number(r.dscr);
  if(isFinite(cap)){if(cap>=8){score+=25;reasons.push("cap rate 8%+")}else if(cap>=6){score+=15;reasons.push("cap rate 6%+")}}
@@ -128,15 +129,17 @@ window.renderAlertsPage=function(){
    r.arv=Number(match.arv);r.projected_sale_price=sale;r.seventyArvCeiling=r.arv*.70;
    if(breakEven!==null&&sale>0){r.arvBreakEven=breakEven;r.arvCushion=sale-breakEven;r.arvCushionPct=(sale-breakEven)/breakEven;}
  }
- r.radarScore=s.score;r.radarReasons=s.reasons.slice();r.radarQuality=quality;if(quality.length)r.radarReasons.push("Needs underwriting: "+quality.join(", "));if(r.arvCushionPct!=null)r.radarReasons.push("ARV cushion "+(r.arvCushionPct*100).toFixed(1)+"%");window.__jgapRadarAnalyzerQueue[r.id]=r;
+ r.radarScore=s.score;r.radarReasons=s.reasons.slice();r.radarQuality=quality;r.radarUnderwriting=radarUnderwritingStatus(r);if(quality.length)r.radarReasons.push("Needs underwriting: "+quality.join(", "));if(r.radarUnderwriting.ready)r.radarReasons.push("Ready for underwriting");if(r.arvCushionPct!=null)r.radarReasons.push("ARV cushion "+(r.arvCushionPct*100).toFixed(1)+"%");window.__jgapRadarAnalyzerQueue[r.id]=r;
 });
   multi.slice(0,12).forEach(function(d){window.__jgapRadarAnalyzerQueue["deal:"+d.id]=d;});
   var alerts=[];
   targetRadar.slice(0,12).forEach(function(r){
    var loc=[r.city,r.state,r.postal_code].filter(Boolean).join(", ")||r.address||"Location not provided";
    var sourceLabel=String(r.source||"").trim();
+   var uw=r.radarUnderwriting||{ready:false,issues:r.radarQuality||[]};
+   var checklist=["Price: "+(Number(r.asking_price)>0?"✓":"Missing"),"Units: "+(Number(r.units)>0?"✓":"Missing"),"Rent: "+(Number(r.monthly_rent)>0?"✓":"Missing"),"OpEx: "+(Number(r.monthly_operating_expenses)>0?"✓":"Missing"),"ARV: "+(Number(r.arv)>0?"✓":"Missing")];
    var body='<b>'+esc(r.name||r.address||"Multifamily opportunity")+'</b><br>'+esc(loc)+(r.units!=null?" · Units: <b>"+esc(r.units)+"</b>":"")+" · Asking price: <b>"+money(r.asking_price)+"</b>";
-   if(sourceLabel) body+='<div style="margin-top:6px" class="muted">Source: <b>'+esc(sourceLabel)+'</b></div>'; var qualityLabel=Array.isArray(r.radarQuality)&&r.radarQuality.length?'<div style="margin-top:8px;padding:8px;border-radius:8px;background:#fff7e6"><b>⚠ Needs underwriting:</b> '+esc(r.radarQuality.join(", "))+'</div>':'<div style="margin-top:8px;padding:8px;border-radius:8px;background:#eef8ee"><b>✓ Basic listing data present</b></div>'; body+=qualityLabel;
+   if(sourceLabel) body+='<div style="margin-top:6px" class="muted">Source: <b>'+esc(sourceLabel)+'</b></div>'; body+='<div style="margin-top:8px;padding:8px;border-radius:8px;background:#f5f7fa"><b>Underwriting readiness:</b> '+(uw.ready?"✓ Ready for Deal Analyzer":"⚠ Needs data")+'<div class="muted" style="margin-top:5px">'+esc(checklist.join(" · "))+'</div></div>'; var qualityLabel=Array.isArray(r.radarQuality)&&r.radarQuality.length?'<div style="margin-top:8px;padding:8px;border-radius:8px;background:#fff7e6"><b>⚠ Needs underwriting:</b> '+esc(r.radarQuality.join(", "))+'</div>':'<div style="margin-top:8px;padding:8px;border-radius:8px;background:#eef8ee"><b>✓ Basic listing data present</b></div>'; body+=qualityLabel;
    if(r.arvCushion!=null) body+='<div style="margin-top:8px" class="muted"><b>ARV underwriting:</b> ARV '+money(r.arv)+' · 70% ARV ceiling '+money(r.seventyArvCeiling)+' · Break-even '+money(r.arvBreakEven)+' · Cushion '+money(r.arvCushion)+' ('+(r.arvCushionPct*100).toFixed(1)+'%)</div>';
    body+='<div style="margin-top:10px"><button class="primary radar-analyze-btn" type="button" data-radar-id="'+esc(r.id)+'">Analyze in Deal Analyzer</button><button class="secondary radar-save-btn" type="button" data-radar-id="'+esc(r.id)+'" style="margin-left:8px">Save as JGAP Deal</button>';
    if(r.source_url) body+='<a class="secondary" target="_blank" rel="noopener" href="'+esc(r.source_url)+'" style="margin-left:8px">Open Listing</a>';
