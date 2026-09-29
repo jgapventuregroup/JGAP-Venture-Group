@@ -49,7 +49,7 @@ window.renderAlertsPage=function(){
  var status=document.getElementById("jgapAlertsStatus");
  var timeout=function(p){return Promise.race([p,new Promise(function(_,rej){setTimeout(function(){rej(new Error("Request timed out. Check Supabase and refresh JGAP."));},10000);})]);};
  Promise.all([
-  timeout(sb.from("deals").select("id,name,property_address,property_county,offer_state,property_type,status,asking_price,monthly_rent,units,neighborhood,created_at").order("created_at",{ascending:false}).limit(100)),
+  timeout(sb.from("deals").select("id,name,property_address,property_county,offer_state,property_type,status,asking_price,monthly_rent,units,neighborhood,arv,projected_sale_price,rehab_cost,closing_costs,financing_costs,holding_months,monthly_holding_costs,selling_cost_percent,created_at").order("created_at",{ascending:false}).limit(100)),
   timeout(sb.from("radar_opportunities").select("id,name,source,source_url,property_type,address,city,state,postal_code,units,asking_price,cap_rate,dscr,status,first_seen_at,last_seen_at").eq("status","new").order("first_seen_at",{ascending:false}).limit(100)),
   timeout(sb.from("market_history").select("deal_id,recorded_at,price,monthly_rent,neighborhood").order("recorded_at",{ascending:true}).limit(500))
  ]).then(function(results){
@@ -59,7 +59,20 @@ window.renderAlertsPage=function(){
   var targetRadar=radar.filter(function(r){return /multi|duplex|triplex|quad|fourplex|apart/i.test(String(r.property_type||""))&&inTarget(r);});
   var prices=multi.map(function(d){return Number(d.asking_price)}).filter(isFinite).filter(function(v){return v>0;});
   var minPrice=prices.length?Math.min.apply(Math,prices):null,maxPrice=prices.length?Math.max.apply(Math,prices):null;
-  targetRadar.forEach(function(r){var s=radarScore(r,minPrice,maxPrice);r.radarScore=s.score;r.radarReasons=s.reasons;window.__jgapRadarAnalyzerQueue[r.id]=r;});
+  targetRadar.forEach(function(r){
+ var s=radarScore(r,minPrice,maxPrice);
+ var keyAddr=String(r.address||"").trim().toLowerCase();
+ var match=multi.find(function(d){return keyAddr&&String(d.property_address||"").trim().toLowerCase()===keyAddr;});
+ if(match&&Number(match.arv)>0){
+   var sale=Number(match.projected_sale_price)||Number(match.arv), sellPct=Math.min(100,Math.max(0,Number(match.selling_cost_percent)||0))/100;
+   var totalCost=Number(match.purchase_price)||Number(r.asking_price)||0;
+   totalCost+=Number(match.rehab_cost)||0; totalCost+=Number(match.closing_costs)||0; totalCost+=Number(match.financing_costs)||0;
+   totalCost+=(Number(match.holding_months)||0)*(Number(match.monthly_holding_costs)||0);
+   var breakEven=sellPct<1?totalCost/(1-sellPct):null;
+   if(breakEven!==null&&sale>0){r.arvCushion=sale-breakEven;r.arvCushionPct=(sale-breakEven)/breakEven;r.radarReasons.push("ARV cushion "+(r.arvCushionPct*100).toFixed(1)+"%");}
+ }
+ r.radarScore=s.score;r.radarReasons=s.reasons;window.__jgapRadarAnalyzerQueue[r.id]=r;
+});
   multi.slice(0,12).forEach(function(d){window.__jgapRadarAnalyzerQueue["deal:"+d.id]=d;});
   var alerts=[];
   targetRadar.slice(0,12).forEach(function(r){
