@@ -555,7 +555,7 @@ function learningBookPrintHtmlWithLessons(){
   const body=chapters.map(c=>{
     const ls=(window.__learningBookLessonsByChapter||{})[c.id]||[];
     return '<section class="chapter"><div class="part">'+escapeHtml(c.part_title)+'</div><h2>Chapter '+c.chapter_number+' — '+escapeHtml(c.chapter_title)+'</h2>'+
-      (c.content_html||'')+
+      '<div class="chapterOverview"><b>Chapter Overview</b><div style="margin-top:6px">'+learningBookChapterOverviewHtml(c.content_html)+'</div></div>'+
       ls.map(l=>'<div class="lesson"><h3>Lesson '+l.lesson_number+' — '+escapeHtml(l.lesson_title)+'</h3>'+l.content_html+learningBookActionSheet(c,l)+'</div>').join('')+
       '</section>';
   }).join('');
@@ -565,7 +565,7 @@ function learningBookPrintHtmlWithLessons(){
   'h3{margin-top:26px}.cover{min-height:850px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;page-break-after:always}'+
   '.front{page-break-after:always}.toc{page-break-after:always}.toc h2{text-align:left}.toc li{margin:4px 0}.tocPart{list-style:none;font-weight:800;text-transform:uppercase;margin-top:18px!important}'+
   '.chapter{page-break-before:always}.lesson{margin:28px 0;padding-left:12px;border-left:3px solid #e2e8f0}.part{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#5b6678}'+
-  '.bookRule{border-top:1px solid #d8e0ea;margin:24px 0}.printNote{border:1px solid #d8e0ea;border-radius:8px;padding:12px;background:#f8fbff}'+
+  '.bookRule{border-top:1px solid #d8e0ea;margin:24px 0}.chapterOverview{border:1px solid #d8e0ea;border-radius:8px;padding:14px;margin:18px 0 28px;background:#f8fbff}.printNote{border:1px solid #d8e0ea;border-radius:8px;padding:12px;background:#f8fbff}'+
   '.lbDealExercise{break-inside:avoid}.lbActionSheet{break-inside:avoid}'+
   'input,textarea{font:inherit;box-sizing:border-box}textarea{width:100%;min-height:90px;padding:10px;border:1px solid #ccd5e2;border-radius:8px}'+
   '@media print{body{margin:0 30px}.cover{min-height:95vh}.chapter{page-break-before:always}.lesson{break-inside:avoid}.front,.toc{page-break-after:always}}'+
