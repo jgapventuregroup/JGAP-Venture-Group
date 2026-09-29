@@ -131,6 +131,9 @@ window.renderAlertsPage=function(){
   Array.prototype.forEach.call(status.querySelectorAll(".radar-analyze-btn"),function(btn){
     btn.addEventListener("click",function(){window.openRadarInAnalyzer(btn.getAttribute("data-radar-id"));});
   });
+  Array.prototype.forEach.call(status.querySelectorAll(".radar-save-btn"),function(btn){
+    btn.addEventListener("click",function(){window.saveRadarAsDeal(btn.getAttribute("data-radar-id"));});
+  });
  }).catch(function(e){status.innerHTML='<div class="error"><b>Could not load alert data.</b><div style="margin-top:8px;font-size:13px">'+esc(e.message||String(e))+'</div></div>';});
 };
 })();
