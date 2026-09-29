@@ -492,13 +492,26 @@ function filterLearningBookChapters(){
   host.querySelectorAll('[data-book-chapter]').forEach(b=>b.addEventListener('click',()=>selectLearningBookChapter(b.dataset.bookChapter)));
 }
 
+function learningBookChapterOverviewHtml(html){
+  const source=html||'';
+  const h3=source.match(/<h3[^>]*>\\s*Chapter\\s+Overview\\s*<\\/h3>/i);
+  const start=h3?h3.index+h3[0].length:0;
+  const rest=source.slice(start);
+  const next=rest.search(/<h4\\b/i);
+  const overview=(next>=0?rest.slice(0,next):rest).trim();
+  if(overview)return overview;
+  const firstH4=source.search(/<h4\\b/i);
+  const intro=source.slice(0,firstH4>=0?firstH4:source.length).replace(/<h3[^>]*>.*?<\\/h3>/i,'').trim();
+  return intro||'<span class="muted">No chapter overview yet.</span>';
+}
+
 async function selectLearningBookChapter(id){
   const c=(window.__learningBookChapters||[]).find(x=>x.id===id);if(!c)return;window.__learningBookCurrentId=id;
   const e=document.getElementById('learningBookEditor');if(!e)return;
   const {data:lessons,error}=await sb.from('learning_book_lessons').select('id,lesson_number,lesson_title,content_html,completed,updated_at').eq('chapter_id',id).order('lesson_number');
   if(error){e.innerHTML='<div class="error">'+escapeHtml(error.message)+'</div>';return;}
   window.__learningBookLessons=lessons||[];
-  e.innerHTML='<div class="pageHead" style="margin-bottom:12px"><div><div class="muted">Chapter '+c.chapter_number+' • '+escapeHtml(c.part_title)+'</div><h2 style="margin:4px 0">'+escapeHtml(c.chapter_title)+'</h2></div><span class="muted" style="font-size:12px">'+window.__learningBookLessons.length+' lesson'+(window.__learningBookLessons.length===1?'':'s')+'</span></div><div class="panel" style="background:#f8fbff;margin-bottom:14px"><b>Chapter overview</b><div style="margin-top:6px">'+(c.content_html||'<span class="muted">No chapter overview yet.</span>')+'</div></div><div class="sectionTitle">Lessons in this chapter</div><div id="learningBookLessonList" style="display:grid;gap:8px">'+window.__learningBookLessons.map(l=>'<button type="button" class="secondary" data-book-lesson="'+l.id+'" style="display:flex;justify-content:space-between;gap:12px;text-align:left;align-items:center;white-space:normal"><span><b>Lesson '+l.lesson_number+'</b> — '+escapeHtml(l.lesson_title)+'</span><span>'+ (l.completed?'✅':'○') +'</span></button>').join('')+'</div><div id="learningBookLessonEditor" style="margin-top:18px"><div class="muted">Choose a lesson above.</div></div>';
+  e.innerHTML='<div class="pageHead" style="margin-bottom:12px"><div><div class="muted">Chapter '+c.chapter_number+' • '+escapeHtml(c.part_title)+'</div><h2 style="margin:4px 0">'+escapeHtml(c.chapter_title)+'</h2></div><span class="muted" style="font-size:12px">'+window.__learningBookLessons.length+' lesson'+(window.__learningBookLessons.length===1?'':'s')+'</span></div><div class="panel" style="background:#f8fbff;margin-bottom:14px"><b>Chapter overview</b><div style="margin-top:6px">'+learningBookChapterOverviewHtml(c.content_html)+'</div></div><div class="sectionTitle">Lessons in this chapter</div><div id="learningBookLessonList" style="display:grid;gap:8px">'+window.__learningBookLessons.map(l=>'<button type="button" class="secondary" data-book-lesson="'+l.id+'" style="display:flex;justify-content:space-between;gap:12px;text-align:left;align-items:center;white-space:normal"><span><b>Lesson '+l.lesson_number+'</b> — '+escapeHtml(l.lesson_title)+'</span><span>'+ (l.completed?'✅':'○') +'</span></button>').join('')+'</div><div id="learningBookLessonEditor" style="margin-top:18px"><div class="muted">Choose a lesson above.</div></div>';
   e.querySelectorAll('[data-book-lesson]').forEach(b=>b.addEventListener('click',()=>openLearningBookLesson(b.dataset.bookLesson)));
   if(window.__learningBookLessons[0])openLearningBookLesson(window.__learningBookLessons[0].id);
 }
