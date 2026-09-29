@@ -26,6 +26,7 @@ function inTarget(r){
  for(var k in centers)if(address.indexOf(k.replace("JOHNSONCITY","JOHNSON CITY").replace("BLOUNTVILLE","BLOUNTVILLE"))>=0)return true;
  return false;
 }
+function radarDataQuality(r){var issues=[];if(!(Number(r.asking_price)>0))issues.push("asking price missing");if(!(Number(r.monthly_rent)>0))issues.push("rent missing");if(!(Number(r.units)>0))issues.push("units missing");if(!(Number(r.monthly_operating_expenses)>0))issues.push("OpEx missing");return issues;}
 function radarScore(r,minPrice,maxPrice){
  var score=0,reasons=[],price=Number(r.asking_price),units=Number(r.units),cap=Number(r.cap_rate),dscr=Number(r.dscr);
  if(isFinite(cap)){if(cap>=8){score+=25;reasons.push("cap rate 8%+")}else if(cap>=6){score+=15;reasons.push("cap rate 6%+")}}
@@ -97,7 +98,7 @@ window.renderAlertsPage=function(){
  var status=document.getElementById("jgapAlertsStatus");
  var timeout=function(p){return Promise.race([p,new Promise(function(_,rej){setTimeout(function(){rej(new Error("Request timed out. Check Supabase and refresh JGAP."));},10000);})]);};
  Promise.all([
-  timeout(sb.from("deals").select("id,name,property_address,property_county,offer_state,property_type,status,asking_price,monthly_rent,units,neighborhood,arv,projected_sale_price,rehab_cost,closing_costs,financing_costs,holding_months,monthly_holding_costs,selling_cost_percent,created_at").order("created_at",{ascending:false}).limit(100)),
+  timeout(sb.from("deals").select("id,name,property_address,property_county,offer_state,property_type,status,asking_price,purchase_price,monthly_rent,monthly_operating_expenses,vacancy_rate,units,neighborhood,arv,projected_sale_price,rehab_cost,closing_costs,financing_costs,holding_months,monthly_holding_costs,selling_cost_percent,created_at").order("created_at",{ascending:false}).limit(100)),
   timeout(sb.from("radar_opportunities").select("id,name,source,source_url,property_type,address,city,state,postal_code,units,asking_price,cap_rate,dscr,status,first_seen_at,last_seen_at").eq("status","new").order("first_seen_at",{ascending:false}).limit(100)),
   timeout(sb.from("market_history").select("deal_id,recorded_at,price,monthly_rent,neighborhood").order("recorded_at",{ascending:true}).limit(500))
  ]).then(function(results){
@@ -108,7 +109,7 @@ window.renderAlertsPage=function(){
   var prices=multi.map(function(d){return Number(d.asking_price)}).filter(isFinite).filter(function(v){return v>0;});
   var minPrice=prices.length?Math.min.apply(Math,prices):null,maxPrice=prices.length?Math.max.apply(Math,prices):null;
   targetRadar.forEach(function(r){
- var s=radarScore(r,minPrice,maxPrice);
+ var s=radarScore(r,minPrice,maxPrice); var quality=radarDataQuality(r);
  var keyAddr=String(r.address||"").trim().toLowerCase();
  var match=multi.find(function(d){return keyAddr&&String(d.property_address||"").trim().toLowerCase()===keyAddr;});
  if(match&&Number(match.arv)>0){
@@ -127,7 +128,7 @@ window.renderAlertsPage=function(){
    r.arv=Number(match.arv);r.projected_sale_price=sale;r.seventyArvCeiling=r.arv*.70;
    if(breakEven!==null&&sale>0){r.arvBreakEven=breakEven;r.arvCushion=sale-breakEven;r.arvCushionPct=(sale-breakEven)/breakEven;}
  }
- r.radarScore=s.score;r.radarReasons=s.reasons.slice();if(r.arvCushionPct!=null)r.radarReasons.push("ARV cushion "+(r.arvCushionPct*100).toFixed(1)+"%");window.__jgapRadarAnalyzerQueue[r.id]=r;
+ r.radarScore=s.score;r.radarReasons=s.reasons.slice();r.radarQuality=quality;if(quality.length)r.radarReasons.push("Needs underwriting: "+quality.join(", "));if(r.arvCushionPct!=null)r.radarReasons.push("ARV cushion "+(r.arvCushionPct*100).toFixed(1)+"%");window.__jgapRadarAnalyzerQueue[r.id]=r;
 });
   multi.slice(0,12).forEach(function(d){window.__jgapRadarAnalyzerQueue["deal:"+d.id]=d;});
   var alerts=[];
@@ -135,7 +136,7 @@ window.renderAlertsPage=function(){
    var loc=[r.city,r.state,r.postal_code].filter(Boolean).join(", ")||r.address||"Location not provided";
    var sourceLabel=String(r.source||"").trim();
    var body='<b>'+esc(r.name||r.address||"Multifamily opportunity")+'</b><br>'+esc(loc)+(r.units!=null?" · Units: <b>"+esc(r.units)+"</b>":"")+" · Asking price: <b>"+money(r.asking_price)+"</b>";
-   if(sourceLabel) body+='<div style="margin-top:6px" class="muted">Source: <b>'+esc(sourceLabel)+'</b></div>';
+   if(sourceLabel) body+='<div style="margin-top:6px" class="muted">Source: <b>'+esc(sourceLabel)+'</b></div>'; var qualityLabel=Array.isArray(r.radarQuality)&&r.radarQuality.length?'<div style="margin-top:8px;padding:8px;border-radius:8px;background:#fff7e6"><b>⚠ Needs underwriting:</b> '+esc(r.radarQuality.join(", "))+'</div>':'<div style="margin-top:8px;padding:8px;border-radius:8px;background:#eef8ee"><b>✓ Basic listing data present</b></div>'; body+=qualityLabel;
    if(r.arvCushion!=null) body+='<div style="margin-top:8px" class="muted"><b>ARV underwriting:</b> ARV '+money(r.arv)+' · 70% ARV ceiling '+money(r.seventyArvCeiling)+' · Break-even '+money(r.arvBreakEven)+' · Cushion '+money(r.arvCushion)+' ('+(r.arvCushionPct*100).toFixed(1)+'%)</div>';
    body+='<div style="margin-top:10px"><button class="primary radar-analyze-btn" type="button" data-radar-id="'+esc(r.id)+'">Analyze in Deal Analyzer</button><button class="secondary radar-save-btn" type="button" data-radar-id="'+esc(r.id)+'" style="margin-left:8px">Save as JGAP Deal</button>';
    if(r.source_url) body+='<a class="secondary" target="_blank" rel="noopener" href="'+esc(r.source_url)+'" style="margin-left:8px">Open Listing</a>';
@@ -161,7 +162,7 @@ window.renderAlertsPage=function(){
     return '<details class="panel" style="margin:0"'+(open?' open':'')+'><summary style="cursor:pointer;font-weight:700;font-size:17px;padding:2px 0">'+title+' <span class="muted" style="float:right;font-size:12px">Click to '+(open?'collapse':'expand')+'</span></summary><div style="margin-top:14px">'+body+'</div></details>';
   }
   var html='<div style="display:grid;gap:10px">';
-  html+=dropdown("🚨 Active Alerts",'<div style="display:grid;gap:10px">'+(alerts.length?alerts.join(""):'<div class="muted">No new targeted multifamily opportunities right now.</div>')+'</div>',true);
+  html+=dropdown("🚨 Active Alerts",'<div style="display:grid;gap:10px">'+(alerts.length?alerts.join(""):'<div class="muted">No new targeted multifamily opportunities right now. Listings outside JGAP target markets are not shown here.</div>')+'</div>',true);
   html+=dropdown("🧭 Recent Market Activity",'<div style="display:grid;gap:10px">'+(recentCards.length?recentCards.join(""):'<div class="muted">No recent market activity recorded yet.</div>')+'</div>',false);
   html+=dropdown("📈 Growth Signals",'<div style="display:grid;gap:10px">'+(growth.length?growth.join(""):'<div class="muted">No 8%+ recorded rent-growth signals yet.</div>')+'</div>',false);
   html+=dropdown("📊 Properties with History",'<div style="display:grid;gap:10px">'+(historyCards.length?historyCards.join(""):'<div class="muted">No properties have enough market-history observations yet.</div>')+'</div>',false);
