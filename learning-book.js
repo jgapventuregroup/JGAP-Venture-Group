@@ -166,24 +166,6 @@ async function seedLearningBookLessons(userId){
  }
 }
 
-function learningBookActionSheet(chapter,lesson,w){
-  const title=lesson?.lesson_title||chapter?.chapter_title||'This lesson',safe=escapeHtml(title),x=w||{},checks=x.checklist||{},exercise=jgapDealExerciseOne(lesson);
-  const note=(k,p)=>'<textarea data-lb-note="'+k+'" placeholder="'+p.replace(/"/g,'&quot;')+'">'+escapeHtml(x[k+'_notes']||'')+'</textarea>';
-  return '<div class="lbActionSheet" style="margin-top:18px;padding:18px;border:1px solid #d8e3ef;border-radius:12px;background:#f8fbff">'+exercise+
-    '<div style="font-weight:800;font-size:18px">JGAP Action Sheet</div><p class="muted" style="margin:6px 0 14px">Turn <b>'+safe+'</b> into an investor action.</p>'+
-    '<div class="detailGrid" style="grid-template-columns:1fr 1fr;gap:12px">'+
-    '<div><b>What I learned</b>'+note('learned','Write the 1–3 most important things you learned.')+'</div>'+
-    '<div><b>What I need to verify</b>'+note('verify','List numbers, documents, assumptions or facts you cannot verify yet.')+'</div></div>'+
-    '<div style="margin-top:14px"><b>Action checklist</b>'+
-    '<label style="display:block;margin-top:8px"><input type="checkbox" data-lb-check="explain" '+(checks.explain?'checked':'')+'> I can explain this concept without guessing.</label>'+
-    '<label style="display:block;margin-top:6px"><input type="checkbox" data-lb-check="numbers" '+(checks.numbers?'checked':'')+'> I identified the numbers or documents that matter.</label>'+
-    '<label style="display:block;margin-top:6px"><input type="checkbox" data-lb-check="questions" '+(checks.questions?'checked':'')+'> I recorded questions that need an answer.</label>'+
-    '<label style="display:block;margin-top:6px"><input type="checkbox" data-lb-check="action" '+(checks.action?'checked':'')+'> I completed one real-world action related to this lesson.</label></div>'+
-    '<div style="margin-top:14px"><b>JGAP Decision Checkpoint</b>'+note('decision','What would make me continue, investigate further, negotiate, or walk away?')+'</div>'+
-    '<div style="margin-top:14px"><b>Next Action</b>'+note('action','What will you do next, and by when?')+'</div>'+
-    '<div style="margin-top:12px"><span id="lbWorkbookStatus" class="muted">Not saved yet.</span> <button class="primary" type="button" onclick="saveLearningBookWorkbook(window.__learningBookCurrentLessonId,window.__learningBookCurrentId)">Save Workbook</button></div></div>';
-}
-
 async function loadLearningBookWorkbook(lessonId){
   const {data:{user}}=await sb.auth.getUser();if(!user)return null;
   const {data,error}=await sb.from('learning_book_workbook').select('*').eq('user_id',user.id).eq('lesson_id',lessonId).maybeSingle();
