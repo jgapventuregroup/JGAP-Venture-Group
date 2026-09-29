@@ -32,10 +32,17 @@
         const p=s.slice(0,3).join(' ');
         return '<p style="margin:0"><b>'+escapeHtml(title)+'</b> — quick preview.</p><p style="margin:8px 0 0">'+escapeHtml(p.length>420?p.slice(0,417).replace(/\s+\S*$/,'')+'...':p)+'</p>';
       }
+      async function toggleLessonComplete(id,completed){
+        const {error}=await sb.from('learning_book_lessons').update({completed:completed}).eq('id',id);
+        if(error){alert('Could not save lesson progress: '+error.message);return false;}
+        return true;
+      }
       function showLesson(id,lessons){
         const l=(lessons||[]).find(x=>x.id===id); if(!l)return;
         const h=document.getElementById('lbLesson'); if(!h)return;
-        h.innerHTML='<div class="panel"><div class="muted">Lesson '+l.lesson_number+'</div><h3>'+escapeHtml(l.lesson_title)+'</h3><div style="line-height:1.7;font-size:16px">'+(l.content_html||'<p>No lesson content yet.</p>')+'</div></div>';
+        h.innerHTML='<div class="panel"><div class="muted">Lesson '+l.lesson_number+'</div><h3>'+escapeHtml(l.lesson_title)+'</h3><div style="line-height:1.7;font-size:16px">'+(l.content_html||'<p>No lesson content yet.</p>')+'</div><div style="margin-top:16px"><button type="button" class="primary" id="lbCompleteBtn">'+(l.completed?'✓ Completed — Mark Incomplete':'Mark Lesson Complete')+'</button></div></div>';
+        const btn=document.getElementById('lbCompleteBtn');
+        if(btn)btn.addEventListener('click',async()=>{const next=!l.completed;if(await toggleLessonComplete(l.id,next)){l.completed=next;btn.textContent=next?'✓ Completed — Mark Incomplete':'Mark Lesson Complete';const listBtn=document.querySelector('[data-lesson="'+l.id+'"]');if(listBtn){listBtn.innerHTML=listBtn.innerHTML.replace(/\\s*✅$/,'')+(next?' ✅':'');}}});
       }
     }catch(err){
       const target=document.querySelector('.layout>main')||main;
