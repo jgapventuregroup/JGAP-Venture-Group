@@ -235,7 +235,7 @@
   async function loadMarketGrowth(){
     const host=document.getElementById('marketGrowthTracking'); if(!host)return;
     host.innerHTML='<div class="muted">Loading growth history…</div>';
-    const {data,error}=await sb.from('market_history').select('deal_id,recorded_at,price,monthly_rent,neighborhood,created_at').order('recorded_at',{ascending:true});
+    const {data,error}=await sb.from('market_history').select('deal_id,recorded_at,price,monthly_rent,status,units,neighborhood,created_at').order('recorded_at',{ascending:true});
     if(error){console.error('JGAP Market Growth load failed:',error);host.innerHTML='<div class="error">Growth history could not be loaded: '+esc(error.message||'database error')+'</div>';return;}
     const byDeal={};
     (data||[]).forEach(h=>{if(!h.recorded_at)return;(byDeal[h.deal_id]||(byDeal[h.deal_id]=[])).push(h);});
