@@ -1125,7 +1125,9 @@ async function addDealChecklistItem(){
  document.getElementById("check_title").value="";document.getElementById("check_due").value="";document.getElementById("check_notes").value="";loadDealChecklist(dealId);
 }
 async function toggleDealChecklistItem(id,done){
- const {error}=await sb.rpc("update_current_user_deal_checklist_item",{p_item_id:id,p_status:done?"completed":"open",p_due_date:null,p_notes:null});
+ const {data:item,error:loadError}=await sb.from("deal_checklist_items").select("due_date,notes").eq("id",id).single();
+ if(loadError){alert(loadError.message);return;}
+ const {error}=await sb.rpc("update_current_user_deal_checklist_item",{p_item_id:id,p_status:done?"completed":"open",p_due_date:item?.due_date||null,p_notes:item?.notes||null});
  if(error){alert(error.message);return;}
  const dealId=document.getElementById("dealSaveMsg")?.dataset.id; if(dealId)loadDealChecklist(dealId);
 }
