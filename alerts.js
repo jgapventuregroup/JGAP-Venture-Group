@@ -78,6 +78,7 @@ window.renderAlertsPage=function(){
   targetRadar.slice(0,12).forEach(function(r){
    var loc=[r.city,r.state,r.postal_code].filter(Boolean).join(", ")||r.address||"Location not provided";
    var body='<b>'+esc(r.name||r.address||"Multifamily opportunity")+'</b><br>'+esc(loc)+(r.units!=null?" · Units: <b>"+esc(r.units)+"</b>":"")+" · Asking price: <b>"+money(r.asking_price)+"</b>";
+   if(r.arvCushion!=null) body+='<div style="margin-top:8px" class="muted"><b>ARV underwriting signal:</b> Cushion '+money(r.arvCushion)+' ('+(r.arvCushionPct*100).toFixed(1)+'%)</div>';
    body+='<div style="margin-top:10px"><button class="primary radar-analyze-btn" type="button" data-radar-id="'+esc(r.id)+'">Analyze in Deal Analyzer</button>';
    if(r.source_url) body+='<a class="secondary" target="_blank" rel="noopener" href="'+esc(r.source_url)+'" style="margin-left:8px">Open Listing</a>';
    body+='</div>';
