@@ -36,6 +36,14 @@ function radarScore(r,minPrice,maxPrice){
  return {score:score,reasons:reasons};
 }
 window.__jgapRadarAnalyzerQueue={};
+window.saveRadarAsDeal=function(id){
+ var r=window.__jgapRadarAnalyzerQueue[id];
+ if(!r){alert("Refresh Alerts and try again.");return;}
+ if(typeof window.renderDealAnalyzer!=="function"||typeof window.saveDeal!=="function"){alert("Deal Analyzer is not available. Refresh JGAP and try again.");return;}
+ var address=[r.address,[r.city,r.state,r.postal_code].filter(Boolean).join(", ")].filter(Boolean).join(", ");
+ window.renderDealAnalyzer({status:"analyzing",name:r.name||r.address||"Deal Radar Opportunity",property_type:r.property_type||"multifamily",property_address:address,property_county:r.property_county||"",offer_state:r.state||"TN",purchase_price:r.purchase_price||r.asking_price,asking_price:r.asking_price,units:r.units,monthly_rent:r.monthly_rent,monthly_operating_expenses:r.monthly_operating_expenses,vacancy_rate:r.vacancy_rate,arv:r.arv,projected_sale_price:r.projected_sale_price,rehab_cost:r.rehab_cost,closing_costs:r.closing_costs,financing_costs:r.financing_costs,holding_months:r.holding_months,monthly_holding_costs:r.monthly_holding_costs,selling_cost_percent:r.selling_cost_percent,notes:[r.source?r.source+" listing":"",r.source_url||""].filter(Boolean).join("\n")});
+ setTimeout(function(){window.saveDeal();},0);
+};
 window.openRadarInAnalyzer=function(id){
  var r=window.__jgapRadarAnalyzerQueue[id];
  if(!r){alert("Refresh Alerts and try again.");return;}
@@ -88,7 +96,7 @@ window.renderAlertsPage=function(){
    var loc=[r.city,r.state,r.postal_code].filter(Boolean).join(", ")||r.address||"Location not provided";
    var body='<b>'+esc(r.name||r.address||"Multifamily opportunity")+'</b><br>'+esc(loc)+(r.units!=null?" · Units: <b>"+esc(r.units)+"</b>":"")+" · Asking price: <b>"+money(r.asking_price)+"</b>";
    if(r.arvCushion!=null) body+='<div style="margin-top:8px" class="muted"><b>ARV underwriting:</b> ARV '+money(r.arv)+' · 70% ARV ceiling '+money(r.seventyArvCeiling)+' · Break-even '+money(r.arvBreakEven)+' · Cushion '+money(r.arvCushion)+' ('+(r.arvCushionPct*100).toFixed(1)+'%)</div>';
-   body+='<div style="margin-top:10px"><button class="primary radar-analyze-btn" type="button" data-radar-id="'+esc(r.id)+'">Analyze in Deal Analyzer</button>';
+   body+='<div style="margin-top:10px"><button class="primary radar-analyze-btn" type="button" data-radar-id="'+esc(r.id)+'">Analyze in Deal Analyzer</button><button class="secondary radar-save-btn" type="button" data-radar-id="'+esc(r.id)+'" style="margin-left:8px">Save as JGAP Deal</button>';
    if(r.source_url) body+='<a class="secondary" target="_blank" rel="noopener" href="'+esc(r.source_url)+'" style="margin-left:8px">Open Listing</a>';
    body+='</div>';
    alerts.push(card("📡 New Deal Radar opportunity",body,"Priority "+r.radarScore+"/100"+(r.radarReasons.length?" · "+r.radarReasons.join(" · "):"")));
