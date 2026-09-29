@@ -1112,6 +1112,20 @@ async function seedDealChecklist(){
  if(failed){alert(failed.message);return;}
  await loadDealChecklist(dealId);
 }
+async function addDealChecklistItem(){
+ const dealId=document.getElementById("dealSaveMsg")?.dataset.id; if(!dealId){alert("Save the deal first.");return;}
+ const title=document.getElementById("check_title")?.value.trim(); if(!title){alert("Enter a checklist item.");return;}
+ const {error}=await sb.rpc("create_current_user_deal_checklist_item",{p_deal_id:dealId,p_category:document.getElementById("check_category")?.value||"Property",p_title:title,p_due_date:document.getElementById("check_due")?.value||null,p_notes:document.getElementById("check_notes")?.value.trim()||null});
+ if(error){alert(error.message);return;}
+ document.getElementById("check_title").value="";document.getElementById("check_due").value="";document.getElementById("check_notes").value="";await loadDealChecklist(dealId);
+}
+async function toggleDealChecklistItem(id,done){
+ const {data:item,error:loadError}=await sb.from("deal_checklist_items").select("due_date,notes").eq("id",id).single();
+ if(loadError){alert(loadError.message);return;}
+ const {error}=await sb.rpc("update_current_user_deal_checklist_item",{p_item_id:id,p_status:done?"completed":"open",p_due_date:item?.due_date||null,p_notes:item?.notes||null});
+ if(error){alert(error.message);return;}
+ const dealId=document.getElementById("dealSaveMsg")?.dataset.id; if(dealId)await loadDealChecklist(dealId);
+}
 async function loadDealComps(){
  const msg=document.getElementById("dealCompsMsg"),wrap=document.getElementById("dealCompsTable"),stats=document.getElementById("dealCompStats");
  if(!msg||!wrap||!stats)return;
