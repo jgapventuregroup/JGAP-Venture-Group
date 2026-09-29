@@ -476,16 +476,25 @@ function filterLearningBookChapters(){
 }
 
 function learningBookChapterOverviewHtml(html){
-  const source=html||'';
-  const h3=source.match(/<h3[^>]*>\s*Chapter\s+Overview\s*<\/h3>/i);
-  const start=h3?h3.index+h3[0].length:0;
-  const rest=source.slice(start);
-  const next=rest.search(/<h4\b/i);
-  const overview=(next>=0?rest.slice(0,next):rest).trim();
-  if(overview)return overview;
-  const firstH4=source.search(/<h4\b/i);
-  const intro=source.slice(0,firstH4>=0?firstH4:source.length).replace(/<h3[^>]*>.*?<\/h3>/i,'').trim();
-  return intro||'<span class="muted">No chapter overview yet.</span>';
+  const source=String(html||'');
+  const stripTags=s=>s.replace(/<script[\\s\\S]*?<\\/script>/gi,'').replace(/<style[\\s\\S]*?<\\/style>/gi,'').trim();
+  const h3=source.match(/<h3[^>]*>\\s*Chapter\\s+Overview\\s*<\\/h3>/i);
+  let overview='';
+  if(h3){
+    const start=h3.index+h3[0].length;
+    const rest=source.slice(start);
+    const boundary=rest.search(/<h[1-4]\\b/i);
+    overview=boundary>=0?rest.slice(0,boundary):rest;
+  }else{
+    const firstHeading=source.search(/<h[1-4]\\b/i);
+    overview=firstHeading>=0?source.slice(0,firstHeading):source;
+  }
+  overview=stripTags(overview);
+  if(!overview || !/<[a-z][\\s\\S]*>/i.test(overview)){
+    const textOnly=overview.replace(/<[^>]+>/g,'').trim();
+    if(textOnly)return '<p>'+escapeHtml(textOnly)+'</p>';
+  }
+  return overview||'<span class="muted">No chapter overview yet.</span>';
 }
 
 async function selectLearningBookChapter(id){
