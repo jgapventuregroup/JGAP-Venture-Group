@@ -970,6 +970,7 @@ function renderDealAnalyzer(existing=null){
  if(visibleOffer)visibleOffer.value=document.getElementById("d_target_offer")?.value||"";
  renderDealWorkflow(existing?.status||"analyzing");
  loadDealChecklist(existing?.id||null);
+ loadClosingTracker(existing?.id||null);
  calcDeal();
  renderOfferTemplatePreview();
  loadFinancingPresets();
