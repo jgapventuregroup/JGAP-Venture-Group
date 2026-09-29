@@ -369,6 +369,8 @@ async function seedLearningBookLessonRows(userId){
       starts.forEach((s,i)=>{const end=i+1<starts.length?starts[i+1].index:html.length;blocks.push({title:s.title.replace(/^\d+\.\s*/,''),html:html.slice(s.end,end)});});
     }else if(html.replace(/<[^>]+>/g,'').trim()){
       blocks=[{title:c.chapter_title,html:html}];
+    }else if(JGAP_ADDITIONAL_BOOK_LESSONS[c.chapter_number]){
+      blocks=JGAP_ADDITIONAL_BOOK_LESSONS[c.chapter_number];
     }else{
       blocks=[{title:'Chapter Overview',html:'<p>This chapter is ready to be developed. JGAP will build this lesson from investor education material, applicable primary sources, practical examples, and the material already supplied for the Learning Book.</p><p><b>Study focus:</b> '+escapeHtml(c.chapter_title)+'.</p>'}];
     }
