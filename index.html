@@ -1083,6 +1083,7 @@ function calcDeal(){
  const asking=n("d_asking"),entered=n("d_target_offer"),working=entered||maxPrice||0,diff=asking>0?asking-working:null,os=document.getElementById("offerSummary");if(os)os.innerHTML=`<div><span>Seller asking</span><b>${asking>0?money2(asking):"—"}</b></div><div><span>Calculated max offer</span><b>${money2(maxPrice)}</b></div><div><span>Working offer</span><b>${money2(working)}</b></div><div><span>Gap vs asking</span><b>${diff===null?"—":money2(diff)+" ("+(asking?(diff/asking*100).toFixed(1):"0.0")+"%)"}</b></div>`;
  const ot=document.getElementById("offerAnalysisTable");if(ot){const rows=[["Target Cap Rate",maxCap],["Target Cash-on-Cash",maxCoc],["Target DSCR",maxDscr]];ot.innerHTML='<table><thead><tr><th>Target</th><th>Maximum Price</th><th>Gap vs Asking</th><th>Gap %</th></tr></thead><tbody>'+rows.map(([l,v])=>{const g=asking-(v||0);return `<tr><td>${l}</td><td>${money2(v)}</td><td>${money2(g)}</td><td>${asking?(g/asking*100).toFixed(1):"0.0"}%</td></tr>`}).join("")+'</tbody></table>'}
  const ow=document.getElementById("offerWorksheet");if(ow){const earnest=n("d_earnest"),dd=Math.max(0,Math.round(n("d_dd_days"))),cd=Math.max(0,Math.round(n("d_close_days"))),ft=document.getElementById("d_offer_financing")?.value||"Not specified",cont=document.getElementById("d_contingencies")?.value||"Not specified",dp=price>0?Math.max(0,Math.min(100,down/price)):0;ow.innerHTML=`<div class="offerPackageHeader"><div><div class="sectionTitle" style="margin:0">Offer Package — Legal Offer Form Worksheet</div><div class="muted" style="margin-top:4px">Review the offer details below, then print or prepare the email.</div></div><div class="offerActions"><button class="secondary" onclick="applyCalculatedOffer()">Use calculated ceiling</button><button class="secondary" onclick="printPurchaseOfferPackage()">Print / Save PDF</button><button class="secondary" onclick="emailPurchaseOfferPackage()">Email Offer Package</button></div></div><div class="offerPackageGrid"><div><span class="muted">Offer price</span><strong>${money2(working)}</strong></div><div><span class="muted">Earnest money</span><strong>${money2(earnest)}</strong></div><div><span class="muted">Due diligence</span><strong>${dd} days</strong></div><div><span class="muted">Closing</span><strong>${cd} days</strong></div><div><span class="muted">Financing</span><strong>${escapeHtml(ft)}</strong></div><div><span class="muted">Estimated total cash</span><strong>${money2(working?working*dp+close+rehab:0)}</strong></div></div><p class="muted" style="margin-top:10px"><b>Contingencies:</b> ${escapeHtml(cont)}</p>`;}
+setupDealAnalyzerCollapsibles();
 }function applyCalculatedOffer(){const arv=n("d_arv"),targetProfit=Math.max(0,n("d_target_profit")),rehab=n("d_rehab"),close=n("d_close"),financing=n("d_financing_costs"),holdingMonths=Math.max(0,Math.round(n("d_holding_months"))),monthlyHolding=n("d_monthly_holding"),sellingPct=Math.min(100,Math.max(0,n("d_selling_cost_pct")))/100,projectedSale=n("d_projected_sale")||arv;if(arv<=0){alert("Enter an ARV first.");return;}const profitCeiling=projectedSale*(1-sellingPct)-(rehab+close+financing+holdingMonths*monthlyHolding)-targetProfit,ceiling=Math.min(profitCeiling,arv*.70),offer=Math.max(0,Math.round(ceiling));const e=document.getElementById("d_target_offer"),p=document.getElementById("d_price"),v=document.getElementById("visibleOfferInput");if(e)e.value=offer;if(p)p.value=offer;if(v)v.value=offer;renderOfferTemplatePreview();calcDeal();}
 function renderOfferTemplatePreview(){
  const ow=document.getElementById("offerWorksheet"); if(!ow)return;
@@ -2502,6 +2503,50 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 });
+<script>
+function setupDealAnalyzerCollapsibles(){
+  const root=document.querySelector('.detailGrid');
+  if(!root)return;
+  if(!document.getElementById('dealAccordionStyle')){
+    const style=document.createElement('style');
+    style.id='dealAccordionStyle';
+    style.textContent=`
+      .dealAccordion{margin:0 0 12px!important;padding:0!important;overflow:hidden}
+      .dealAccordion>summary{list-style:none;cursor:pointer;padding:15px 16px;font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border-radius:14px}
+      .dealAccordion>summary::-webkit-details-marker{display:none}
+      .dealAccordion>summary:after{content:'＋';font-size:20px;line-height:1;font-weight:500}
+      .dealAccordion[open]>summary:after{content:'−'}
+      .dealAccordion[open]>summary{border-bottom:1px solid #e2e7ef;border-radius:14px 14px 0 0}
+      .dealAccordion>.sectionTitle{display:none}
+      .dealAccordion>summary:hover{background:#f8fbff}
+      .dealAccordion>.stats,.dealAccordion>.toolbar,.dealAccordion>p,.dealAccordion>div:not(.sectionTitle){max-width:100%}
+      .analyzerRightColumn>.dealAccordion{width:100%}
+    `;
+    document.head.appendChild(style);
+  }
+  const panels=[
+    ...root.querySelectorAll(':scope > .panel'),
+    ...root.querySelectorAll(':scope > .analyzerRightColumn > .panel')
+  ];
+  panels.forEach(panel=>{
+    if(panel.dataset.dealAccordionApplied==='1')return;
+    const title=panel.querySelector(':scope > .sectionTitle');
+    if(!title)return;
+    const details=document.createElement('details');
+    details.className=(panel.className||'panel')+' dealAccordion';
+    details.id=panel.id||'';
+    details.dataset.dealAccordionApplied='1';
+    details.open=(title.textContent||'').trim()==='Deal Inputs';
+    const summary=document.createElement('summary');
+    summary.innerHTML=title.innerHTML;
+    details.appendChild(summary);
+    title.remove();
+    while(panel.firstChild)details.appendChild(panel.firstChild);
+    panel.replaceWith(details);
+  });
+}
+</script>
+
 </script>
 
 <script>
