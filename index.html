@@ -2435,10 +2435,13 @@ sb.auth.onAuthStateChange((event)=>{ if(event==='TOKEN_REFRESHED') return; windo
   const APP_URL = window.location.href;
   window.__JGAP_APP_URL = APP_URL;
   const navNames = [
-    'renderDealsPage','renderMarketMapPage','renderDocumentsPage','renderPropertiesPage','renderPropertyDetail',
-    'renderPropertyManagementPage','renderRepairsPage','renderFinancesPage',
-    'renderProjectsPage','renderReportsPage','renderInvestmentsPage',
-    'renderDealAnalyzer','renderDealRadarPage','renderLearningBookPage','renderNotesPage','renderContractorsPage','renderRehabPage','renderRentRoll'
+    'renderDealsPage','openJGAPMarketMap','openJGAPAlerts','renderDealRadarPage',
+    'renderLeadGenerationPage','renderMoneyMakingSystem','renderPropertiesPage',
+    'renderPropertyDetail','renderPropertyManagementPage','renderVendorsPage',
+    'renderRepairsPage','renderProjectsPage','renderLaundromatPage','renderFinancesPage',
+    'renderDocumentsPage','renderLearningBookPage','renderNotesPage','renderTasksPage',
+    'renderReportsPage','renderInvestmentsPage','renderLendersPage','renderUsersAccessPage',
+    'renderDealAnalyzer','renderContractorsPage','renderRehabPage','renderRentRoll'
   ];
   const originals = {};
   navNames.forEach(name => {
