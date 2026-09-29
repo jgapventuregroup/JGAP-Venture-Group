@@ -70,7 +70,8 @@ window.renderAlertsPage=function(){
    totalCost+=Number(match.rehab_cost)||0; totalCost+=Number(match.closing_costs)||0; totalCost+=Number(match.financing_costs)||0;
    totalCost+=(Number(match.holding_months)||0)*(Number(match.monthly_holding_costs)||0);
    var breakEven=sellPct<1?totalCost/(1-sellPct):null;
-   if(breakEven!==null&&sale>0){r.arvCushion=sale-breakEven;r.arvCushionPct=(sale-breakEven)/breakEven;r.radarReasons.push("ARV cushion "+(r.arvCushionPct*100).toFixed(1)+"%");}
+   r.arv=Number(match.arv);r.projected_sale_price=sale;r.seventyArvCeiling=r.arv*.70;
+   if(breakEven!==null&&sale>0){r.arvBreakEven=breakEven;r.arvCushion=sale-breakEven;r.arvCushionPct=(sale-breakEven)/breakEven;}
  }
  r.radarScore=s.score;r.radarReasons=s.reasons.slice();if(r.arvCushionPct!=null)r.radarReasons.push("ARV cushion "+(r.arvCushionPct*100).toFixed(1)+"%");window.__jgapRadarAnalyzerQueue[r.id]=r;
 });
@@ -79,7 +80,7 @@ window.renderAlertsPage=function(){
   targetRadar.slice(0,12).forEach(function(r){
    var loc=[r.city,r.state,r.postal_code].filter(Boolean).join(", ")||r.address||"Location not provided";
    var body='<b>'+esc(r.name||r.address||"Multifamily opportunity")+'</b><br>'+esc(loc)+(r.units!=null?" · Units: <b>"+esc(r.units)+"</b>":"")+" · Asking price: <b>"+money(r.asking_price)+"</b>";
-   if(r.arvCushion!=null) body+='<div style="margin-top:8px" class="muted"><b>ARV underwriting signal:</b> Cushion '+money(r.arvCushion)+' ('+(r.arvCushionPct*100).toFixed(1)+'%)</div>';
+   if(r.arvCushion!=null) body+='<div style="margin-top:8px" class="muted"><b>ARV underwriting:</b> ARV '+money(r.arv)+' · 70% ARV ceiling '+money(r.seventyArvCeiling)+' · Break-even '+money(r.arvBreakEven)+' · Cushion '+money(r.arvCushion)+' ('+(r.arvCushionPct*100).toFixed(1)+'%)</div>';
    body+='<div style="margin-top:10px"><button class="primary radar-analyze-btn" type="button" data-radar-id="'+esc(r.id)+'">Analyze in Deal Analyzer</button>';
    if(r.source_url) body+='<a class="secondary" target="_blank" rel="noopener" href="'+esc(r.source_url)+'" style="margin-left:8px">Open Listing</a>';
    body+='</div>';
