@@ -923,7 +923,7 @@ function renderDealAnalyzer(existing=null){
 <button type="button" class="primary" style="margin-top:12px;position:relative;z-index:6;pointer-events:auto" onclick="applyVisibleOfferInputs()">ANALYZE OUR OFFER</button>
 <div id="visibleOfferResult" class="muted" style="margin-top:10px">Enter the asking price and our offer above.</div>
 </div>
-<div class="panel" style="margin-bottom:14px"><div class="sectionTitle">How to Use the Deal Analyzer</div><div class="stats" style="margin-top:10px"><div><span>1. Seller's price</span><b>Enter asking price</b></div><div><span>2. Your offer</span><b>Enter our offer</b></div><div><span>3. Test the offer</span><b>Analyzer runs the numbers</b></div><div><span>4. Decision</span><b>See target & walk-away price</b></div></div><p class="muted" style="margin:12px 0 0">You should normally enter the seller's asking price and then the offer you want to test. The analyzer uses your income, expenses, financing and return targets to calculate the maximum price the deal supports.</p><div id="dealWorkflow" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px"></div><div id="dealDueDiligence" class="panel" style="margin-top:12px;background:#fffdf7"><div class="sectionTitle">🔎 Due Diligence Checklist</div><p class="muted">Track the items that must be verified before this deal moves forward. Save the deal first to activate the checklist.</p><div id="dealChecklistSummary" class="muted"></div><div id="dealChecklistItems" style="display:grid;gap:8px;margin-top:10px"></div></div></div>
+<div class="panel" style="margin-bottom:14px"><div class="sectionTitle">How to Use the Deal Analyzer</div><div class="stats" style="margin-top:10px"><div><span>1. Seller's price</span><b>Enter asking price</b></div><div><span>2. Your offer</span><b>Enter our offer</b></div><div><span>3. Test the offer</span><b>Analyzer runs the numbers</b></div><div><span>4. Decision</span><b>See target & walk-away price</b></div></div><p class="muted" style="margin:12px 0 0">You should normally enter the seller's asking price and then the offer you want to test. The analyzer uses your income, expenses, financing and return targets to calculate the maximum price the deal supports.</p><div id="dealWorkflow" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px"></div></div>
  <div class="detailGrid"><div class="panel"><div class="sectionTitle">Deal Inputs</div><div class="formGrid">
  <label>Deal name<input id="d_name" placeholder="Example: 123 Main St"></label><label>Deal type<select id="d_type" onchange="updateDealTypeUI();calcDeal()"><option value="single_family">Residential / Single Family</option><option value="multifamily">Multifamily</option><option value="house_flip">House Flip</option><option value="laundromat">Laundromat</option><option value="commercial">Commercial Property</option><option value="business_acquisition">Business Acquisition</option><option value="other">Other</option></select></label><label>Property address<input id="d_address" placeholder="123 Main St, Bristol, TN 37620"></label><label>Units<input id="d_units" type="number" min="1" step="1" placeholder="2"></label><label>County<input id="d_county" placeholder="Sullivan County"></label><label>Seller name<input id="d_seller" placeholder="Seller / LLC name"></label><label>Offer state<select id="d_offer_state" onchange="renderOfferTemplatePreview()"><option value="TN">Tennessee</option><option value="OTHER">Other / General U.S.</option></select></label><label>Deal stage<select id="d_status"><option value="lead">Lead</option><option value="analyzing">Analyzing</option><option value="due_diligence">Due Diligence</option><option value="offer">Offer</option><option value="under_contract">Under Contract</option><option value="closed">Closed</option><option value="passed">Passed</option></select></label>
  <label>Financing strategy<select id="d_financing_preset" onchange="applyFinancingPreset()"><option value="">Custom / current inputs</option><option value="conventional">Conventional</option><option value="dscr">Investor / DSCR</option><option value="private">Private Money</option><option value="seller">Seller Financing</option><option value="cash">Cash</option></select></label><label>Loan structure<select id="d_loan_structure" onchange="calcDeal()"><option value="amortizing">Amortizing</option><option value="interest_only">Interest-only</option><option value="none">No loan / cash</option></select></label><div style="display:flex;align-items:end;gap:8px"><button class="secondary" type="button" onclick="saveCurrentFinancingPreset()">Save financing as preset</button></div>
@@ -1099,39 +1099,19 @@ function renderOfferTemplatePreview(){
  ow.innerHTML=`<div class="offerPackageHeader"><div><div class="sectionTitle" style="margin:0">Offer Package — ${escapeHtml(title)}</div><div class="muted" style="margin-top:4px">Investment analysis stays separate from this offer worksheet.</div></div><div class="offerActions"><button class="secondary" onclick="printPurchaseOfferPackage()">Print / Save PDF</button><button class="secondary" onclick="emailPurchaseOfferPackage()">Email Offer Package</button></div></div><div class="offerPackageGrid"><div><span class="muted">Property</span><strong>${escapeHtml(address)}</strong></div><div><span class="muted">County</span><strong>${escapeHtml(county)}</strong></div><div><span class="muted">Seller</span><strong>${escapeHtml(seller)}</strong></div><div><span class="muted">Offer</span><strong>${money2(offer)}</strong></div><div><span class="muted">Asking</span><strong>${money2(asking)}</strong></div><div><span class="muted">Calculated ceiling</span><strong>${calculatedCeiling!==null?money2(calculatedCeiling):"—"}</strong></div><div><span class="muted">Offer vs ceiling</span><strong>${calculatedCeiling!==null?money2(offer-calculatedCeiling):"—"}</strong></div><div><span class="muted">Earnest money</span><strong>${money2(earnest)}</strong></div><div><span class="muted">Due diligence</span><strong>${dd} days</strong></div><div><span class="muted">Closing</span><strong>${cd} days</strong></div></div><p class="muted" style="margin-top:10px">${escapeHtml(note)}</p>`;
 }
 
-async function loadDealChecklist(dealId){
- const wrap=document.getElementById("dealChecklist"), msg=document.getElementById("dealChecklistMsg"); if(!wrap||!msg)return;
- if(!dealId){msg.textContent="Save the deal first to activate its due-diligence checklist.";wrap.innerHTML="";return;}
- msg.textContent="Loading checklist...";
- const {data,error}=await sb.from("deal_checklist_items").select("*").eq("deal_id",dealId).order("created_at",{ascending:true});
- if(error){msg.innerHTML='<span class="error">'+escapeHtml(error.message)+'</span>';return;}
- const items=data||[];
- msg.textContent=items.length?`${items.filter(x=>x.status!=="completed").length} open of ${items.length} checklist items`:'No checklist items yet. Add one below or create the standard acquisition checklist.';
- wrap.innerHTML=items.length?items.map(x=>`<div class="card" style="margin:8px 0"><div style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" ${x.status==='completed'?'checked':''} onchange="toggleDealChecklistItem('${x.id}',this.checked)" style="margin-top:4px"><div style="flex:1"><b>${escapeHtml(x.title)}</b><div class="muted">${escapeHtml(x.category)}${x.due_date?' • Due '+escapeHtml(x.due_date):''}</div>${x.notes?'<div style="margin-top:5px">'+escapeHtml(x.notes)+'</div>':''}</div></div></div>`).join(''):'<div class="muted">No items yet.</div>';
-}
 async function seedDealChecklist(){
  const dealId=document.getElementById("dealSaveMsg")?.dataset.id; if(!dealId){alert("Save the deal first.");return;}
  const defaults=[
   ["Property","Verify property address, parcel and ownership"],["Financial","Verify taxes, insurance, utilities and operating expenses"],["Inspection","Order property inspection"],["Title / Legal","Order title search / preliminary title review"],["Financing","Confirm financing terms and lender requirements"],["Insurance / Taxes","Obtain insurance quote and verify tax status"],["Seller / Broker","Collect seller disclosures and requested documents"],["Closing","Confirm closing timeline and required documents"]
  ];
- for(const [category,title] of defaults){await sb.rpc("create_current_user_deal_checklist_item",{p_deal_id:dealId,p_category:category,p_title:title,p_due_date:null,p_notes:null});}
+ let failed=null;
+ for(const [category,title] of defaults){
+  const {error}=await sb.rpc("create_current_user_deal_checklist_item",{p_deal_id:dealId,p_category:category,p_title:title,p_due_date:null,p_notes:null});
+  if(error){failed=error;break;}
+ }
+ if(failed){alert(failed.message);return;}
  await loadDealChecklist(dealId);
 }
-async function addDealChecklistItem(){
- const dealId=document.getElementById("dealSaveMsg")?.dataset.id; if(!dealId){alert("Save the deal first.");return;}
- const title=document.getElementById("check_title")?.value.trim(); if(!title){alert("Enter a checklist item.");return;}
- const {error}=await sb.rpc("create_current_user_deal_checklist_item",{p_deal_id:dealId,p_category:document.getElementById("check_category")?.value||"Property",p_title:title,p_due_date:document.getElementById("check_due")?.value||null,p_notes:document.getElementById("check_notes")?.value.trim()||null});
- if(error){alert(error.message);return;}
- document.getElementById("check_title").value="";document.getElementById("check_due").value="";document.getElementById("check_notes").value="";loadDealChecklist(dealId);
-}
-async function toggleDealChecklistItem(id,done){
- const {data:item,error:loadError}=await sb.from("deal_checklist_items").select("due_date,notes").eq("id",id).single();
- if(loadError){alert(loadError.message);return;}
- const {error}=await sb.rpc("update_current_user_deal_checklist_item",{p_item_id:id,p_status:done?"completed":"open",p_due_date:item?.due_date||null,p_notes:item?.notes||null});
- if(error){alert(error.message);return;}
- const dealId=document.getElementById("dealSaveMsg")?.dataset.id; if(dealId)loadDealChecklist(dealId);
-}
-
 async function loadDealComps(){
  const msg=document.getElementById("dealCompsMsg"),wrap=document.getElementById("dealCompsTable"),stats=document.getElementById("dealCompStats");
  if(!msg||!wrap||!stats)return;
@@ -1308,10 +1288,12 @@ async function loadDealChecklist(dealId){
  host.innerHTML=rows.map(x=>'<div style="display:flex;gap:10px;align-items:center;padding:9px;border:1px solid #e5e7eb;border-radius:8px;background:#fff"><input type="checkbox" '+(x.status==="complete"?"checked":"")+' onchange="updateDealChecklistItem(\''+x.id+'\',this.checked)"><div style="flex:1"><b>'+escapeHtml(x.title)+'</b><div class="muted" style="font-size:12px">'+escapeHtml(x.category)+'</div></div></div>').join("");
 }
 async function updateDealChecklistItem(id,complete){
- const {error}=await sb.from("deal_checklist_items").update({status:complete?"complete":"open"}).eq("id",id);
+ const {data:item,error:loadError}=await sb.from("deal_checklist_items").select("due_date,notes").eq("id",id).single();
+ if(loadError){alert(loadError.message);return;}
+ const {error}=await sb.rpc("update_current_user_deal_checklist_item",{p_item_id:id,p_status:complete?"completed":"open",p_due_date:item?.due_date||null,p_notes:item?.notes||null});
  if(error){alert(error.message);return;}
  const dealId=document.getElementById("dealSaveMsg")?.dataset.id;
- loadDealChecklist(dealId);
+ if(dealId)await loadDealChecklist(dealId);
 }
 async function saveDeal(){
  const msg=document.getElementById("dealSaveMsg"); if(!msg)return;
