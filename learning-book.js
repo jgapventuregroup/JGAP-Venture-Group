@@ -522,9 +522,12 @@ function learningBookPrintHtmlWithLessons(){
   const chapters=(window.__learningBookChapters||[]).slice().sort((a,b)=>a.chapter_number-b.chapter_number);
   let lastPart="";
   const toc=chapters.map(c=>{const part=c.part_title!==lastPart?'<li class="tocPart">'+escapeHtml(c.part_title)+'</li>':'';lastPart=c.part_title;const ls=(window.__learningBookLessonsByChapter||{})[c.id]||[];return part+'<li><b>Chapter '+c.chapter_number+' — '+escapeHtml(c.chapter_title)+'</b><ol class="tocLessons">'+ls.map(l=>'<li>Lesson '+l.lesson_number+' — '+escapeHtml(l.lesson_title)+'</li>').join('')+'</ol></li>';}).join('')+'<li class="tocPart">JGAP WORKBOOK</li><li>Core Investor Worksheets</li><li>Answer Key & Calculation Reference</li>';
+  let bodyLastPart="";
   const body=chapters.map(c=>{
     const ls=(window.__learningBookLessonsByChapter||{})[c.id]||[];
-    return '<section class="chapter"><div class="part">'+escapeHtml(c.part_title)+'</div><h2>Chapter '+c.chapter_number+' — '+escapeHtml(c.chapter_title)+'</h2>'+
+    const partDivider=c.part_title!==bodyLastPart?'<section class="partDivider"><div class="partDividerLabel">'+escapeHtml(c.part_title)+'</div><h2>'+escapeHtml(c.part_title.replace(/^Part\\s+\\d+\\s+—\\s*/i,''))+'</h2><p>Learn the concepts, work the numbers, verify the facts, and build the habits that turn investing into a repeatable process.</p></section>':'';
+    bodyLastPart=c.part_title;
+    return partDivider+'<section class="chapter"><div class="part">'+escapeHtml(c.part_title)+'</div><h2>Chapter '+c.chapter_number+' — '+escapeHtml(c.chapter_title)+'</h2>'+
       '<div class="chapterOverview"><b>Chapter Overview</b><div style="margin-top:6px">'+learningBookChapterOverviewHtml(c.content_html)+'</div></div>'+
       ls.map(l=>'<div class="lesson"><h3>Lesson '+l.lesson_number+' — '+escapeHtml(l.lesson_title)+'</h3>'+l.content_html+learningBookActionSheet(c,l)+'</div>').join('')+
       '</section>';
