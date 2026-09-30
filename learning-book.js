@@ -525,7 +525,7 @@ function learningBookPrintHtmlWithLessons(){
   let bodyLastPart="";
   const body=chapters.map(c=>{
     const ls=(window.__learningBookLessonsByChapter||{})[c.id]||[];
-    const partDivider=c.part_title!==bodyLastPart?'<section class="partDivider"><div class="partDividerLabel">'+escapeHtml(c.part_title)+'</div><h2>'+escapeHtml(c.part_title.replace(/^Part\\s+\\d+\\s+—\\s*/i,''))+'</h2><p>Learn the concepts, work the numbers, verify the facts, and build the habits that turn investing into a repeatable process.</p></section>':'';
+    const partDivider=c.part_title!==bodyLastPart?'<section class="partDivider"><div class="partDividerLabel">'+escapeHtml(c.part_title)+'</div><h2>'+escapeHtml(c.part_title.replace(/^Part\s+\d+\s+—\s*/i,''))+'</h2><p>Learn the concepts, work the numbers, verify the facts, and build the habits that turn investing into a repeatable process.</p></section>':'';
     bodyLastPart=c.part_title;
     return partDivider+'<section class="chapter"><div class="part">'+escapeHtml(c.part_title)+'</div><h2>Chapter '+c.chapter_number+' — '+escapeHtml(c.chapter_title)+'</h2>'+
       '<div class="chapterOverview"><b>Chapter Overview</b><div style="margin-top:6px">'+learningBookChapterOverviewHtml(c.content_html)+'</div></div>'+
