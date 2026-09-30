@@ -257,10 +257,6 @@ function filterLearningBookChapters(){
  host.innerHTML=rows.map(c=>{const part=c.part_title!==lastPart?'<div class="muted" style="font-size:11px;font-weight:800;text-transform:uppercase;margin:12px 4px 5px">'+escapeHtml(c.part_title)+'</div>':'';lastPart=c.part_title;return part+'<button type="button" class="secondary" data-book-chapter="'+c.id+'" style="display:block;width:100%;text-align:left;margin:4px 0;white-space:normal"><b>Chapter '+c.chapter_number+'</b><div>'+escapeHtml(c.chapter_title)+'</div></button>';}).join('')||'<div class="muted">No chapters found.</div>';
  host.querySelectorAll('[data-book-chapter]').forEach(b=>b.addEventListener('click',()=>selectLearningBookChapter(b.dataset.bookChapter)));
 }
-function selectLearningBookChapter(id){
- const c=(window.__learningBookChapters||[]).find(x=>x.id===id);if(!c)return;window.__learningBookCurrentId=id;const e=document.getElementById('learningBookEditor');if(!e)return;
- e.innerHTML='<div class="pageHead" style="margin-bottom:12px"><div><div class="muted">Chapter '+c.chapter_number+' • '+escapeHtml(c.part_title)+'</div><h2 style="margin:4px 0">'+escapeHtml(c.chapter_title)+'</h2></div><span class="muted" style="font-size:12px">Last saved '+new Date(c.updated_at).toLocaleString()+'</span></div><label style="font-weight:700;font-size:13px">Chapter content</label><div id="learningBookContent" contenteditable="true" spellcheck="true" style="min-height:560px;border:1px solid #ccd5e2;border-radius:9px;padding:20px;background:#fff;outline:none;line-height:1.7;font-size:16px">'+(c.content_html||'')+'</div><div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap"><span id="learningBookSaveStatus" class="muted" style="font-size:12px">Edit this chapter and save when ready.</span><button class="primary" onclick="saveLearningBookChapter()">Save Chapter</button></div>';
-}
 async function saveLearningBookChapter(){
  const id=window.__learningBookCurrentId,content=document.getElementById('learningBookContent')?.innerHTML||'';if(!id)return;
  const {error}=await sb.from('learning_book_chapters').update({content_html:content,updated_at:new Date().toISOString()}).eq('id',id);if(error){alert('Could not save chapter: '+error.message);return;}
@@ -471,26 +467,20 @@ function filterLearningBookChapters(){
 
 function learningBookChapterOverviewHtml(html){
   const source=String(html||'');
-  const stripTags=s=>s.replace(/<script[\\s\\S]*?<\\/script>/gi,'').replace(/<style[\\s\\S]*?<\\/style>/gi,'').trim();
-  const h3=source.match(/<h3[^>]*>\\s*Chapter\\s+Overview\\s*<\\/h3>/i);
   let overview='';
-  if(h3){
-    const start=h3.index+h3[0].length;
-    const rest=source.slice(start);
-    const boundary=rest.search(/<h[1-4]\\b/i);
-    overview=boundary>=0?rest.slice(0,boundary):rest;
+  const overviewHeading=source.match(/<h3[^>]*>\s*Chapter\s+Overview\s*<\/h3>/i);
+  if(overviewHeading){
+    const afterHeading=source.slice(overviewHeading.index+overviewHeading[0].length);
+    const firstLessonHeading=afterHeading.search(/<h4\b/i);
+    overview=firstLessonHeading>=0?afterHeading.slice(0,firstLessonHeading):afterHeading;
   }else{
-    const firstHeading=source.search(/<h[1-4]\\b/i);
-    overview=firstHeading>=0?source.slice(0,firstHeading):source;
+    const firstLessonHeading=source.search(/<h4\b/i);
+    overview=firstLessonHeading>=0?source.slice(0,firstLessonHeading):source;
   }
-  overview=stripTags(overview);
-  if(!overview || !/<[a-z][\\s\\S]*>/i.test(overview)){
-    const textOnly=overview.replace(/<[^>]+>/g,'').trim();
-    if(textOnly)return '<p>'+escapeHtml(textOnly)+'</p>';
-  }
+  overview=overview.trim();
+  overview=overview.replace(/^\s*(?:<p[^>]*>\s*)?Chapter\s+Overview\s*(?:<\/p>\s*)?/i,'').trim();
   return overview||'<span class="muted">No chapter overview yet.</span>';
 }
-
 async function selectLearningBookChapter(id){
   const c=(window.__learningBookChapters||[]).find(x=>x.id===id);if(!c)return;window.__learningBookCurrentId=id;
   const e=document.getElementById('learningBookEditor');if(!e)return;
