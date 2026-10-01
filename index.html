@@ -963,7 +963,7 @@ function renderDealAnalyzer(existing=null){
  <label><span id="d_exp_label">Monthly operating expenses</span><input id="d_exp" type="number" step="0.01" value="0" oninput="calcDeal()"></label><label>Other monthly income<input id="d_other" type="number" step="0.01" value="0" oninput="calcDeal()"></label>
  <label>Target cash-on-cash %<input id="d_target_coc" type="number" step="0.1" value="8" oninput="calcDeal()"></label><label>Target cap rate %<input id="d_target_cap" type="number" step="0.1" value="8" oninput="calcDeal()"></label><label>Target DSCR <span class="muted">(optional)</span><input id="d_target_dscr" type="number" step="0.01" placeholder="Leave blank if not applicable" oninput="calcDeal()"></label><label>Minimum monthly cash flow <span class="muted">(optional)</span><input id="d_min_cf" type="number" step="25" value="0" oninput="calcDeal()"></label><label>Offer buffer % <span class="muted">(optional)</span><input id="d_offer_buffer" type="number" step="0.5" value="5" oninput="calcDeal()"></label><label>Holding period (months) <span class="muted">(flip)</span><input id="d_holding_months" type="number" min="0" step="1" value="0" oninput="calcDeal()"></label><label>Monthly holding costs <span class="muted">(flip)</span><input id="d_monthly_holding" type="number" step="0.01" value="0" oninput="calcDeal()"></label><label>Selling costs % <span class="muted">(flip)</span><input id="d_selling_cost_pct" type="number" step="0.1" value="8" oninput="calcDeal()"></label><label>Financing / points costs <span class="muted">(flip)</span><input id="d_financing_costs" type="number" step="0.01" value="0" oninput="calcDeal()"></label><label>Projected sale price <span class="muted">(flip)</span><input id="d_projected_sale" type="number" step="0.01" placeholder="Defaults to ARV" oninput="calcDeal()"></label>
  </div><label>Notes<textarea id="d_notes" style="width:100%;min-height:90px;padding:12px;border:1px solid #ccd5e2;border-radius:9px;margin:6px 0 12px;font:inherit"></textarea></label>
- <div id="dealSaveMsg" class="muted"></div><button class="primary" onclick="saveDeal()">Save Deal</button> <button class="secondary" type="button" onclick="openDealDocuments()">Deal Documents</button> <button class="secondary" type="button" onclick="seedDealChecklist()">Create Standard Checklist</button></div><div class="analyzerRightColumn">
+ <div id="dealSaveMsg" class="muted"></div><button class="primary" onclick="saveDeal()">Save Deal</button> <button class="secondary" type="button" onclick="openDealDocuments()">Deal Documents</button> <button class="secondary" type="button" onclick="seedDealChecklist()">Create / Refresh Standard Checklist</button></div><div class="analyzerRightColumn">
  <div id="financingComparisonPanel" class="panel" style="margin-top:14px;align-self:start;padding:14px"><div class="sectionTitle" style="margin-bottom:6px">Financing Comparison</div><p class="muted" style="margin:0 0 8px;font-size:12px">Compare down payment and rate combinations. Scroll for all scenarios.</p><div id="financingComparison" class="tableWrap" style="max-height:240px;overflow:auto"></div></div><div class="panel" style="padding:14px"><div class="sectionTitle" style="margin-bottom:8px">Live Analysis</div><div id="analyzerDataQuality" class="muted" style="margin:-2px 0 10px;font-size:12px"></div><div class="stats" style="margin-top:0">
  <div><span>Loan amount</span><b id="r_loan">$0</b></div><div><span>Monthly debt service</span><b id="r_debt">$0</b></div>
  <div><span>Effective monthly income</span><b id="r_income">$0</b></div><div><span>Monthly NOI</span><b id="r_noi">$0</b></div>
@@ -1131,20 +1131,24 @@ function renderOfferTemplatePreview(){
 }
 
 async function seedDealChecklist(){
- const dealId=document.getElementById("dealSaveMsg")?.dataset.id; if(!dealId){alert("Save the deal first.");return;}
- const existing=await sb.from("deal_checklist_items").select("id").eq("deal_id",dealId).limit(1);
- if(existing.error){alert(existing.error.message);return;}
- if(existing.data?.length){const msg=document.getElementById("dealChecklistMsg");if(msg)msg.innerHTML="<b>Standard checklist already exists for this deal.</b>";await loadDealChecklist(dealId);return;}
- const defaults=[
-  ["Property","Verify property address, parcel and ownership"],["Financial","Verify taxes, insurance, utilities and operating expenses"],["Inspection","Order property inspection"],["Title / Legal","Order title search / preliminary title review"],["Financing","Confirm financing terms and lender requirements"],["Insurance / Taxes","Obtain insurance quote and verify tax status"],["Seller / Broker","Collect seller disclosures and requested documents"],["Closing","Confirm closing timeline and required documents"]
- ];
- let failed=null;
- for(const [category,title] of defaults){
-  const {error}=await sb.rpc("create_current_user_deal_checklist_item",{p_deal_id:dealId,p_category:category,p_title:title,p_due_date:null,p_notes:null});
-  if(error){failed=error;break;}
+ const dealId=document.getElementById("dealSaveMsg")?.dataset.id;
+ const msg=document.getElementById("dealChecklistMsg");
+ if(!dealId){
+  if(msg)msg.innerHTML='<span class="error">Save the deal first to activate its checklist.</span>';
+  return;
  }
- if(failed){alert(failed.message);return;}
+ const ensured=await ensureDealChecklist(dealId);
+ if(ensured?.error){
+  if(msg)msg.innerHTML='<span class="error">'+escapeHtml(ensured.error.message||"Could not create the checklist.")+'</span>';
+  return;
+ }
  await loadDealChecklist(dealId);
+ const q=await sb.from("deal_checklist_items").select("id").eq("deal_id",dealId);
+ if(q.error){
+  if(msg)msg.innerHTML='<span class="error">'+escapeHtml(q.error.message)+'</span>';
+  return;
+ }
+ if(msg)msg.innerHTML="<b>Standard checklist ready — "+(q.data?.length||0)+" items loaded.</b>";
 }
 async function addDealChecklistItem(){
  const dealId=document.getElementById("dealSaveMsg")?.dataset.id; if(!dealId){alert("Save the deal first.");return;}
@@ -1316,13 +1320,17 @@ function setDealStage(stage){
 function openDealDocuments(){const dealId=document.getElementById('dealSaveMsg')?.dataset.id;if(!dealId){alert('Save the deal first so its documents can be linked to it.');return;} window.renderDocumentsPage({dealId});}
 const defaultDealChecklist=[["Financial","Verify rent roll / current rents"],["Financial","Verify operating expenses and utility responsibility"],["Physical","Complete property inspection"],["Physical","Estimate rehab / deferred maintenance"],["Legal","Verify title and ownership"],["Legal","Check zoning / permitted use"],["Market","Verify comparable sales and supported ARV"],["Market","Verify market rents / lease terms"],["Financing","Confirm lender terms, down payment and DSCR"],["Insurance","Obtain insurance quote"],["Documents","Review leases, contracts and disclosures"]];
 async function ensureDealChecklist(dealId){
- if(!dealId)return;
+ if(!dealId)return {created:false,error:null};
  const q=await sb.from("deal_checklist_items").select("id").eq("deal_id",dealId).limit(1);
- if(q.error||q.data?.length)return;
+ if(q.error)return {created:false,error:q.error};
+ if(q.data?.length)return {created:false,error:null};
  const d=await sb.from("deals").select("company_id").eq("id",dealId).maybeSingle();
- if(d.error||!d.data?.company_id)return;
+ if(d.error)return {created:false,error:d.error};
+ if(!d.data?.company_id)return {created:false,error:new Error("This deal is missing its company association.")};
  const rows=defaultDealChecklist.map(x=>({company_id:d.data.company_id,deal_id:dealId,category:x[0],title:x[1],status:"open"}));
- await sb.from("deal_checklist_items").insert(rows);
+ const ins=await sb.from("deal_checklist_items").insert(rows);
+ if(ins.error)return {created:false,error:ins.error};
+ return {created:true,error:null};
 }
 async function loadDealChecklist(dealId){
  const host=document.getElementById("dealChecklist"),summary=document.getElementById("dealChecklistMsg");
