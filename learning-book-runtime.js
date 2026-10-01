@@ -8,13 +8,27 @@
       shell();
       const target=document.querySelector('.layout>main');
       if(!target) throw new Error('JGAP main area was not found.');
-      target.innerHTML='<div class="pageHead"><div><h1>📚 JGAP Real Estate Investor\'s Learning Book</h1><div class="muted">Chapters, lessons, reference material and investor education.</div></div></div><div class="detailGrid" style="grid-template-columns:310px minmax(0,1fr)"><div class="panel"><div class="sectionTitle">Book Outline</div><div id="lbList">Loading...</div></div><div class="panel"><div id="lbContent"><div class="muted">Loading...</div></div></div></div>';
+      target.innerHTML='<div class="pageHead"><div><h1>📚 JGAP Real Estate Investor\'s Learning Book</h1><div class="muted">Chapters, lessons, reference material and investor education.</div></div><div style="display:flex;gap:8px;align-items:center"><button type="button" class="primary" id="lbExport">📖 Export Full Book</button></div></div><div class="detailGrid" style="grid-template-columns:310px minmax(0,1fr)"><div class="panel"><div class="sectionTitle">Book Outline</div><div id="lbList">Loading...</div></div><div class="panel"><div id="lbContent"><div class="muted">Loading...</div></div></div></div>';
+      document.getElementById('lbExport').addEventListener('click',exportBook);
       const {data:chapters,error}=await sb.from('learning_book_chapters').select('id,chapter_number,part_title,chapter_title,content_html').eq('user_id',user.id).order('chapter_number');
       if(error) throw error;
       const list=document.getElementById('lbList');
       list.innerHTML=(chapters||[]).map(c=>'<button type="button" class="secondary" data-chapter="'+c.id+'" style="display:block;width:100%;text-align:left;margin:5px 0;white-space:normal"><b>Chapter '+c.chapter_number+'</b><div>'+escapeHtml(c.chapter_title)+'</div></button>').join('')||'<div class="muted">No chapters found.</div>';
       list.querySelectorAll('[data-chapter]').forEach(b=>b.addEventListener('click',()=>showChapter(b.dataset.chapter)));
       if(chapters&&chapters[0]) showChapter(chapters[0].id);
+      async function exportBook(){
+        const btn=document.getElementById('lbExport'); if(!btn)return;
+        const old=btn.textContent; btn.disabled=true; btn.textContent='⏳ Building full book...';
+        try{
+          const {data:{session},error}=await sb.auth.getSession();
+          if(error||!session) throw new Error('Your JGAP session has expired. Please sign in again.');
+          const res=await fetch('https://sfsyphmnzxaplundaljy.supabase.co/functions/v1/jgap-book-export',{headers:{Authorization:'Bearer '+session.access_token}});
+          if(!res.ok){let msg='Book export failed.';try{const j=await res.json();msg=j.error||msg;}catch(_){}throw new Error(msg);}
+          const blob=await res.blob();
+          const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='JGAP_Real_Estate_Investor_Book.docx'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),10000);
+          btn.textContent='✅ Book Exported'; setTimeout(()=>{btn.textContent=old;btn.disabled=false;},2500);
+        }catch(err){alert('Could not export the book: '+(err&&err.message?err.message:String(err)));btn.textContent=old;btn.disabled=false;}
+      }
       async function showChapter(id){
         const c=(chapters||[]).find(x=>x.id===id); if(!c)return;
         const box=document.getElementById('lbContent');
