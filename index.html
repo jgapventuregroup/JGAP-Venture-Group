@@ -731,7 +731,7 @@ async function renderTenantLedger(propertyId){
  host.innerHTML=`<div class="stats"><div><span>Charges</span><b>${money2(scheduled)}</b></div><div><span>Collected</span><b>${money2(collected)}</b></div><div><span>Balance</span><b>${money2(balance)}</b></div><div><span>Entries</span><b>${filtered.length}</b></div></div><div style="overflow:auto;margin-top:12px"><table class="table"><thead><tr><th>Tenant</th><th>Due</th><th>Charge</th><th>Paid</th><th>Balance</th><th>Status</th><th>Paid Date</th><th>Method</th><th></th></tr></thead><tbody>${filtered.map(r=>{const t=(tenants||[]).find(x=>x.id===r.tenant_id);const bal=Math.max(0,Number(r.amount_due||0)-Number(r.amount_paid||0));return `<tr><td>${escapeHtml(t?.name||"—")}</td><td>${escapeHtml(r.due_date||"—")}</td><td>${money2(r.amount_due)}</td><td>${money2(r.amount_paid)}</td><td>${money2(bal)}</td><td><span class="pill">${escapeHtml(r.status)}</span></td><td>${escapeHtml(r.paid_date||"—")}</td><td>${escapeHtml(r.payment_method||"—")}</td><td><button class="secondary" onclick="editRentPayment('${propertyId}','${r.id}')">Edit</button></td></tr>`}).join("")}</tbody></table></div>`;
 }
 
-async function renderPropertyDetail(id) {\n  window.scrollTo(0,0);
+async function renderPropertyDetail(id) {
   const main = document.querySelector("main");
   if (!main) return;
   main.innerHTML = '<div class="panel">Loading property...</div>';
@@ -894,7 +894,7 @@ async function saveProperty(id) {
 }
 
 
-async function renderDealsPage(){\n window.scrollTo(0,0);
+async function renderDealsPage(){
  const main=document.querySelector("main"); if(!main)return;
  main.innerHTML=`<div class="pageHead"><div><h1>Deal Pipeline</h1><p class="muted">Track opportunities from first lead through closing.</p></div><div><button class="secondary" onclick="render()">← Dashboard</button> <button class="primary" onclick="renderDealAnalyzer()">+ New Deal</button></div></div><div id="dealsMsg" class="muted">Loading deals...</div><div id="dealPipeline" class="cards"></div>`;
  const {data:deals,error}=await sb.from("deals").select("*").order("created_at",{ascending:false});
@@ -938,7 +938,7 @@ async function closeDealToProperty(id){
  renderPropertyDetail(propertyId);
 }
 
-function renderDealAnalyzer(existing=null){\n window.scrollTo(0,0);
+function renderDealAnalyzer(existing=null){
  const main=document.querySelector("main"); if(!main)return;
  main.innerHTML=`<div class="pageHead"><div><h1>Deal Analyzer</h1><p class="muted">Evaluate a potential investment before you commit capital.</p></div><button class="secondary" onclick="render()">← Dashboard</button></div>
  <div id="offerDecisionBanner" class="panel" style="margin-bottom:14px;border:2px solid var(--accent,#2f6fed);position:relative;z-index:100000;pointer-events:auto;">
@@ -963,7 +963,7 @@ function renderDealAnalyzer(existing=null){\n window.scrollTo(0,0);
  <label><span id="d_exp_label">Monthly operating expenses</span><input id="d_exp" type="number" step="0.01" value="0" oninput="calcDeal()"></label><label>Other monthly income<input id="d_other" type="number" step="0.01" value="0" oninput="calcDeal()"></label>
  <label>Target cash-on-cash %<input id="d_target_coc" type="number" step="0.1" value="8" oninput="calcDeal()"></label><label>Target cap rate %<input id="d_target_cap" type="number" step="0.1" value="8" oninput="calcDeal()"></label><label>Target DSCR <span class="muted">(optional)</span><input id="d_target_dscr" type="number" step="0.01" placeholder="Leave blank if not applicable" oninput="calcDeal()"></label><label>Minimum monthly cash flow <span class="muted">(optional)</span><input id="d_min_cf" type="number" step="25" value="0" oninput="calcDeal()"></label><label>Offer buffer % <span class="muted">(optional)</span><input id="d_offer_buffer" type="number" step="0.5" value="5" oninput="calcDeal()"></label><label>Holding period (months) <span class="muted">(flip)</span><input id="d_holding_months" type="number" min="0" step="1" value="0" oninput="calcDeal()"></label><label>Monthly holding costs <span class="muted">(flip)</span><input id="d_monthly_holding" type="number" step="0.01" value="0" oninput="calcDeal()"></label><label>Selling costs % <span class="muted">(flip)</span><input id="d_selling_cost_pct" type="number" step="0.1" value="8" oninput="calcDeal()"></label><label>Financing / points costs <span class="muted">(flip)</span><input id="d_financing_costs" type="number" step="0.01" value="0" oninput="calcDeal()"></label><label>Projected sale price <span class="muted">(flip)</span><input id="d_projected_sale" type="number" step="0.01" placeholder="Defaults to ARV" oninput="calcDeal()"></label>
  </div><label>Notes<textarea id="d_notes" style="width:100%;min-height:90px;padding:12px;border:1px solid #ccd5e2;border-radius:9px;margin:6px 0 12px;font:inherit"></textarea></label>
- <div id="dealSaveMsg" class="muted"></div><button class="primary" onclick="saveDeal()">Save Deal</button> <button class="secondary" type="button" onclick="openDealDocuments()">Deal Documents</button> <button class="secondary" type="button" onclick="var e=document.getElementById('dealChecklist');if(e){window.scrollTo({top:e.getBoundingClientRect().top+window.scrollY-24,behavior:'smooth'});}">Go to Due Diligence Checklist</button></div><div class="analyzerRightColumn">
+ <div id="dealSaveMsg" class="muted"></div><button class="primary" onclick="saveDeal()">Save Deal</button> <button class="secondary" type="button" onclick="openDealDocuments()">Deal Documents</button> <button class="secondary" type="button" onclick="document.getElementById('dealChecklist')?.scrollIntoView({behavior:'smooth',block:'center'});">Go to Due Diligence Checklist</button></div><div class="analyzerRightColumn">
  <div id="financingComparisonPanel" class="panel" style="margin-top:14px;align-self:start;padding:14px"><div class="sectionTitle" style="margin-bottom:6px">Financing Comparison</div><p class="muted" style="margin:0 0 8px;font-size:12px">Compare down payment and rate combinations. Scroll for all scenarios.</p><div id="financingComparison" class="tableWrap" style="max-height:240px;overflow:auto"></div></div><div class="panel" style="padding:14px"><div class="sectionTitle" style="margin-bottom:8px">Live Analysis</div><div id="analyzerDataQuality" class="muted" style="margin:-2px 0 10px;font-size:12px"></div><div class="stats" style="margin-top:0">
  <div><span>Loan amount</span><b id="r_loan">$0</b></div><div><span>Monthly debt service</span><b id="r_debt">$0</b></div>
  <div><span>Effective monthly income</span><b id="r_income">$0</b></div><div><span>Monthly NOI</span><b id="r_noi">$0</b></div>
