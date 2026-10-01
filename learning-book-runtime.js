@@ -22,7 +22,7 @@
         try{
           const {data:{session},error}=await sb.auth.getSession();
           if(error||!session) throw new Error('Your JGAP session has expired. Please sign in again.');
-          const res=await fetch('https://sfsyphmnzxaplundaljy.supabase.co/functions/v1/jgap-book-export',{headers:{Authorization:'Bearer '+session.access_token}});
+          const res=await fetch('https://sfsyphmnzxaplundaljy.supabase.co/functions/v1/jgap-book-export-clean',{headers:{Authorization:'Bearer '+session.access_token}});
           if(!res.ok){let msg='Book export failed.';try{const j=await res.json();msg=j.error||msg;}catch(_){}throw new Error(msg);}
           const blob=await res.blob();
           const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='JGAP_Real_Estate_Investor_Book.docx'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),10000);
