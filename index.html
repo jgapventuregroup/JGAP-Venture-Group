@@ -1132,6 +1132,9 @@ function renderOfferTemplatePreview(){
 
 async function seedDealChecklist(){
  const dealId=document.getElementById("dealSaveMsg")?.dataset.id; if(!dealId){alert("Save the deal first.");return;}
+ const existing=await sb.from("deal_checklist_items").select("id").eq("deal_id",dealId).limit(1);
+ if(existing.error){alert(existing.error.message);return;}
+ if(existing.data?.length){const msg=document.getElementById("dealChecklistMsg");if(msg)msg.innerHTML="<b>Standard checklist already exists for this deal.</b>";await loadDealChecklist(dealId);return;}
  const defaults=[
   ["Property","Verify property address, parcel and ownership"],["Financial","Verify taxes, insurance, utilities and operating expenses"],["Inspection","Order property inspection"],["Title / Legal","Order title search / preliminary title review"],["Financing","Confirm financing terms and lender requirements"],["Insurance / Taxes","Obtain insurance quote and verify tax status"],["Seller / Broker","Collect seller disclosures and requested documents"],["Closing","Confirm closing timeline and required documents"]
  ];
