@@ -1131,8 +1131,12 @@ function renderOfferTemplatePreview(){
 }
 
 async function seedDealChecklist(){
- const dealId=document.getElementById("dealSaveMsg")?.dataset.id;
+ const panel=document.getElementById("dealChecklist");
  const msg=document.getElementById("dealChecklistMsg");
+ const dealSaveMsg=document.getElementById("dealSaveMsg");
+ if(panel)panel.scrollIntoView({behavior:"smooth",block:"center"});
+ if(msg)msg.innerHTML="<b>Opening the due-diligence checklist…</b>";
+ const dealId=dealSaveMsg?.dataset.id;
  if(!dealId){
   if(msg)msg.innerHTML='<span class="error">Save the deal first to activate its checklist.</span>';
   return;
@@ -1148,6 +1152,7 @@ async function seedDealChecklist(){
   if(msg)msg.innerHTML='<span class="error">'+escapeHtml(q.error.message)+'</span>';
   return;
  }
+ if(panel)panel.scrollIntoView({behavior:"smooth",block:"center"});
  if(msg)msg.innerHTML="<b>Standard checklist ready — "+(q.data?.length||0)+" items loaded.</b>";
 }
 async function addDealChecklistItem(){
