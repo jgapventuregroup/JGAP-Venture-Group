@@ -23,13 +23,12 @@ jobs:
           s = p.read_text(encoding='utf-8')
           original = s
 
-          # Keep the Radar query aligned with the current triage fields when the
-          # existing source uses a plain opportunity_score select expression.
+          # Keep the Radar query aligned with the current triage fields.
           if 'jgap_fit_score' not in s and 'opportunity_score' in s:
               s = s.replace('opportunity_score', 'opportunity_score,jgap_fit_score,jgap_fit_reason,review_priority,recommended_action,missing_data,target_fit,target_fit_reason', 1)
 
-          # Add a lightweight client-side Radar filter/triage bar. This is deliberately
-          # DOM-based so it does not require replacing the existing Radar renderer.
+          # Inject a runtime filter bar. The Radar table is rendered dynamically and
+          # may use a header row without <thead>, so the script must support both forms.
           marker = '</body>'
           if 'id="jgapRadarFilters"' not in s and marker in s:
               inject = r'''<script>
@@ -46,32 +45,47 @@ jobs:
       if(h.indexOf('opportunity')!==-1 && h.indexOf('status')!==-1){table=tables[i];break;}
     }
     if(!table) return false;
-    var head=table.querySelector('thead tr');
+
+    var head=table.querySelector('thead tr') || table.querySelector('tr');
     if(!head) return false;
     var headers=[].slice.call(head.children).map(function(x){return (x.innerText||'').trim().toLowerCase();});
     var locIdx=headers.indexOf('location');
     var priorityIdx=headers.indexOf('priority');
     var targetIdx=headers.indexOf('target fit');
-    if(targetIdx===-1){
-      var th=document.createElement('th'); th.textContent='Target Fit'; head.appendChild(th); targetIdx=head.children.length-1;
-    }
     var rows=table.querySelectorAll('tbody tr');
-    rows.forEach(function(row){
-      var cells=row.children;
-      if(!cells.length) return;
-      var loc=locIdx>=0&&cells[locIdx]?(cells[locIdx].innerText||'').toLowerCase():'';
-      var fit=(loc.indexOf('bristol')>=0||loc.indexOf('kingsport')>=0||loc.indexOf('johnson city')>=0)?'target':'outside_target';
-      if(cells[targetIdx]){cells[targetIdx].textContent=fit;}
-      else{var td=document.createElement('td');td.textContent=fit;row.appendChild(td);}
-    });
-    var host=document.querySelector('.pageHead')||document.querySelector('main')||document.body;
-    var bar=document.createElement('div'); bar.id='jgapRadarFilters'; bar.className='toolbar'; bar.style.margin='0 0 14px';
-    bar.innerHTML='<label style="font-size:12px;font-weight:700">Target <select id="jgapTargetFilter" style="width:auto;margin:0 8px 0 4px"><option value="all">All</option><option value="target">Target</option><option value="outside_target">Outside Target</option></select></label><label style="font-size:12px;font-weight:700">Priority <select id="jgapPriorityFilter" style="width:auto;margin:0 8px 0 4px"><option value="all">All</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>';
-    if(host.firstChild) host.parentNode.insertBefore(bar,host.nextSibling); else host.appendChild(bar);
+    if(!rows.length){
+      var allRows=table.querySelectorAll('tr');
+      rows=[].slice.call(allRows).slice(1);
+    }
+
+    function addTargetCells(){
+      if(targetIdx===-1){
+        var th=document.createElement('th'); th.textContent='Target Fit'; head.appendChild(th); targetIdx=head.children.length-1;
+        rows.forEach(function(row){
+          var loc=locIdx>=0&&row.children[locIdx]?(row.children[locIdx].innerText||'').toLowerCase():'';
+          var fit=(loc.indexOf('bristol')>=0||loc.indexOf('kingsport')>=0||loc.indexOf('johnson city')>=0)?'target':'outside_target';
+          var td=document.createElement('td'); td.textContent=fit; row.appendChild(td);
+        });
+      }
+    }
+    addTargetCells();
+
+    var host=document.querySelector('.pageHead') || table.closest('.panel') || document.querySelector('main') || document.body;
+    var bar=document.createElement('div');
+    bar.id='jgapRadarFilters';
+    bar.className='toolbar';
+    bar.style.cssText='margin:0 0 14px;padding:10px 12px;background:#fff;border:1px solid #e2e7ef;border-radius:10px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;';
+    bar.innerHTML='<label style="font-size:13px;font-weight:700">Target <select id="jgapTargetFilter" style="width:auto;margin:0 0 0 6px"><option value="all">All</option><option value="target">Target</option><option value="outside_target">Outside Target</option></select></label><label style="font-size:13px;font-weight:700">Priority <select id="jgapPriorityFilter" style="width:auto;margin:0 0 0 6px"><option value="all">All</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>';
+    if(host.parentNode) host.parentNode.insertBefore(bar,host.nextSibling); else document.body.appendChild(bar);
+
     function apply(){
-      var tf=document.getElementById('jgapTargetFilter').value, pf=document.getElementById('jgapPriorityFilter').value;
-      table.querySelectorAll('tbody tr').forEach(function(row){
-        var c=row.children, loc=locIdx>=0&&c[locIdx]?(c[locIdx].innerText||'').toLowerCase():'';
+      var tf=document.getElementById('jgapTargetFilter').value;
+      var pf=document.getElementById('jgapPriorityFilter').value;
+      var currentRows=table.querySelectorAll('tbody tr');
+      if(!currentRows.length){var ar=table.querySelectorAll('tr');currentRows=[].slice.call(ar).slice(1);}
+      currentRows.forEach(function(row){
+        var c=row.children;
+        var loc=locIdx>=0&&c[locIdx]?(c[locIdx].innerText||'').toLowerCase():'';
         var fit=(loc.indexOf('bristol')>=0||loc.indexOf('kingsport')>=0||loc.indexOf('johnson city')>=0)?'target':'outside_target';
         var pri=priorityIdx>=0&&c[priorityIdx]?(c[priorityIdx].innerText||'').toLowerCase():'';
         row.style.display=(tf!=='all'&&fit!==tf)||(pf!=='all'&&pri.indexOf(pf)===-1)?'none':'';
@@ -90,7 +104,7 @@ jobs:
               p.write_text(s, encoding='utf-8')
               print('Radar filter UI updated.')
           else:
-              print('No Radar filter patch needed.')
+              print('No Radar UI patch needed.')
 
       - name: Commit Radar UI patch
         run: |
@@ -101,5 +115,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "Add Deal Radar target and priority filters"
+          git commit -m "Fix Deal Radar target and priority filters"
           git push
