@@ -31,14 +31,12 @@ jobs:
               if(!table) return false;
               var rows=table.querySelectorAll('tbody tr');
               if(!rows.length) return false;
-              var first=rows[0].children;
               var headers=table.querySelectorAll('th');
-              var loc=-1,pri=-1,target=-1;
+              var loc=-1,pri=-1;
               for(var i=0;i<headers.length;i++){
                 var h=(headers[i].innerText||'').trim().toLowerCase();
                 if(h==='location') loc=i;
                 if(h==='priority') pri=i;
-                if(h==='target fit') target=i;
               }
               var bar=document.createElement('div');
               bar.id='jgapRadarFilters';
@@ -70,7 +68,7 @@ jobs:
           from pathlib import Path
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          tag = '<script defer src="./radar-filters.js?v=20261003-1"></script>'
+          tag = '<script defer src="./radar-filters.js?v=20261003-2"></script>'
           if tag not in s:
               anchor = '<script defer src="./learning-book-runtime.js?v=20261001-1"></script>'
               if anchor not in s:
@@ -82,7 +80,7 @@ jobs:
               print('Radar filter script already wired')
           PY
 
-      - name: Commit
+      - name: Commit generated files
         run: |
           if git diff --quiet; then
             echo 'No changes.'
@@ -91,5 +89,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html radar-filters.js
-          git commit -m 'Wire Radar filters into app [skip ci]'
+          git commit -m 'Wire Radar filters into app'
           git push
