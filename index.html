@@ -2244,7 +2244,7 @@ async function renderDealRadarPage(){
   `;
 
   const {data,error}=await sb.from('radar_opportunities')
-    .select('id,name,source,source_url,external_id,property_type,address,city,state,postal_code,units,asking_price,previous_price,monthly_rent,monthly_operating_expenses,vacancy_rate,cap_rate,dscr,monthly_cash_flow,price_per_unit,opportunity_score,status,first_seen_at,last_seen_at,last_price_change_at,notes')
+    .select('id,name,source,source_url,external_id,property_type,address,city,state,postal_code,units,asking_price,previous_price,monthly_rent,monthly_operating_expenses,vacancy_rate,cap_rate,dscr,monthly_cash_flow,price_per_unit,opportunity_score,jgap_fit_score,jgap_fit_reason,review_priority,status,first_seen_at,last_seen_at,last_price_change_at,notes')
     .order('first_seen_at',{ascending:false});
 
   if(error){
@@ -2287,7 +2287,7 @@ function filterRadarInbox(){
   }
 
   host.innerHTML='<div style="overflow:auto"><table class="table"><thead><tr>'+
-    '<th>Opportunity</th><th>Location</th><th>Units</th><th>Asking Price</th><th>Cap / DSCR</th><th>Status</th><th>Actions</th>'+
+    '<th>Opportunity</th><th>Location</th><th>Units</th><th>Asking Price</th><th>Cap / DSCR</th><th>JGAP Fit</th><th>Priority</th><th>Status</th><th>Actions</th>'+
     '</tr></thead><tbody>'+
     filtered.map(r=>{
       const name=escapeHtml(r.name||r.address||'Untitled Opportunity');
@@ -2305,6 +2305,8 @@ function filterRadarInbox(){
         '<td>'+units+'</td>'+
         '<td>'+price+'</td>'+
         '<td>'+cap+' / '+dscr+'</td>'+
+        '<td><b>'+(r.jgap_fit_score==null?'—':Number(r.jgap_fit_score).toFixed(0))+'</b>'+(r.jgap_fit_reason?'<div class="muted" style="font-size:11px">'+escapeHtml(r.jgap_fit_reason)+'</div>':'')+'</td>'+
+        '<td><span class="pill">'+escapeHtml(r.review_priority||'—')+'</span></td>'+
         '<td><span class="pill">'+escapeHtml(status)+'</span></td>'+
         '<td><div style="display:flex!important;gap:10px!important;align-items:center!important;flex-wrap:wrap!important;min-width:230px!important"><button class="primary" style="margin:0!important" onclick="analyzeRadarOpportunity(\''+r.id+'\')">Analyze</button>'+(r.source_url?'<a class="secondary" style="display:inline-block!important;margin:0!important;text-decoration:none!important" target="_blank" rel="noopener noreferrer" href="'+escapeHtml(r.source_url)+'">Source</a>':'')+'<button class="secondary" style="margin:0!important" onclick="updateRadarOpportunityStatus(\''+r.id+'\',\''+(status==='new'?'reviewing':'new')+'\')">'+(status==='new'?'Review':'New')+'</button></div></td>'+
       '</tr>';
