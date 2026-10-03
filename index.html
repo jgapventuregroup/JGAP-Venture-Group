@@ -2244,7 +2244,7 @@ async function renderDealRadarPage(){
   `;
 
   const {data,error}=await sb.from('radar_opportunities')
-    .select('id,name,source,source_url,external_id,property_type,address,city,state,postal_code,units,asking_price,previous_price,monthly_rent,monthly_operating_expenses,vacancy_rate,cap_rate,dscr,monthly_cash_flow,price_per_unit,opportunity_score,jgap_fit_score,jgap_fit_reason,review_priority,missing_data,recommended_action,status,first_seen_at,last_seen_at,last_price_change_at,notes')
+    .select('id,name,source,source_url,external_id,property_type,address,city,state,postal_code,units,asking_price,previous_price,monthly_rent,monthly_operating_expenses,vacancy_rate,cap_rate,dscr,monthly_cash_flow,price_per_unit,opportunity_score,jgap_fit_score,jgap_fit_reason,review_priority,target_fit_reason,target_fit,missing_data,recommended_action,status,first_seen_at,last_seen_at,last_price_change_at,notes')
     .order('first_seen_at',{ascending:false});
 
   if(error){
@@ -2287,7 +2287,7 @@ function filterRadarInbox(){
   }
 
   host.innerHTML='<div style="overflow:auto"><table class="table"><thead><tr>'+
-    '<th>Opportunity</th><th>Location</th><th>Units</th><th>Asking Price</th><th>Cap / DSCR</th><th>JGAP Fit</th><th>Priority</th><th>Next Action</th><th>Missing Data</th><th>Status</th><th>Actions</th>'+
+    '<th>Opportunity</th><th>Location</th><th>Units</th><th>Asking Price</th><th>Cap / DSCR</th><th>JGAP Fit</th><th>Priority</th><th>Target Fit</th><th>Next Action</th><th>Missing Data</th><th>Status</th><th>Actions</th>'+
     '</tr></thead><tbody>'+
     filtered.map(r=>{
       const name=escapeHtml(r.name||r.address||'Untitled Opportunity');
@@ -2307,6 +2307,7 @@ function filterRadarInbox(){
         '<td>'+cap+' / '+dscr+'</td>'+
         '<td><b>'+(r.jgap_fit_score==null?'—':Number(r.jgap_fit_score).toFixed(0))+'</b>'+(r.jgap_fit_reason?'<div class="muted" style="font-size:11px">'+escapeHtml(r.jgap_fit_reason)+'</div>':'')+'</td>'+
         '<td><span class="pill">'+escapeHtml(r.review_priority||'—')+'</span></td>'+
+        '<td><span class="pill">'+escapeHtml(r.target_fit||'—')+'</span>'+(r.target_fit_reason?'<div class="muted" style="font-size:11px">'+escapeHtml(r.target_fit_reason)+'</div>':'')+'</td>'+
         '<td><b>'+escapeHtml(r.recommended_action||'—')+'</b></td>'+
         '<td>'+(r.missing_data?'<span class="muted" style="font-size:11px">'+escapeHtml(r.missing_data)+'</span>':'—')+'</td>'+
         '<td><span class="pill">'+escapeHtml(status)+'</span></td>'+
