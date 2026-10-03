@@ -1,0 +1,59 @@
+name: Update Radar UI
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  update-radar-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch Radar UI
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          original = s
+
+          # Add the new Radar scoring fields to the Supabase select if missing.
+          marker = 'opportunity_score'
+          fields = ',jgap_fit_score,jgap_fit_reason,review_priority'
+          if 'jgap_fit_score' not in s and marker in s:
+              s = s.replace(marker, marker + fields, 1)
+
+          # Add visible score/priority columns if the older Radar table is present.
+          old_header = "'<th>Opportunity</th><th>Location</th><th>Units</th><th>Asking Price</th><th>Cap / DSCR</th><th>Status</th><th>Actions</th>'+"
+          new_header = "'<th>Opportunity</th><th>Location</th><th>Units</th><th>Asking Price</th><th>Cap / DSCR</th><th>JGAP Fit</th><th>Priority</th><th>Status</th><th>Actions</th>'+"
+          if old_header in s:
+              s = s.replace(old_header, new_header, 1)
+
+          old_cap = "'<td>'+cap+' / '+dscr+'</td>'+"
+          new_cap = "'<td>'+cap+' / '+dscr+'</td>'+\n        '<td><b>'+(r.jgap_fit_score==null?'—':Number(r.jgap_fit_score).toFixed(0))+'</b>'+(r.jgap_fit_reason?'<div class=\"muted\" style=\"font-size:11px\">'+escapeHtml(r.jgap_fit_reason)+'</div>':'')+'</td>'+\n        '<td><span class=\"pill\">'+escapeHtml(r.review_priority||'—')+'</span></td>'+"
+          if old_cap in s and 'r.jgap_fit_score' not in s:
+              s = s.replace(old_cap, new_cap, 1)
+
+          if s != original:
+              p.write_text(s, encoding='utf-8')
+          else:
+              print('No Radar UI patch needed.')
+
+      - name: Commit Radar UI patch
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Update Deal Radar score and priority columns"
+          git push
