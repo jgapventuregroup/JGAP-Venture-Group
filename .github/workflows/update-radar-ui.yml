@@ -24,25 +24,30 @@ jobs:
           s = p.read_text(encoding='utf-8')
           original = s
 
-          # Add the new Radar scoring fields to the Supabase select if missing.
-          marker = 'opportunity_score'
-          fields = ',jgap_fit_score,jgap_fit_reason,review_priority'
-          if 'jgap_fit_score' not in s and marker in s:
-              s = s.replace(marker, marker + fields, 1)
+          # Keep the Radar query aligned with the current triage fields.
+          if 'jgap_fit_score' not in s and 'opportunity_score' in s:
+              s = s.replace('opportunity_score', 'opportunity_score,jgap_fit_score,jgap_fit_reason,review_priority,recommended_action,missing_data', 1)
+          elif 'jgap_fit_score' in s:
+              # Add only fields that are still missing from the select expression.
+              for field in ['recommended_action','missing_data']:
+                  if field not in s:
+                      s = s.replace('review_priority', 'review_priority,' + field, 1)
 
-          # Add visible score/priority columns if the older Radar table is present.
-          old_header = "'<th>Opportunity</th><th>Location</th><th>Units</th><th>Asking Price</th><th>Cap / DSCR</th><th>Status</th><th>Actions</th>'+"
-          new_header = "'<th>Opportunity</th><th>Location</th><th>Units</th><th>Asking Price</th><th>Cap / DSCR</th><th>JGAP Fit</th><th>Priority</th><th>Status</th><th>Actions</th>'+"
-          if old_header in s:
+          # Upgrade the Radar header once, preserving the existing layout.
+          old_header = "'<th>Opportunity</th><th>Location</th><th>Units</th><th>Asking Price</th><th>Cap / DSCR</th><th>JGAP Fit</th><th>Priority</th><th>Status</th><th>Actions</th>'+"
+          new_header = "'<th>Opportunity</th><th>Location</th><th>Units</th><th>Asking Price</th><th>Cap / DSCR</th><th>JGAP Fit</th><th>Priority</th><th>Next Action</th><th>Missing Data</th><th>Status</th><th>Actions</th>'+"
+          if old_header in s and 'Next Action' not in s:
               s = s.replace(old_header, new_header, 1)
 
-          old_cap = "'<td>'+cap+' / '+dscr+'</td>'+"
-          new_cap = "'<td>'+cap+' / '+dscr+'</td>'+\n        '<td><b>'+(r.jgap_fit_score==null?'—':Number(r.jgap_fit_score).toFixed(0))+'</b>'+(r.jgap_fit_reason?'<div class=\"muted\" style=\"font-size:11px\">'+escapeHtml(r.jgap_fit_reason)+'</div>':'')+'</td>'+\n        '<td><span class=\"pill\">'+escapeHtml(r.review_priority||'—')+'</span></td>'+"
-          if old_cap in s and 'r.jgap_fit_score' not in s:
-              s = s.replace(old_cap, new_cap, 1)
+          # Add triage details after the priority cell if the older version is present.
+          priority_cell = "'<td><span class=\"pill\">'+escapeHtml(r.review_priority||'—')+'</span></td>'+"
+          triage_cells = "'<td><b>'+escapeHtml(r.recommended_action||'—')+'</b></td>'+\n        '<td>'+(r.missing_data?'<span class=\"muted\" style=\"font-size:11px\">'+escapeHtml(r.missing_data)+'</span>':'—')+'</td>'+"
+          if priority_cell in s and 'r.recommended_action' not in s:
+              s = s.replace(priority_cell, priority_cell + '\n        ' + triage_cells, 1)
 
           if s != original:
               p.write_text(s, encoding='utf-8')
+              print('Radar UI updated.')
           else:
               print('No Radar UI patch needed.')
 
@@ -55,5 +60,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "Update Deal Radar score and priority columns"
+          git commit -m "Update Deal Radar triage display"
           git push
