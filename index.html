@@ -2259,6 +2259,7 @@ async function renderDealRadarPage(){
   window.__jgapRadarRows=data||[];
   updateRadarStats(window.__jgapRadarRows);
   filterRadarInbox();
+  if(typeof window.loadJGAPDistressRadar==='function'){ await window.loadJGAPDistressRadar(); }
   const last=document.getElementById('radarStatus');
   if(last)last.textContent='Radar refreshed '+new Date().toLocaleString()+'.';
 }
