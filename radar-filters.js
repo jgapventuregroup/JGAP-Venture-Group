@@ -1,10 +1,11 @@
 (function(){
-  function loadHotfix(){if(window.__jgapDealRadarHotfixLoader)return;window.__jgapDealRadarHotfixLoader=true;var s=document.createElement('script');s.src='./deal-radar-hotfix.js?v=20261004-4';s.async=false;document.head.appendChild(s);}
+  function loadHotfix(){if(window.__jgapDealRadarHotfixLoader)return;window.__jgapDealRadarHotfixLoader=true;var s=document.createElement('script');s.src='./deal-radar-hotfix.js?v=20261004-2';s.async=false;document.head.appendChild(s);}
   loadHotfix();
   function loadPropertyPassport(){if(window.__jgapPropertyPassportLoader)return;window.__jgapPropertyPassportLoader=true;var s=document.createElement('script');s.src='./property-passport.js?v=20261004-1';s.async=false;document.head.appendChild(s);}
   loadPropertyPassport();
   function cleanTitle(v){return String(v||'').trim().replace(/_/g,' ').replace(/^\s*[>:-]\s*/,'').trim();}
   function addSafeRadarLayout(){if(document.getElementById('jgapRadarStableLayout'))return;var s=document.createElement('style');s.id='jgapRadarStableLayout';s.textContent='#radarInbox{width:100%;min-width:0;overflow:hidden}#radarInbox .table{width:100%;table-layout:fixed}#radarInbox th,#radarInbox td{white-space:normal;overflow-wrap:break-word;vertical-align:top}#radarInbox td:nth-child(12)>div{display:flex!important;gap:5px!important;flex-wrap:nowrap!important}#radarInbox td:nth-child(12) button,#radarInbox td:nth-child(12) a{padding:6px 8px!important;font-size:12px!important;white-space:nowrap!important}';document.head.appendChild(s);}
+  function initOldRadar(){addSafeRadarLayout();var tables=document.querySelectorAll('#radarInbox table,.table');for(var i=0;i<tables.length;i++){var t=tables[i],txt=(t.innerText||'').toLowerCase();if(txt.indexOf('opportunity')>=0&&txt.indexOf('actions')>=0){t.querySelectorAll('tbody tr').forEach(function(r){var b=r.querySelector('td b');if(b)b.textContent=cleanTitle(b.textContent);});return true;}}return false;}
   function distressStyle(){if(document.getElementById('jgapDistressStyle'))return;var s=document.createElement('style');s.id='jgapDistressStyle';s.textContent='#jgapDistressRadar{margin-top:18px}#jgapDistressRadar .drGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}@media(max-width:900px){#jgapDistressRadar .drGrid{grid-template-columns:1fr 1fr}}@media(max-width:600px){#jgapDistressRadar .drGrid{grid-template-columns:1fr}}#jgapDistressRadar table{width:100%;border-collapse:collapse}#jgapDistressRadar th,#jgapDistressRadar td{padding:9px;border-bottom:1px solid #e6eaf0;text-align:left;vertical-align:top;font-size:13px}#jgapDistressRadar .drTools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}#jgapDistressRadar select,#jgapDistressRadar input{margin:0;width:auto;min-width:150px}#jgapDistressRadar .drAction{display:flex;gap:5px;flex-wrap:wrap;align-items:center}#jgapDistressRadar .drAction button{padding:7px 9px;font-size:12px}';document.head.appendChild(s);}
   async function loadDistressRadar(){var radar=document.getElementById('radarInbox');if(!radar||document.getElementById('jgapDistressRadar'))return;distressStyle();var p=document.createElement('div');p.id='jgapDistressRadar';p.className='panel';p.innerHTML='<div class="pageHead"><div><h2 style="margin:0 0 5px">🚨 JGAP Distress Radar</h2><p class="muted" style="margin:0">Tax delinquency, code enforcement, foreclosure, county-owned and other distressed-property leads.</p></div><button class="secondary" id="drRefresh">↻ Refresh</button></div><div class="drGrid"><div class="card"><div class="muted">Leads</div><div class="metric" id="drCount">0</div></div><div class="card"><div class="muted">Priority</div><div class="metric" id="drPriority">0</div></div><div class="card"><div class="muted">$20K–$40K Targets</div><div class="metric" id="drLowCost">0</div></div><div class="card"><div class="muted">Potential Cash Flow</div><div class="metric" id="drCashFlow">$0</div></div></div><div class="drTools" style="margin:14px 0"><select id="drSource"><option value="">All sources</option><option value="tax_delinquent">Tax delinquent</option><option value="tax_sale">Tax sale</option><option value="code_enforcement">Code enforcement</option><option value="foreclosure">Foreclosure</option><option value="county_owned">County owned</option><option value="surplus">Surplus</option></select><select id="drType"><option value="">All property types</option><option value="single_family">Single family</option><option value="duplex">Duplex</option><option value="multifamily">Multifamily</option><option value="commercial">Commercial</option><option value="other">Other</option></select><select id="drStatus"><option value="">All statuses</option><option value="new">New</option><option value="researching">Researching</option><option value="contact">Contact</option><option value="analyzing">Analyzing</option><option value="archived">Archived</option></select><input id="drSearch" placeholder="Search address / county / owner"></div><div id="drMsg" class="muted">Loading...</div><div id="drTable" style="margin-top:10px;overflow:auto"></div><div class="muted" style="font-size:11px;margin-top:10px">Discovery is automated separately. This workspace only shows verified/researched records and does not invent missing numbers.</div>';radar.parentNode.insertBefore(p,radar);document.getElementById('drRefresh').onclick=loadDistressRadar;['drSource','drType','drStatus','drSearch'].forEach(function(id){document.getElementById(id).oninput=renderDistressRows;document.getElementById(id).onchange=renderDistressRows;});try{var q=await sb.from('distress_opportunities').select('id,source_type,source_name,source_url,name,owner_name,address,city,state,postal_code,county,property_type,units,asking_price,estimated_repairs,estimated_monthly_rent,projected_monthly_cash_flow,jgap_score,priority,status,recommended_action,reason').order('jgap_score',{ascending:false,nullsLast:true}).order('first_seen_at',{ascending:false});if(q.error)throw q.error;window.__jgapDistressRows=q.data||[];renderDistressRows();}catch(e){document.getElementById('drMsg').innerHTML='<span class="error">Distress Radar could not load: '+String(e.message||e)+'</span>';}}
   function renderDistressRows(){var rows=window.__jgapDistressRows||[],source=document.getElementById('drSource')?.value||'',type=document.getElementById('drType')?.value||'',status=document.getElementById('drStatus')?.value||'',q=(document.getElementById('drSearch')?.value||'').toLowerCase().trim();var f=rows.filter(function(r){var h=[r.name,r.owner_name,r.address,r.city,r.state,r.postal_code,r.county,r.source_name].join(' ').toLowerCase();return(!source||r.source_type===source)&&(!type||r.property_type===type)&&(!status||r.status===status)&&(!q||h.indexOf(q)>=0)});var active=rows.filter(r=>String(r.status||'').toLowerCase()!=='archived'),low=active.filter(r=>Number(r.asking_price||0)>0&&Number(r.asking_price)<=40000).length,pri=active.filter(r=>String(r.priority||'').toLowerCase()==='high').length,cf=active.reduce((a,r)=>a+Number(r.projected_monthly_cash_flow||0),0),set=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};set('drCount',active.length);set('drPriority',pri);set('drLowCost',low);set('drCashFlow',money2(cf));var host=document.getElementById('drTable'),msg=document.getElementById('drMsg');if(!host)return;if(msg)msg.textContent=f.length+' distress lead'+(f.length===1?'':'s')+' shown';if(!f.length){host.innerHTML='<div class="card"><b>No distress leads match this filter.</b><p class="muted">Try All statuses or another source/property type.</p></div>';return;}host.innerHTML='<table><thead><tr><th>Property</th><th>Source</th><th>Location</th><th>Price</th><th>Rent</th><th>Repairs</th><th>Cash Flow</th><th>JGAP Score</th><th>Action</th></tr></thead><tbody>'+f.map(function(r){var archived=String(r.status||'').toLowerCase()==='archived';return '<tr><td><b>'+escapeHtml(cleanTitle(r.name||r.address||'Untitled'))+'</b>'+(r.owner_name?'<div class="muted">Owner: '+escapeHtml(r.owner_name)+'</div>':'')+(archived?'<div class="muted">Archived</div>':'')+'</td><td><span class="pill">'+escapeHtml(String(r.source_type||'').replaceAll('_',' '))+'</span></td><td>'+escapeHtml([r.city,r.state,r.postal_code].filter(Boolean).join(', ')||r.county||'—')+'</td><td>'+(r.asking_price==null?'—':money2(r.asking_price))+'</td><td>'+(r.estimated_monthly_rent==null?'—':money2(r.estimated_monthly_rent))+'</td><td>'+(r.estimated_repairs==null?'—':money2(r.estimated_repairs))+'</td><td>'+(r.projected_monthly_cash_flow==null?'—':money2(r.projected_monthly_cash_flow))+'</td><td><b>'+(r.jgap_score==null?'—':Number(r.jgap_score).toFixed(0))+'</b>'+(r.priority?'<div class="muted">'+escapeHtml(r.priority)+'</div>':'')+'</td><td><div class="drAction">'+(archived?'<button class="secondary" onclick="restoreDistressLead(\''+r.id+'\')">Restore</button>':'<button class="secondary" onclick="openDistressLead(\''+r.id+'\')">Review / Analyze</button><button class="secondary" onclick="archiveDistressLead(\''+r.id+'\')">Archive</button>')+'<button class="secondary" onclick="deleteDistressLead(\''+r.id+'\')">Delete</button>'+(r.source_url?' <a class="secondary" target="_blank" rel="noopener" href="'+escapeHtml(r.source_url)+'">Source</a>':'')+'</div></td></tr>';}).join('')+'</tbody></table>';}
@@ -14,21 +15,39 @@
   window.restoreDistressLead=async function(id){var res=await sb.from('distress_opportunities').update({status:'new',last_seen_at:new Date().toISOString()}).eq('id',id);if(res.error){alert('Could not restore property: '+res.error.message);return;}await refreshDistressRows();}
   window.deleteDistressLead=async function(id){var r=(window.__jgapDistressRows||[]).find(x=>x.id===id);if(!r)return;if(!confirm('Permanently delete '+(r.name||r.address||'this property')+' from Distress Radar?\n\nThis cannot be undone.'))return;var res=await sb.from('distress_opportunities').delete().eq('id',id);if(res.error){alert('Could not delete property: '+res.error.message);return;}await refreshDistressRows();}
   window.loadJGAPDistressRadar=loadDistressRadar;
-  // Mount the distress workspace from the actual Deal Radar renderer instead of
-  // relying on timing/DOM visibility. The renderer is defined later in index.html,
-  // so wait for it and wrap it once; after every render completes, mount Distress Radar.
-  function hookRadarRenderer(){
-    if(window.__jgapDistressRadarRendererHooked || typeof window.renderDealRadarPage!=='function')return;
-    window.__jgapDistressRadarRendererHooked=true;
-    var original=window.renderDealRadarPage;
-    window.renderDealRadarPage=async function(){
-      var result=await original.apply(this,arguments);
-      await new Promise(function(resolve){setTimeout(resolve,0);});
-      try{await loadDistressRadar();}catch(e){console.error('JGAP Distress Radar mount failed:',e);}
-      return result;
-    };
+  // Deal Analyzer rebuilds the Radar DOM when Back is clicked. The first
+  // navigation fix was too dependent on mutation timing. Keep a lightweight
+  // watchdog that verifies the Distress Radar is actually mounted inside the
+  // CURRENT radar container and remounts it whenever the container is rebuilt.
+  function radarIsVisible(el){
+    if(!el) return false;
+    var cs=getComputedStyle(el);
+    return cs.display!=='none' && cs.visibility!=='hidden' && el.getBoundingClientRect().height>0;
   }
-  var hookTries=0;var hookTimer=setInterval(function(){hookRadarRenderer();if(window.__jgapDistressRadarRendererHooked||++hookTries>120)clearInterval(hookTimer);},100);
-  // Also recover if the Radar renderer is already present before this file finishes.
-  hookRadarRenderer();
+  var remountTimer=null;
+  function ensureDistressRadar(){
+    var radar=document.getElementById('radarInbox');
+    if(!radar || !radarIsVisible(radar) || typeof window.loadJGAPDistressRadar!=='function') return;
+    var distress=document.getElementById('jgapDistressRadar');
+    if(distress && !radar.contains(distress)) distress.remove();
+    if(document.getElementById('jgapDistressRadar')) return;
+    if(remountTimer) clearTimeout(remountTimer);
+    remountTimer=setTimeout(function(){
+      remountTimer=null;
+      var current=document.getElementById('radarInbox');
+      if(current && radarIsVisible(current) && !document.getElementById('jgapDistressRadar') && typeof window.loadJGAPDistressRadar==='function'){
+        window.loadJGAPDistressRadar();
+      }
+    },250);
+  }
+  if(!window.__jgapRadarNavigationObserver){
+    window.__jgapRadarNavigationObserver=true;
+    var observer=new MutationObserver(function(){ensureDistressRadar();});
+    observer.observe(document.body,{childList:true,subtree:true});
+    window.addEventListener('popstate',ensureDistressRadar);
+    window.addEventListener('hashchange',ensureDistressRadar);
+    document.addEventListener('visibilitychange',function(){if(!document.hidden)ensureDistressRadar();});
+    setInterval(ensureDistressRadar,750);
+    setTimeout(ensureDistressRadar,100);
+  }
 })();
