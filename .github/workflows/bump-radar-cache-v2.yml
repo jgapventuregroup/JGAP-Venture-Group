@@ -1,0 +1,43 @@
+name: Bump Deal Radar asset version v2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bump-radar-cache-v2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  bump-radar-asset:
+    if: "!contains(github.event.head_commit.message, 'Bump Deal Radar asset version v2')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Change only the Radar asset version
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = './radar-filters.js?v=20261004-1'
+          new = './radar-filters.js?v=20261004-2'
+          count = s.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one current Radar asset reference, found {count}')
+          p.write_text(s.replace(old, new), encoding='utf-8')
+          PY
+      - name: Verify the exact change
+        run: |
+          test "$(grep -Fc './radar-filters.js?v=20261004-2' index.html)" -eq 1
+          test "$(grep -Fc './radar-filters.js?v=20261004-1' index.html)" -eq 0
+          git diff --check
+      - name: Commit only the version change
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Bump Deal Radar asset version v2'
+          git push
