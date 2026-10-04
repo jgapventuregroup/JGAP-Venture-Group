@@ -1,0 +1,43 @@
+name: Integrate Distress Radar into Deal Radar renderer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/integrate-distress-radar.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: "!contains(github.event.head_commit.message, 'Integrate Distress Radar into Deal Radar renderer')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Make the exact renderer integration
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = "  window.__jgapRadarRows=data||[];\n  updateRadarStats(window.__jgapRadarRows);\n  filterRadarInbox();\n  const last=document.getElementById('radarStatus');"
+          new = "  window.__jgapRadarRows=data||[];\n  updateRadarStats(window.__jgapRadarRows);\n  filterRadarInbox();\n  if(typeof window.loadJGAPDistressRadar==='function'){ await window.loadJGAPDistressRadar(); }\n  const last=document.getElementById('radarStatus');"
+          count = s.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one Deal Radar renderer insertion point, found {count}')
+          p.write_text(s.replace(old, new), encoding='utf-8')
+          PY
+      - name: Verify exact integration
+        run: |
+          grep -F "await window.loadJGAPDistressRadar();" index.html
+          test "$(grep -Fc "await window.loadJGAPDistressRadar();" index.html)" -eq 1
+      - name: Commit only the renderer integration
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --check
+          git commit -m 'Integrate Distress Radar into Deal Radar renderer'
+          git push
