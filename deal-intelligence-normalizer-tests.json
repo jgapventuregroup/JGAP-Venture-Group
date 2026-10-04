@@ -1,0 +1,10 @@
+{
+  "mode":"test",
+  "cases":[
+    {"name":"price reduction","input":{"id":"A1","city":"Bristol","state":"TN","units":8,"listPrice":500000,"previousPrice":550000},"expected":"price_reduced"},
+    {"name":"new listing","input":{"id":"A2","city":"Kingsport","state":"TN","units":4,"listPrice":350000},"expected":"new"},
+    {"name":"missing economics","input":{"id":"A3","city":"Johnson City","state":"TN","units":6,"listPrice":400000},"expected":"accepted_without_guessing"},
+    {"name":"outside unit box","input":{"id":"A4","city":"Elizabethton","state":"TN","units":25,"listPrice":700000},"expected":"not_match"}
+  ],
+  "safety":{"do_not_guess":true,"outbound_notifications":false,"commercial_data_rights_required":true}
+}
