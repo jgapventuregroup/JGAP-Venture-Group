@@ -18,4 +18,40 @@
   }
   window.archiveRadarOpportunity=archiveRadarOpportunity;
   window.restoreRadarOpportunity=restoreRadarOpportunity;
+
+  // Navigation persistence: Deal Analyzer can rebuild the Deal Radar DOM when
+  // the user clicks Back. Re-mount the Distress Radar whenever the Radar view
+  // becomes visible again instead of requiring a hard refresh.
+  function radarIsVisible(el){
+    if(!el) return false;
+    var cs=getComputedStyle(el);
+    return cs.display!=='none' && cs.visibility!=='hidden' && el.getBoundingClientRect().height>0;
+  }
+  var remountTimer=null;
+  function ensureDistressRadar(){
+    var radar=document.getElementById('radarInbox');
+    if(!radar || !radarIsVisible(radar)) return;
+    if(document.getElementById('jgapDistressRadar')) return;
+    if(typeof window.loadJGAPDistressRadar!=='function') return;
+    if(remountTimer) clearTimeout(remountTimer);
+    remountTimer=setTimeout(function(){
+      remountTimer=null;
+      if(document.getElementById('radarInbox') && !document.getElementById('jgapDistressRadar') && radarIsVisible(document.getElementById('radarInbox'))){
+        window.loadJGAPDistressRadar();
+      }
+    },100);
+  }
+  if(!window.__jgapRadarNavigationObserver){
+    window.__jgapRadarNavigationObserver=true;
+    var observer=new MutationObserver(function(){ensureDistressRadar();});
+    observer.observe(document.body,{childList:true,subtree:true});
+    window.addEventListener('popstate',ensureDistressRadar);
+    window.addEventListener('hashchange',ensureDistressRadar);
+    document.addEventListener('visibilitychange',function(){if(!document.hidden)ensureDistressRadar();});
+    var tries=0;
+    var boot=setInterval(function(){
+      ensureDistressRadar();
+      if(++tries>120) clearInterval(boot);
+    },500);
+  }
 })();
