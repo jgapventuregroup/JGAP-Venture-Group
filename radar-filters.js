@@ -14,40 +14,5 @@
   window.archiveDistressLead=async function(id){var r=(window.__jgapDistressRows||[]).find(x=>x.id===id);if(!r)return;if(!confirm('Archive '+(r.name||r.address||'this property')+'?\n\nIt will remain in the database and can be restored.'))return;var res=await sb.from('distress_opportunities').update({status:'archived',last_seen_at:new Date().toISOString()}).eq('id',id);if(res.error){alert('Could not archive property: '+res.error.message);return;}await refreshDistressRows();}
   window.restoreDistressLead=async function(id){var res=await sb.from('distress_opportunities').update({status:'new',last_seen_at:new Date().toISOString()}).eq('id',id);if(res.error){alert('Could not restore property: '+res.error.message);return;}await refreshDistressRows();}
   window.deleteDistressLead=async function(id){var r=(window.__jgapDistressRows||[]).find(x=>x.id===id);if(!r)return;if(!confirm('Permanently delete '+(r.name||r.address||'this property')+' from Distress Radar?\n\nThis cannot be undone.'))return;var res=await sb.from('distress_opportunities').delete().eq('id',id);if(res.error){alert('Could not delete property: '+res.error.message);return;}await refreshDistressRows();}
-  window.loadJGAPDistressRadar=loadDistressRadar;
-  // Deal Analyzer rebuilds the Radar DOM when Back is clicked. The first
-  // navigation fix was too dependent on mutation timing. Keep a lightweight
-  // watchdog that verifies the Distress Radar is actually mounted inside the
-  // CURRENT radar container and remounts it whenever the container is rebuilt.
-  function radarIsVisible(el){
-    if(!el) return false;
-    var cs=getComputedStyle(el);
-    return cs.display!=='none' && cs.visibility!=='hidden' && el.getBoundingClientRect().height>0;
-  }
-  var remountTimer=null;
-  function ensureDistressRadar(){
-    var radar=document.getElementById('radarInbox');
-    if(!radar || !radarIsVisible(radar) || typeof window.loadJGAPDistressRadar!=='function') return;
-    var distress=document.getElementById('jgapDistressRadar');
-    if(distress && !radar.contains(distress)) distress.remove();
-    if(document.getElementById('jgapDistressRadar')) return;
-    if(remountTimer) clearTimeout(remountTimer);
-    remountTimer=setTimeout(function(){
-      remountTimer=null;
-      var current=document.getElementById('radarInbox');
-      if(current && radarIsVisible(current) && !document.getElementById('jgapDistressRadar') && typeof window.loadJGAPDistressRadar==='function'){
-        window.loadJGAPDistressRadar();
-      }
-    },250);
-  }
-  if(!window.__jgapRadarNavigationObserver){
-    window.__jgapRadarNavigationObserver=true;
-    var observer=new MutationObserver(function(){ensureDistressRadar();});
-    observer.observe(document.body,{childList:true,subtree:true});
-    window.addEventListener('popstate',ensureDistressRadar);
-    window.addEventListener('hashchange',ensureDistressRadar);
-    document.addEventListener('visibilitychange',function(){if(!document.hidden)ensureDistressRadar();});
-    setInterval(ensureDistressRadar,750);
-    setTimeout(ensureDistressRadar,100);
-  }
+  window.loadJGAPDistressRadar=loadDistressRadar;var attempts=0,watch=setInterval(function(){if(document.getElementById('radarInbox')&&!document.getElementById('jgapDistressRadar')){loadDistressRadar();clearInterval(watch);}if(++attempts>40)clearInterval(watch);},500);
 })();
