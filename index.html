@@ -2226,6 +2226,7 @@ async function renderDealRadarPage(){
             <option value="reviewing">Reviewing</option>
             <option value="passed">Passed</option>
           </select>
+          <label style="display:flex;align-items:center;gap:6px;margin:0;white-space:nowrap"><input id="radarShowArchived" type="checkbox" onchange="loadDealRadar()" style="width:auto;margin:0"> Show archived</label>
         </div>
       </div>
       <div class="stats">
@@ -2244,8 +2245,10 @@ async function renderDealRadarPage(){
   `;
 
   const {data,error}=await sb.from('radar_opportunities')
-    .select('id,name,source,source_url,external_id,property_type,address,city,state,postal_code,units,asking_price,previous_price,monthly_rent,monthly_operating_expenses,vacancy_rate,cap_rate,dscr,monthly_cash_flow,price_per_unit,opportunity_score,jgap_fit_score,jgap_fit_reason,review_priority,target_fit_reason,target_fit,missing_data,recommended_action,status,first_seen_at,last_seen_at,last_price_change_at,notes')
+    .select('id,name,source,source_url,external_id,property_type,address,city,state,postal_code,units,asking_price,previous_price,monthly_rent,monthly_operating_expenses,vacancy_rate,cap_rate,dscr,monthly_cash_flow,price_per_unit,opportunity_score,jgap_fit_score,jgap_fit_reason,review_priority,target_fit_reason,target_fit,missing_data,recommended_action,status,first_seen_at,last_seen_at,last_price_change_at,notes,archived_at')
     .order('first_seen_at',{ascending:false});
+  const showArchived=document.getElementById('radarShowArchived')?.checked;
+  window.__jgapRadarRows=(data||[]).filter(r=>showArchived || !r.archived_at);
 
   if(error){
     console.error('Deal Radar query failed:',error);
@@ -2258,6 +2261,21 @@ async function renderDealRadarPage(){
   filterRadarInbox();
   const last=document.getElementById('radarStatus');
   if(last)last.textContent='Radar refreshed '+new Date().toLocaleString()+'.';
+}
+
+async function archiveRadarOpportunity(id){
+  const r=(window.__jgapRadarRows||[]).find(x=>x.id===id);
+  if(!r)return;
+  const label=r.name||r.address||'this property';
+  if(!confirm('Archive '+label+' from Deal Radar?\\n\\nIt will leave the active radar but remain available under “Show archived”.'))return;
+  const {error}=await sb.from('radar_opportunities').update({archived_at:new Date().toISOString()}).eq('id',id);
+  if(error){alert('Could not archive property: '+error.message);return;}
+  await loadDealRadar();
+}
+async function restoreRadarOpportunity(id){
+  const {error}=await sb.from('radar_opportunities').update({archived_at:null}).eq('id',id);
+  if(error){alert('Could not restore property: '+error.message);return;}
+  await loadDealRadar();
 }
 
 function updateRadarStats(rows){
@@ -2311,7 +2329,7 @@ function filterRadarInbox(){
         '<td><b>'+escapeHtml(r.recommended_action||'—')+'</b></td>'+
         '<td>'+(r.missing_data?'<span class="muted" style="font-size:11px">'+escapeHtml(r.missing_data)+'</span>':'—')+'</td>'+
         '<td><span class="pill">'+escapeHtml(status)+'</span></td>'+
-        '<td><div style="display:flex!important;gap:10px!important;align-items:center!important;flex-wrap:wrap!important;min-width:230px!important"><button class="primary" style="margin:0!important" onclick="analyzeRadarOpportunity(\''+r.id+'\')">Analyze</button>'+(r.source_url?'<a class="secondary" style="display:inline-block!important;margin:0!important;text-decoration:none!important" target="_blank" rel="noopener noreferrer" href="'+escapeHtml(r.source_url)+'">Source</a>':'')+'<button class="secondary" style="margin:0!important" onclick="updateRadarOpportunityStatus(\''+r.id+'\',\''+(status==='new'?'reviewing':'new')+'\')">'+(status==='new'?'Review':'New')+'</button><button class="secondary" style="margin:0!important" onclick="deleteRadarOpportunity(\''+r.id+'\')">Delete</button></div></td>'+
+        '<td><div style="display:flex!important;gap:10px!important;align-items:center!important;flex-wrap:wrap!important;min-width:230px!important"><button class="primary" style="margin:0!important" onclick="analyzeRadarOpportunity(\''+r.id+'\')">Analyze</button>'+(r.source_url?'<a class="secondary" style="display:inline-block!important;margin:0!important;text-decoration:none!important" target="_blank" rel="noopener noreferrer" href="'+escapeHtml(r.source_url)+'">Source</a>':'')+'<button class="secondary" style="margin:0!important" onclick="updateRadarOpportunityStatus(\''+r.id+'\',\''+(status==='new'?'reviewing':'new')+'\')">'+(status==='new'?'Review':'New')+'</button><button class="secondary" style="margin:0!important" onclick="archiveRadarOpportunity(\''+r.id+'\')">Archive</button><button class="secondary" style="margin:0!important" onclick="deleteRadarOpportunity(\''+r.id+'\')">Delete</button></div></td>'+
       '</tr>';
     }).join('')+
     '</tbody></table></div>';
