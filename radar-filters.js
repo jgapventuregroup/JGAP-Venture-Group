@@ -5,7 +5,17 @@
     var s=document.createElement('script');s.src='./property-passport.js?v=20261004-1';s.async=false;document.head.appendChild(s);
   }
   loadPropertyPassport();
+
+  function addRadarLayoutFix(){
+    if(document.getElementById('jgapRadarInboxLayoutFix'))return;
+    var style=document.createElement('style');
+    style.id='jgapRadarInboxLayoutFix';
+    style.textContent='#radarInbox{width:100%;min-width:0;max-width:100%;overflow-x:hidden}#radarInbox>div{width:100%;min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}#radarInbox .table{min-width:1120px}#radarInbox th,#radarInbox td{white-space:normal;overflow-wrap:anywhere;vertical-align:top}@media(max-width:1100px){#radarInbox .table{min-width:980px}#radarInbox th,#radarInbox td{padding:8px 6px;font-size:12px}}';
+    document.head.appendChild(style);
+  }
+
   function init(){
+    addRadarLayoutFix();
     if(document.getElementById('jgapRadarFilters')) return true;
     var tables=document.querySelectorAll('table'),table=null;
     for(var i=0;i<tables.length;i++){var txt=(tables[i].innerText||'').toLowerCase();if(txt.indexOf('opportunity')>=0&&txt.indexOf('status')>=0){table=tables[i];break;}}
