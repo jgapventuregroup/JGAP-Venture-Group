@@ -1,0 +1,36 @@
+name: Bump Deal Radar cache version
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'radar-filters.js'
+      - '.github/workflows/radar-cache-bump.yml'
+permissions:
+  contents: write
+jobs:
+  bump:
+    if: "!contains(github.event.head_commit.message, 'Bump Deal Radar cache version')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bump only the Radar asset version
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = './radar-filters.js?v=20261003-2'
+          new = './radar-filters.js?v=20261004-3'
+          if old not in s:
+              raise SystemExit('Expected current Deal Radar asset reference was not found')
+          p.write_text(s.replace(old, new), encoding='utf-8')
+          PY
+          grep -F './radar-filters.js?v=20261004-3' index.html
+          git diff --check
+      - name: Commit cache bump
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Bump Deal Radar cache version'
+          git push
