@@ -1,5 +1,5 @@
 (function(){
-  function loadHotfix(){if(window.__jgapDealRadarHotfixLoader)return;window.__jgapDealRadarHotfixLoader=true;var s=document.createElement('script');s.src='./deal-radar-hotfix.js?v=20261004-3';s.async=false;document.head.appendChild(s);}
+  function loadHotfix(){if(window.__jgapDealRadarHotfixLoader)return;window.__jgapDealRadarHotfixLoader=true;var s=document.createElement('script');s.src='./deal-radar-hotfix.js?v=20261004-4';s.async=false;document.head.appendChild(s);}
   loadHotfix();
   function loadPropertyPassport(){if(window.__jgapPropertyPassportLoader)return;window.__jgapPropertyPassportLoader=true;var s=document.createElement('script');s.src='./property-passport.js?v=20261004-1';s.async=false;document.head.appendChild(s);}
   loadPropertyPassport();
@@ -14,15 +14,21 @@
   window.restoreDistressLead=async function(id){var res=await sb.from('distress_opportunities').update({status:'new',last_seen_at:new Date().toISOString()}).eq('id',id);if(res.error){alert('Could not restore property: '+res.error.message);return;}await refreshDistressRows();}
   window.deleteDistressLead=async function(id){var r=(window.__jgapDistressRows||[]).find(x=>x.id===id);if(!r)return;if(!confirm('Permanently delete '+(r.name||r.address||'this property')+' from Distress Radar?\n\nThis cannot be undone.'))return;var res=await sb.from('distress_opportunities').delete().eq('id',id);if(res.error){alert('Could not delete property: '+res.error.message);return;}await refreshDistressRows();}
   window.loadJGAPDistressRadar=loadDistressRadar;
-  // Keep checking for the Radar view for the entire session. The app builds the
-  // Radar DOM dynamically, and a user may refresh the page and not open Radar
-  // until much later. The previous 20-second watchdog could simply expire.
-  if(!window.__jgapDistressRadarWatch){
-    window.__jgapDistressRadarWatch=true;
-    setInterval(function(){
-      var radar=document.getElementById('radarInbox');
-      if(radar && !document.getElementById('jgapDistressRadar')) loadDistressRadar();
-    },750);
+  // Mount the distress workspace from the actual Deal Radar renderer instead of
+  // relying on timing/DOM visibility. The renderer is defined later in index.html,
+  // so wait for it and wrap it once; after every render completes, mount Distress Radar.
+  function hookRadarRenderer(){
+    if(window.__jgapDistressRadarRendererHooked || typeof window.renderDealRadarPage!=='function')return;
+    window.__jgapDistressRadarRendererHooked=true;
+    var original=window.renderDealRadarPage;
+    window.renderDealRadarPage=async function(){
+      var result=await original.apply(this,arguments);
+      await new Promise(function(resolve){setTimeout(resolve,0);});
+      try{await loadDistressRadar();}catch(e){console.error('JGAP Distress Radar mount failed:',e);}
+      return result;
+    };
   }
-  setTimeout(function(){var radar=document.getElementById('radarInbox');if(radar&&!document.getElementById('jgapDistressRadar'))loadDistressRadar();},100);
+  var hookTries=0;var hookTimer=setInterval(function(){hookRadarRenderer();if(window.__jgapDistressRadarRendererHooked||++hookTries>120)clearInterval(hookTimer);},100);
+  // Also recover if the Radar renderer is already present before this file finishes.
+  hookRadarRenderer();
 })();
