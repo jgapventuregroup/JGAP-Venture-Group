@@ -1,4 +1,6 @@
 (function(){
+  function loadHotfix(){if(window.__jgapDealRadarHotfixLoader)return;window.__jgapDealRadarHotfixLoader=true;var s=document.createElement('script');s.src='./deal-radar-hotfix.js?v=20261004-2';s.async=false;document.head.appendChild(s);}
+  loadHotfix();
   function loadPropertyPassport(){if(window.__jgapPropertyPassportLoader)return;window.__jgapPropertyPassportLoader=true;var s=document.createElement('script');s.src='./property-passport.js?v=20261004-1';s.async=false;document.head.appendChild(s);}
   loadPropertyPassport();
   function cleanTitle(v){return String(v||'').trim().replace(/_/g,' ').replace(/^\s*[>:-]\s*/,'').trim();}
