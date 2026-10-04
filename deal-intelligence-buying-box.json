@@ -1,0 +1,13 @@
+{
+  "mode": "test",
+  "markets": ["Bristol, TN", "Kingsport, TN", "Johnson City, TN", "Elizabethton, TN", "Southwest Virginia"],
+  "property_types": ["duplex", "triplex", "fourplex", "multifamily"],
+  "min_units": 2,
+  "max_units": 20,
+  "min_cap_rate": 8,
+  "min_dscr": 1.2,
+  "min_monthly_cash_flow": 500,
+  "missing_metric_policy": "do_not_guess",
+  "new_or_material_change_only": true,
+  "outbound_notifications": false
+}
