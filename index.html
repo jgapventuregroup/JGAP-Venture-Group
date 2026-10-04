@@ -50,7 +50,7 @@ nav .flipNav{font-weight:800;border:2px solid #111;background:#fff;}
 <script defer src="./money-making-system.js"></script><script defer src="./lenders.js?v=20260928-1"></script>
 <script defer src="./vendors.js"></script>
 <script defer src="./laundromats.js"></script><script defer src="./learning-book.js?v=20260930-1125"></script>
-<script defer src="./learning-book-runtime.js?v=20261001-1"></script><script defer src="./radar-filters.js?v=20261004-2"></script>
+<script defer src="./learning-book-runtime.js?v=20261001-1"></script><script defer src="./radar-filters.js?v=20261003-2"></script>
 </head>
 <body><script>
 function openJGAPLearningBook(){
@@ -2259,7 +2259,6 @@ async function renderDealRadarPage(){
   window.__jgapRadarRows=data||[];
   updateRadarStats(window.__jgapRadarRows);
   filterRadarInbox();
-  if(typeof window.loadJGAPDistressRadar==='function'){ await window.loadJGAPDistressRadar(); }
   const last=document.getElementById('radarStatus');
   if(last)last.textContent='Radar refreshed '+new Date().toLocaleString()+'.';
 }
