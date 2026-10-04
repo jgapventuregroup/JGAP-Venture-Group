@@ -13,5 +13,7 @@ async function ppMaint(id){const c=await C(),title=prompt('Maintenance item:');i
 async function ppImp(id){const c=await C(),title=prompt('Improvement:');if(!title?.trim())return;const cost=prompt('Cost:',''),{error}=await sb.from('property_improvements').insert({company_id:c,property_id:id,title:title.trim(),improvement_date:prompt('Date:',new Date().toISOString().slice(0,10)),description:prompt('Description:','')||null,cost:cost===''?null:+cost,category:prompt('Category:','')||null});if(error)alert(error.message);else ppOpen(id)}
 function ppPrint(){window.print()}
 window.renderPropertyPassportPage=list;window.openPropertyPassport=ppOpen;window.openPropertyPassportNew=ppNew;window.savePropertyPassport=ppSave;window.addPropertyAsset=ppAsset;window.addPropertyMaintenance=ppMaint;window.addPropertyImprovement=ppImp;window.printPropertyPassport=ppPrint;
+// The rendered HTML uses short inline handlers. Expose those exact names globally.
+window.ppOpen=ppOpen;window.ppNew=ppNew;window.ppSave=ppSave;window.ppAsset=ppAsset;window.ppMaint=ppMaint;window.ppImp=ppImp;window.ppPrint=ppPrint;
 const install=()=>{if(typeof window.renderPropertiesPage==='function'&&!window.__ppInstalled){window.renderPropertiesPage=list;window.__ppInstalled=true;return true}return !!window.__ppInstalled};if(!install()){let n=0,t=setInterval(()=>{if(install()||++n>40)clearInterval(t)},250)}
 })();
