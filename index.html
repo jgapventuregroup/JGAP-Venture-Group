@@ -897,7 +897,7 @@ async function saveProperty(id) {
 async function renderDealsPage(){
  const main=document.querySelector("main"); if(!main)return;
  main.innerHTML=`<div class="pageHead"><div><h1>Deal Pipeline</h1><p class="muted">Track opportunities from first lead through closing.</p></div><div><button class="secondary" onclick="render()">← Dashboard</button> <button class="primary" onclick="renderDealAnalyzer()">+ New Deal</button></div></div><div id="dealsMsg" class="muted">Loading deals...</div><div id="dealPipeline" class="cards"></div>`;
- const {data:deals,error}=await sb.from("deals").select("*").order("created_at",{ascending:false});
+ const {data:deals,error}=await sb.rpc("list_current_user_deals");
  const msg=document.getElementById("dealsMsg"), grid=document.getElementById("dealPipeline");
  if(error){msg.innerHTML='<span class="error">'+escapeHtml(error.message)+'</span>';return;}
  const stages=["lead","analyzing","due_diligence","offer","under_contract","closed","passed"];
