@@ -1,119 +1,43 @@
 name: Update Radar UI
-
 on:
   push:
     branches: [main]
-
 permissions:
   contents: write
-
 jobs:
   update-radar-ui:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Patch Radar UI
-        shell: python
+        with:
+          fetch-depth: 0
+      - name: Restore known-good JGAP application and CELOC
+        shell: bash
         run: |
+          set -e
+          git show 3a1b3e1b47ca8cfe8d08974a9598dabebbbc9d32:index.html > index.html
+          git show 36fb914faf73c475d34401e3180968eb0f7b78e4:radar-filters.js > radar-filters.js
+          python - <<'PY'
           from pathlib import Path
-
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-          original = s
-
-          # Keep the Radar query aligned with the current triage fields.
-          if 'jgap_fit_score' not in s and 'opportunity_score' in s:
-              s = s.replace('opportunity_score', 'opportunity_score,jgap_fit_score,jgap_fit_reason,review_priority,recommended_action,missing_data,target_fit,target_fit_reason', 1)
-
-          # Inject a runtime filter bar. The Radar table is rendered dynamically and
-          # may use a header row without <thead>, so the script must support both forms.
-          marker = '</body>'
-          if 'id="jgapRadarFilters"' not in s and marker in s:
-              inject = r'''<script>
-(function(){
-  function initJGAPRadarFilters(){
-    if(document.getElementById('jgapRadarFilters')) return true;
-    var text=(document.body.innerText||'').toLowerCase();
-    if(text.indexOf('deal radar')===-1) return false;
-    var tables=document.querySelectorAll('table');
-    if(!tables.length) return false;
-    var table=null;
-    for(var i=0;i<tables.length;i++){
-      var h=(tables[i].innerText||'').toLowerCase();
-      if(h.indexOf('opportunity')!==-1 && h.indexOf('status')!==-1){table=tables[i];break;}
-    }
-    if(!table) return false;
-
-    var head=table.querySelector('thead tr') || table.querySelector('tr');
-    if(!head) return false;
-    var headers=[].slice.call(head.children).map(function(x){return (x.innerText||'').trim().toLowerCase();});
-    var locIdx=headers.indexOf('location');
-    var priorityIdx=headers.indexOf('priority');
-    var targetIdx=headers.indexOf('target fit');
-    var rows=table.querySelectorAll('tbody tr');
-    if(!rows.length){
-      var allRows=table.querySelectorAll('tr');
-      rows=[].slice.call(allRows).slice(1);
-    }
-
-    function addTargetCells(){
-      if(targetIdx===-1){
-        var th=document.createElement('th'); th.textContent='Target Fit'; head.appendChild(th); targetIdx=head.children.length-1;
-        rows.forEach(function(row){
-          var loc=locIdx>=0&&row.children[locIdx]?(row.children[locIdx].innerText||'').toLowerCase():'';
-          var fit=(loc.indexOf('bristol')>=0||loc.indexOf('kingsport')>=0||loc.indexOf('johnson city')>=0)?'target':'outside_target';
-          var td=document.createElement('td'); td.textContent=fit; row.appendChild(td);
-        });
-      }
-    }
-    addTargetCells();
-
-    var host=document.querySelector('.pageHead') || table.closest('.panel') || document.querySelector('main') || document.body;
-    var bar=document.createElement('div');
-    bar.id='jgapRadarFilters';
-    bar.className='toolbar';
-    bar.style.cssText='margin:0 0 14px;padding:10px 12px;background:#fff;border:1px solid #e2e7ef;border-radius:10px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;';
-    bar.innerHTML='<label style="font-size:13px;font-weight:700">Target <select id="jgapTargetFilter" style="width:auto;margin:0 0 0 6px"><option value="all">All</option><option value="target">Target</option><option value="outside_target">Outside Target</option></select></label><label style="font-size:13px;font-weight:700">Priority <select id="jgapPriorityFilter" style="width:auto;margin:0 0 0 6px"><option value="all">All</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>';
-    if(host.parentNode) host.parentNode.insertBefore(bar,host.nextSibling); else document.body.appendChild(bar);
-
-    function apply(){
-      var tf=document.getElementById('jgapTargetFilter').value;
-      var pf=document.getElementById('jgapPriorityFilter').value;
-      var currentRows=table.querySelectorAll('tbody tr');
-      if(!currentRows.length){var ar=table.querySelectorAll('tr');currentRows=[].slice.call(ar).slice(1);}
-      currentRows.forEach(function(row){
-        var c=row.children;
-        var loc=locIdx>=0&&c[locIdx]?(c[locIdx].innerText||'').toLowerCase():'';
-        var fit=(loc.indexOf('bristol')>=0||loc.indexOf('kingsport')>=0||loc.indexOf('johnson city')>=0)?'target':'outside_target';
-        var pri=priorityIdx>=0&&c[priorityIdx]?(c[priorityIdx].innerText||'').toLowerCase():'';
-        row.style.display=(tf!=='all'&&fit!==tf)||(pf!=='all'&&pri.indexOf(pf)===-1)?'none':'';
-      });
-    }
-    document.getElementById('jgapTargetFilter').onchange=apply;
-    document.getElementById('jgapPriorityFilter').onchange=apply;
-    return true;
-  }
-  var tries=0, timer=setInterval(function(){if(initJGAPRadarFilters()||++tries>40)clearInterval(timer);},500);
-})();
-</script>'''
-              s=s.replace(marker,inject+'\n'+marker,1)
-
-          if s != original:
-              p.write_text(s, encoding='utf-8')
-              print('Radar filter UI updated.')
-          else:
-              print('No Radar UI patch needed.')
-
-      - name: Commit Radar UI patch
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old='./radar-filters.js?v=20261004-3'
+          new='./radar-filters.js?v=20261005-1'
+          if old not in s:
+              raise SystemExit('Stable index did not contain the expected Radar asset reference; refusing unsafe edit')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git diff --check
+      - name: Commit restored application
         run: |
-          if git diff --quiet -- index.html; then
-            echo "No changes to commit."
+          if git diff --quiet -- index.html radar-filters.js; then
+            echo "JGAP application is already restored."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          git commit -m "Fix Deal Radar target and priority filters"
+          git add index.html radar-filters.js
+          git commit -m "Restore full JGAP app and enable CELOC safely"
           git push
