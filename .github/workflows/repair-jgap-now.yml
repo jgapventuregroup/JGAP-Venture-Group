@@ -1,4 +1,4 @@
-name: Repair startup from verified baseline
+name: Restore exact known-good JGAP app
 on:
   push:
     branches: [main]
@@ -8,49 +8,38 @@ permissions:
   contents: write
 jobs:
   repair:
-    if: "!contains(github.event.head_commit.message, 'Repair startup from verified baseline')"
+    if: "!contains(github.event.head_commit.message, 'Restore exact known-good JGAP app')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Restore verified application and install CELOC safely
+      - name: Restore exact verified baseline
         shell: bash
         run: |
           set -euo pipefail
           git show 3a1b3e1b47ca8cfe8d08974a9598dabebbbc9d32:index.html > index.html
-          git show dc00e9c4e7d4b819f5dfb50b377d9f68184b2d47:radar-filters.js > radar-filters.js
+          git show 36fb914faf73c475d34401e3180968eb0f7b78e4:radar-filters.js > radar-filters.js
           test -s index.html
           test -s radar-filters.js
-          test -s celoc-analyzer.js
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-          tag='<script defer src="./celoc-analyzer.js?v=20261005-1"></script>'
-          # Start from the verified baseline and remove any accidental CELOC loader.
-          s=s.replace(tag,'')
-          # Insert exactly once immediately after the real opening <head> tag.
-          marker='<head>'
-          if s.count(marker)!=1:
-              raise SystemExit('Unsafe: expected exactly one real <head> tag')
-          s=s.replace(marker,marker+'\n'+tag,1)
-          p.write_text(s,encoding='utf-8')
-          if s.count(tag)!=1:
-              raise SystemExit('Unsafe: CELOC loader count is not exactly one')
-          # The loader must not occur inside any inline script block.
-          import re
-          for i,b in enumerate(re.findall(r'<script(?![^>]*\\bsrc=)[^>]*>([\\s\\S]*?)</script>',s,re.I)):
-              if tag in b:
-                  raise SystemExit(f'Unsafe: CELOC loader found inside inline script block {i}')
-          PY
+      - name: Verify baseline has no CELOC injection
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -n 'celoc-analyzer\|jgapCeloc' index.html radar-filters.js; then
+            echo 'Unsafe: CELOC code remains in the verified baseline files.'
+            exit 1
+          fi
+      - name: Syntax-check application JavaScript
+        shell: bash
+        run: |
+          set -euo pipefail
           node --check radar-filters.js
-          node --check celoc-analyzer.js
           python - <<'PY'
           import re, subprocess, tempfile
           from pathlib import Path
           s=Path('index.html').read_text(encoding='utf-8')
-          blocks=re.findall(r'<script(?![^>]*\\bsrc=)[^>]*>([\\s\\S]*?)</script>',s,re.I)
+          blocks=re.findall(r'<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)</script>',s,re.I)
           for i,b in enumerate(blocks):
               if not b.strip():
                   continue
@@ -59,11 +48,11 @@ jobs:
                   name=f.name
               r=subprocess.run(['node','--check',name],capture_output=True,text=True)
               if r.returncode:
-                  raise SystemExit(f'Inline script {i} failed syntax check: {r.stderr}')
+                  raise SystemExit(f'Inline script {i} failed syntax check:\n{r.stderr}')
           print(f'Validated {len(blocks)} inline script blocks')
           PY
           git diff --check
-      - name: Commit only after validation passes
+      - name: Commit verified baseline only
         shell: bash
         run: |
           set -euo pipefail
@@ -71,8 +60,8 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html radar-filters.js
           if git diff --cached --quiet; then
-            echo 'No repair changes needed.'
+            echo 'Baseline already restored.'
             exit 0
           fi
-          git commit -m 'Repair startup from verified baseline'
+          git commit -m 'Restore exact known-good JGAP app'
           git push
