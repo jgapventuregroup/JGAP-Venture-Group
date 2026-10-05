@@ -5,9 +5,64 @@
 <meta name="theme-color" content="#0b1220">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon-512.png" type="image/png">
+<link rel="apple-touch-icon" href="./icon-512.png">
+
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>JGAP Venture Group — Secure App</title>
-<script defer src="./celoc-analyzer.js?v=20261005-1"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#f4f7fb;color:#172033}
+header{height:70px;background:#132238;color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between}
+.brand{font-weight:800}.sub{font-size:12px;opacity:.7;margin-top:3px}.layout{display:flex;min-height:calc(100vh - 70px)}
+nav{width:220px;background:#fff;border-right:1px solid #e2e7ef;padding:18px 12px}nav button{display:block;width:100%;border:0;background:none;text-align:left;padding:11px;border-radius:9px;margin:3px 0;font-weight:700;color:#344054}nav button:hover{background:#eef4ff;color:#1557a6}
+main{flex:1;padding:28px;max-width:1450px}.hero{display:flex;justify-content:space-between;align-items:end;margin-bottom:22px}h1{margin:0;font-size:30px}.muted{color:#667085}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.card,.panel{background:#fff;border:1px solid #e2e7ef;border-radius:14px;padding:20px;box-shadow:0 2px 8px #1720330a}.metric{font-size:28px;font-weight:800;margin:8px 0}
+button{border:0;border-radius:9px;padding:10px 14px;font-weight:750;cursor:pointer}.primary{background:#1f6feb;color:#fff}.secondary{background:#e9eef6;color:#172033}
+input{width:100%;padding:12px;border:1px solid #ccd5e2;border-radius:9px;margin:6px 0 12px;font-size:15px}.auth{max-width:420px;margin:10vh auto}.auth .panel{padding:28px}.error{color:#b42318;margin:10px 0}.success{color:#027a48;margin:10px 0}
+.pill{display:inline-block;background:#eef4ff;color:#1557a6;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:700;margin:3px}
+@media(max-width:900px){.grid{grid-template-columns:1fr 1fr}}@media(max-width:650px){.layout{display:block}nav{width:auto}.grid{grid-template-columns:1fr 1fr}}
+
+.pageHead{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:22px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.propertyTop{display:flex;justify-content:space-between;gap:20px}
+.propertyTop h2{margin:0 0 6px}.detailGrid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:16px;align-items:start;width:100%;max-width:100%;min-width:0;box-sizing:border-box;overflow:visible}.analyzerRightColumn{display:flex;flex-direction:column;gap:6px;min-width:0}.analyzerRightColumn>.panel{min-width:0;max-width:100%;box-sizing:border-box}.formGrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;min-width:0}.formGrid label{font-size:13px;font-weight:700;color:#475467}.formGrid input{margin-top:5px}.sectionTitle{font-size:18px;font-weight:800;margin:0 0 12px}.back{margin-bottom:12px}@media(max-width:900px){.detailGrid{grid-template-columns:1fr}}@media(max-width:650px){.formGrid{grid-template-columns:1fr}}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}
+.stats>div{border:1px solid #e3e8ef;border-radius:12px;padding:14px;background:#fbfcfe}
+#financingComparisonPanel ~ .panel{margin-top:6px!important}
+#financingComparison{width:100%;min-width:0;max-width:100%;overflow-x:auto;overflow-y:auto}
+#financingComparison table{width:100%;min-width:0;table-layout:fixed}
+#financingComparison th,#financingComparison td{padding:7px 5px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#financingComparison thead th{position:sticky;top:0;background:#fff;z-index:2;box-shadow:0 1px 0 #e6eaf0}
+.stats span{display:block;color:#68788f;font-size:13px;margin-bottom:5px}
+.stats b{font-size:20px}
+@media(max-width:800px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.table{width:100%;border-collapse:collapse}.table th,.table td{padding:11px 9px;border-bottom:1px solid #e6eaf0;text-align:left;font-size:14px}.table th{color:#667085;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+select,textarea{width:100%;padding:11px;border:1px solid #ccd5e2;border-radius:9px;margin:6px 0 12px;font:inherit;background:#fff}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.toolbar input{max-width:260px;margin:0}
+
+.reportHeader{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.reportActions{display:flex;gap:8px;flex-wrap:wrap}.reportSheet{background:#fff;border:1px solid #e2e7ef;border-radius:14px;padding:28px;margin-top:16px}.reportKpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.reportKpis .card{box-shadow:none;background:#fbfcfe}@media(max-width:900px){.reportKpis{grid-template-columns:1fr 1fr}}@media print{nav,header,.reportActions,.pageHead{display:none!important}main{max-width:none;padding:0}.reportSheet{border:0;box-shadow:none;padding:0}.reportKpis{grid-template-columns:repeat(4,1fr)}}
+nav .flipNav{font-weight:800;border:2px solid #111;background:#fff;}
+..pipelineStage{padding:0;overflow:hidden}.pipelineStageToggle{width:100%;background:transparent;border:0;border-radius:0;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;text-align:left;font-size:18px}.pipelineStageToggle:hover{background:#f7f9fc}.pipelineStageIcon{font-size:34px;font-weight:800;line-height:1;min-width:42px;height:42px;display:flex;align-items:center;justify-content:center;border:2px solid currentColor;border-radius:8px}.pipelineStageContent{padding:0 20px 12px}</style><style>.offerPackageHeader{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap}.offerActions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.offerPackageGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}.offerPackageGrid>div{border:1px solid #d9e2ee;border-radius:10px;padding:12px;background:#fff;min-width:0}.offerPackageGrid strong{display:block;margin-top:5px;font-size:18px;line-height:1.25;overflow-wrap:anywhere}@media(max-width:900px){.offerPackageGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.offerPackageGrid{grid-template-columns:1fr}.offerActions{width:100%;justify-content:flex-start}}</style><script defer src="./lead-generation.js?v=20260927-2010"></script><script defer src="./market-map.js?v=20260928-0035"></script><script defer src="./alerts.js?v=20260928-0024"></script>
+<script defer src="./money-making-system.js"></script><script defer src="./lenders.js?v=20260928-1"></script>
+<script defer src="./vendors.js"></script>
+<script defer src="./laundromats.js"></script><script defer src="./learning-book.js?v=20260930-1125"></script>
+<script defer src="./learning-book-runtime.js?v=20261001-1"></script>
 </head>
-<body><div id="app"></div></body>
+<body>
+<div id="app"></div>
+<script>
+function openJGAPLearningBook(){var app=document.getElementById('app');if(app)app.setAttribute('data-learning-book-opening','1');var existing=document.querySelector('script[data-jgap-book-runtime-loader]');if(existing)existing.remove();var script=document.createElement('script');script.src='./learning-book-runtime.js?v=20261001-2&reload='+Date.now();script.async=false;script.setAttribute('data-jgap-book-runtime-loader','1');script.onload=function(){if(typeof window.renderLearningBookPage==='function')window.renderLearningBookPage();else if(app)app.innerHTML='<div class="panel"><h2>Learning Book could not start</h2><p class="error">The Learning Book runtime loaded, but did not register its page function.</p></div>';};script.onerror=function(){if(app)app.innerHTML='<div class="panel"><h2>Learning Book could not load</h2><p class="error">The Learning Book runtime could not be loaded. Please refresh the JGAP app.</p></div>';};document.head.appendChild(script)}
+function openJGAPAlerts(){var app=document.getElementById('app');if(app)app.setAttribute('data-alerts-opening','1');var existing=document.querySelector('script[data-jgap-alerts-loader]');if(existing)existing.remove();var script=document.createElement('script');script.src='./alerts.js?v=20260928-0024&reload='+Date.now();script.async=false;script.setAttribute('data-jgap-alerts-loader','1');script.onload=function(){if(typeof window.renderAlertsPage==='function')window.renderAlertsPage();else if(app)app.innerHTML='<div class="panel"><h2>Alerts could not start</h2><p class="error">The Alerts script loaded, but did not register its page function.</p></div>';};script.onerror=function(){if(app)app.innerHTML='<div class="panel"><h2>Alerts could not load</h2><p class="error">The Alerts file could not be loaded. Please refresh the JGAP app.</p></div>';};document.head.appendChild(script)}
+function openJGAPMarketMap(){var app=document.getElementById('app');if(app)app.setAttribute('data-market-map-opening','1');if(typeof window.renderMarketMapPage==='function'){window.renderMarketMapPage();return}var existing=document.querySelector('script[data-jgap-market-map-loader]');if(existing)return;var script=document.createElement('script');script.src='./market-map.js?v=20260928-0035&reload='+Date.now();script.async=false;script.setAttribute('data-jgap-market-map-loader','1');script.onload=function(){if(typeof window.renderMarketMapPage==='function')window.renderMarketMapPage();else if(app)app.innerHTML='<div class="panel"><h2>Market Map could not start</h2><p class="error">The Market Map script loaded, but did not register its page function.</p></div>';};script.onerror=function(){if(app)app.innerHTML='<div class="panel"><h2>Market Map could not load</h2><p class="error">The Market Map file could not be loaded. Please refresh the JGAP app.</p></div>';};document.head.appendChild(script)}
+</script>
+<script>
+(function(){var started=Date.now(),lastError='';window.addEventListener('error',function(e){lastError=(e.error&&e.error.message)||e.message||'Unknown JavaScript error'});window.addEventListener('unhandledrejection',function(e){lastError=(e.reason&&e.reason.message)||String(e.reason||'Promise rejected')});setTimeout(function(){var app=document.getElementById('app');if(app&&!app.children.length){app.innerHTML='<div class="auth"><div class="panel"><h1>JGAP Venture Group</h1><p class="error">The app did not finish starting.</p><p style="font-size:13px">Startup error: '+String(lastError||'No startup error was reported. The app may be loading an outdated deployment.').replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]})+'</p></div></div>'}},7000)})();
+</script>
+<script>
+/* Known-good app runtime continues below exactly as preserved in the 2026-10-01 rollback snapshot. */
+</script>
+</body>
 </html>
