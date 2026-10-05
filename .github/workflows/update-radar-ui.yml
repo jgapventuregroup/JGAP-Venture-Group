@@ -17,7 +17,7 @@ jobs:
         run: |
           set -e
           git show 3a1b3e1b47ca8cfe8d08974a9598dabebbbc9d32:index.html > index.html
-          git show 36fb914faf73c475d34401e3180968eb0f7b78e4:radar-filters.js > radar-filters.js
+          git show dc00e9c4e7d4b819f5dfb50b377d9f68184b2d47:radar-filters.js > radar-filters.js
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html')
