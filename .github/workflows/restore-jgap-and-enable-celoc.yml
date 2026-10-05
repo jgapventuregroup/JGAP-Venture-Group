@@ -1,0 +1,39 @@
+name: Restore JGAP and enable CELOC
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/restore-jgap-and-enable-celoc.yml'
+permissions:
+  contents: write
+jobs:
+  restore:
+    if: "!contains(github.event.head_commit.message, 'Restore full JGAP app and enable CELOC safely')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore known-good application files
+        run: |
+          git show 3a1b3e1b47ca8cfe8d08974a9598dabebbbc9d32:index.html > index.html
+          git show 36fb914faf73c475d34401e3180968eb0f7b78e4:radar-filters.js > radar-filters.js
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old='./radar-filters.js?v=20261004-3'
+          new='./radar-filters.js?v=20261005-1'
+          if old not in s:
+              raise SystemExit('Expected stable Radar asset reference was not found; refusing unsafe edit')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git diff --check
+      - name: Commit restored application
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html radar-filters.js
+          git commit -m 'Restore full JGAP app and enable CELOC safely'
+          git push
