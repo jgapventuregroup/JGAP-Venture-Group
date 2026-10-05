@@ -1,55 +1,54 @@
-name: Restore JGAP stable app
+name: Install isolated CELOC module
 on:
   workflow_dispatch:
   push:
     branches: [main]
+    paths:
+      - '.github/workflows/update-radar-ui.yml'
 permissions:
   contents: write
 jobs:
-  restore:
-    if: "!contains(github.event.head_commit.message, 'Restore JGAP stable app')"
+  install:
+    if: "!contains(github.event.head_commit.message, 'Install isolated CELOC module')"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-      - name: Restore and validate verified application baseline
+          fetch-depth: 1
+      - name: Validate and install isolated CELOC loader
         shell: bash
         run: |
           set -euo pipefail
-          git show 3a1b3e1b47ca8cfe8d08974a9598dabebbbc9d32:index.html > index.html
-          git show dc00e9c4e7d4b819f5dfb50b377d9f68184b2d47:radar-filters.js > radar-filters.js
+          test -s index.html
+          test -s radar-filters.js
+          test -s celoc-analyzer.js
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          # Remove only trailing whitespace; preserve all application content.
-          lines=s.splitlines()
-          s='\n'.join(line.rstrip() for line in lines)+'\n'
           tag='<script defer src="./celoc-analyzer.js?v=20261005-1"></script>'
           if tag not in s:
-              marker='</body>'
+              marker='</head>'
               if marker not in s:
-                  raise SystemExit('Verified baseline index.html has no </body>; refusing unsafe edit')
+                  raise SystemExit('index.html has no </head>; refusing unsafe edit')
               s=s.replace(marker, tag+'\n'+marker, 1)
-          p.write_text(s,encoding='utf-8')
+              p.write_text(s,encoding='utf-8')
+              print('Installed isolated CELOC loader')
+          else:
+              print('CELOC loader already installed')
           PY
-          test -s index.html
-          test -s radar-filters.js
-          test -s celoc-analyzer.js
           grep -q 'celoc-analyzer.js?v=20261005-1' index.html
-          grep -q '<script' index.html
           git diff --check
-      - name: Commit restored application
+      - name: Commit isolated CELOC loader
         shell: bash
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html radar-filters.js
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
           if git diff --cached --quiet; then
-            echo "No application changes needed."
+            echo 'CELOC loader already present; no commit needed.'
             exit 0
           fi
-          git commit -m "Restore JGAP stable app"
+          git commit -m 'Install isolated CELOC module'
           git push
