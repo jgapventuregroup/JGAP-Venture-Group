@@ -1,0 +1,42 @@
+name: Verified JGAP repair now
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/repair-jgap-now.yml'
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: "!contains(github.event.head_commit.message, 'Restore verified app and install isolated CELOC')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore and install
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 3a1b3e1b47ca8cfe8d08974a9598dabebbbc9d32:index.html > index.html
+          git show dc00e9c4e7d4b819f5dfb50b377d9f68184b2d47:radar-filters.js > radar-filters.js
+          test -s celoc-analyzer.js
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          tag='<script defer src="./celoc-analyzer.js?v=20261005-1"></script>'
+          s=s.replace(tag,'')
+          if s.count('</head>')!=1: raise SystemExit('unsafe: expected one head close')
+          s=s.replace('</head>',tag+'\n</head>',1)
+          p.write_text(s,encoding='utf-8')
+          if s.count(tag)!=1: raise SystemExit('unsafe: CELOC loader count')
+          PY
+          node --check radar-filters.js
+          node --check celoc-analyzer.js
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html radar-filters.js
+          git commit -m 'Restore verified app and install isolated CELOC'
+          git push
