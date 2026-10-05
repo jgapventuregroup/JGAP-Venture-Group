@@ -1,4 +1,4 @@
-name: Restore verified JGAP and install isolated CELOC
+name: Repair JGAP using exact HTML head boundary
 on:
   workflow_dispatch:
   push:
@@ -9,13 +9,14 @@ permissions:
   contents: write
 jobs:
   repair:
-    if: "!contains(github.event.head_commit.message, 'Restore verified JGAP and install isolated CELOC')"
+    if: "!contains(github.event.head_commit.message, 'Repair JGAP using exact HTML head boundary')"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Restore known-good application files
+      - name: Restore verified baseline
         shell: bash
         run: |
           set -euo pipefail
@@ -24,7 +25,7 @@ jobs:
           test -s index.html
           test -s radar-filters.js
           test -s celoc-analyzer.js
-      - name: Install CELOC only in document head
+      - name: Install CELOC at the real head/body boundary
         shell: bash
         run: |
           set -euo pipefail
@@ -34,15 +35,17 @@ jobs:
           s=p.read_text(encoding='utf-8')
           tag='<script defer src="./celoc-analyzer.js?v=20261005-1"></script>'
           s=s.replace(tag,'')
-          marker='</head>'
+          marker='</head>\n<body>'
+          if marker not in s:
+              raise SystemExit('Verified baseline did not contain the exact </head>\\n<body> boundary; refusing unsafe edit')
           if s.count(marker)!=1:
-              raise SystemExit('Expected exactly one </head>; refusing unsafe edit')
-          s=s.replace(marker,tag+'\n'+marker,1)
+              raise SystemExit('Expected exactly one HTML head/body boundary')
+          s=s.replace(marker,tag+'\n</head>\n<body>',1)
           p.write_text(s,encoding='utf-8')
-          if p.read_text(encoding='utf-8').count(tag)!=1:
+          if s.count(tag)!=1:
               raise SystemExit('CELOC loader count is not exactly one')
           PY
-      - name: Validate files and JavaScript syntax
+      - name: Validate the complete repaired application
         shell: bash
         run: |
           set -euo pipefail
@@ -50,19 +53,21 @@ jobs:
           test -s radar-filters.js
           test -s celoc-analyzer.js
           test "$(grep -o 'celoc-analyzer.js?v=20261005-1' index.html | wc -l)" -eq 1
-          grep -q '</head>' index.html
+          grep -q '</head>\n<body>' index.html
           node --check radar-filters.js
           node --check celoc-analyzer.js
           python - <<'PY'
           import re, subprocess, tempfile
           from pathlib import Path
           s=Path('index.html').read_text(encoding='utf-8')
-          blocks=re.findall(r'<script(?![^>]*src=)[^>]*>([\s\S]*?)</script>',s,re.I)
+          # Validate inline scripts only; external scripts are checked separately.
+          blocks=re.findall(r'<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)</script>',s,re.I)
           for i,b in enumerate(blocks):
               if not b.strip(): continue
-              f=tempfile.NamedTemporaryFile('w',suffix='.js',delete=False,encoding='utf-8')
-              f.write(b); f.close()
-              r=subprocess.run(['node','--check',f.name],capture_output=True,text=True)
+              with tempfile.NamedTemporaryFile('w',suffix='.js',delete=False,encoding='utf-8') as f:
+                  f.write(b)
+                  name=f.name
+              r=subprocess.run(['node','--check',name],capture_output=True,text=True)
               if r.returncode:
                   raise SystemExit(f'Inline script {i} failed syntax check: {r.stderr}')
           print(f'Validated {len(blocks)} inline script blocks')
@@ -79,5 +84,5 @@ jobs:
             echo 'No repair changes needed.'
             exit 0
           fi
-          git commit -m 'Restore verified app and install isolated CELOC'
+          git commit -m 'Repair JGAP using exact HTML head boundary'
           git push
