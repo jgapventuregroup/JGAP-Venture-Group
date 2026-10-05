@@ -17,15 +17,20 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          old = './radar-filters.js?v=20261003-2'
-          new = './radar-filters.js?v=20261004-3'
-          if old not in s:
-              raise SystemExit('Expected current Deal Radar asset reference was not found')
-          p.write_text(s.replace(old, new), encoding='utf-8')
+          pattern = r'(\./radar-filters\.js\?v=)(\d{8})-(\d+)'
+          m = re.search(pattern, s)
+          if not m:
+              raise SystemExit('Deal Radar asset reference was not found in index.html')
+          old = m.group(0)
+          version = int(m.group(3)) + 1
+          new = f'{m.group(1)}{m.group(2)}-{version}'
+          p.write_text(s[:m.start()] + new + s[m.end():], encoding='utf-8')
+          print(f'Bumped {old} -> {new}')
           PY
-          grep -F './radar-filters.js?v=20261004-3' index.html
+          grep -oE './radar-filters.js\?v=[0-9]{8}-[0-9]+' index.html | head -1
           git diff --check
       - name: Commit cache bump
         run: |
