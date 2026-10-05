@@ -1,18 +1,20 @@
-name: Update Radar UI
+name: Restore JGAP stable app
 on:
+  workflow_dispatch:
   push:
     branches: [main]
 permissions:
   contents: write
 jobs:
-  update-radar-ui:
+  restore:
+    if: "!contains(github.event.head_commit.message, 'Restore JGAP stable app')"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Restore known-good JGAP application and CELOC
+      - name: Restore verified application baseline
         shell: bash
         run: |
           set -e
@@ -21,23 +23,32 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-          old='./radar-filters.js?v=20261004-3'
-          new='./radar-filters.js?v=20261005-1'
-          if old not in s:
-              raise SystemExit('Stable index did not contain the expected Radar asset reference; refusing unsafe edit')
-          s=s.replace(old,new,1)
+          s=p.read_text(encoding='utf-8').rstrip() + '\n'
+          tag='<script defer src="./celoc-analyzer.js?v=20261005-1"></script>'
+          if tag not in s:
+              marker='</body>'
+              if marker not in s:
+                  raise SystemExit('Verified baseline index.html has no </body>; refusing unsafe edit')
+              s=s.replace(marker, tag+'\n'+marker, 1)
           p.write_text(s,encoding='utf-8')
+          # Normalize only trailing whitespace introduced by the verified baseline.
+          lines=p.read_text(encoding='utf-8').splitlines()
+          p.write_text('\n'.join(x.rstrip() for x in lines)+'\n',encoding='utf-8')
           PY
           git diff --check
+          test -s index.html
+          test -s radar-filters.js
+          test -s celoc-analyzer.js
+          grep -q 'celoc-analyzer.js?v=20261005-1' index.html
       - name: Commit restored application
+        shell: bash
         run: |
-          if git diff --quiet -- index.html radar-filters.js; then
-            echo "JGAP application is already restored."
-            exit 0
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html radar-filters.js
-          git commit -m "Restore full JGAP app and enable CELOC safely"
+          if git diff --cached --quiet; then
+            echo "No application changes needed."
+            exit 0
+          fi
+          git commit -m "Restore JGAP stable app"
           git push
