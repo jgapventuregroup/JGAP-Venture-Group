@@ -1,4 +1,4 @@
-name: Install isolated CELOC module
+name: Repair CELOC loader placement
 on:
   workflow_dispatch:
   push:
@@ -8,47 +8,44 @@ on:
 permissions:
   contents: write
 jobs:
-  install:
-    if: "!contains(github.event.head_commit.message, 'Install isolated CELOC module')"
+  repair:
+    if: "!contains(github.event.head_commit.message, 'Repair CELOC loader placement')"
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - name: Validate and install isolated CELOC loader
+      - name: Repair CELOC placement
         shell: bash
         run: |
           set -euo pipefail
-          test -s index.html
-          test -s radar-filters.js
-          test -s celoc-analyzer.js
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
           tag='<script defer src="./celoc-analyzer.js?v=20261005-1"></script>'
-          if tag not in s:
-              marker='</head>'
-              if marker not in s:
-                  raise SystemExit('index.html has no </head>; refusing unsafe edit')
-              s=s.replace(marker, tag+'\n'+marker, 1)
-              p.write_text(s,encoding='utf-8')
-              print('Installed isolated CELOC loader')
-          else:
-              print('CELOC loader already installed')
+          # Remove every existing CELOC loader first. This prevents it from
+          # living inside a JavaScript template/string as happened previously.
+          s=s.replace(tag+'\n','').replace(tag,'')
+          marker='</head>'
+          if marker not in s:
+              raise SystemExit('No </head>; refusing unsafe repair')
+          s=s.replace(marker,tag+'\n'+marker,1)
+          p.write_text(s,encoding='utf-8')
           PY
-          grep -q 'celoc-analyzer.js?v=20261005-1' index.html
+      - name: Validate inline JavaScript
+        shell: bash
+        run: |
+          set -euo pipefail
+          node -e "const fs=require('fs'),s=fs.readFileSync('index.html','utf8'); const m=s.match(/<script(?:[^>]*)>([\\s\\S]*?)<\\/script>/gi)||[]; console.log('script blocks',m.length); for(let i=0;i<m.length;i++){const x=m[i].replace(/^<script[^>]*>|<\\/script>$/gi,''); if(x.trim()){try{new Function(x)}catch(e){console.error('Inline script',i,'failed:',e.message); process.exit(1)}}}"
+          test "$(grep -o 'celoc-analyzer.js?v=20261005-1' index.html | wc -l)" -eq 1
+          grep -q '<script defer src="./celoc-analyzer.js?v=20261005-1"></script>' index.html
           git diff --check
-      - name: Commit isolated CELOC loader
+      - name: Commit repair
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          if git diff --cached --quiet; then
-            echo 'CELOC loader already present; no commit needed.'
-            exit 0
-          fi
-          git commit -m 'Install isolated CELOC module'
+          git commit -m 'Repair CELOC loader placement'
           git push
