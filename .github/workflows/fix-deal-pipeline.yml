@@ -1,64 +1,20 @@
-name: Fix Deal Pipeline
+name: Verify Deal Pipeline
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: read
 
 jobs:
-  fix-and-deploy:
+  verify:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Patch Deal Pipeline query
-        id: patch
-        shell: python
-        run: |
-          from pathlib import Path
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-          old = 'const {data:deals,error}=await sb.from("deals").select("*").order("created_at",{ascending:false});'
-          new = 'const {data:deals,error}=await sb.rpc("list_current_user_deals");'
-          if old in s:
-              s = s.replace(old, new, 1)
-              p.write_text(s, encoding='utf-8')
-              print('PATCHED')
-          elif new in s:
-              print('ALREADY_PATCHED')
-          else:
-              raise SystemExit('Expected Deal Pipeline query was not found; refusing to modify the app.')
-
-      - name: Commit source fix
-        if: steps.patch.outputs.result != 'ALREADY_PATCHED'
+        uses: actions/checkout@v4
+      - name: Verify secure Deal Pipeline query
         shell: bash
         run: |
-          git config user.name 'JGAP Venture Group'
-          git config user.email 'jgapventuregroup@gmail.com'
-          git add index.html
-          git commit -m '[deal-fix] Load company-authorized deals through secure RPC'
-          git push
-
-      - name: Configure Pages
-        if: steps.patch.outcome == 'success'
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages artifact
-        if: steps.patch.outcome == 'success'
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: .
-
-      - name: Deploy Pages
-        if: steps.patch.outcome == 'success'
-        id: deployment
-        uses: actions/deploy-pages@v4
+          set -euo pipefail
+          grep -F 'sb.rpc("list_current_user_deals")' index.html
+          echo 'Deal Pipeline secure RPC is present.'
