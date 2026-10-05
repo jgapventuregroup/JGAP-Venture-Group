@@ -8,7 +8,7 @@ permissions:
   contents: write
 jobs:
   repair:
-    if: "!contains(github.event.head_commit.message, 'Restore exact known-good JGAP app')"
+    if: "!contains(github.event.head_commit.message, 'Restore exact known-good app without inline CELOC injection')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,14 +22,30 @@ jobs:
           git show 36fb914faf73c475d34401e3180968eb0f7b78e4:radar-filters.js > radar-filters.js
           test -s index.html
           test -s radar-filters.js
-      - name: Verify baseline has no CELOC injection
+      - name: Set a fresh Radar asset version only
         shell: bash
         run: |
           set -euo pipefail
-          if grep -n 'celoc-analyzer\|jgapCeloc' index.html radar-filters.js; then
-            echo 'Unsafe: CELOC code remains in the verified baseline files.'
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old='./radar-filters.js?v=20261004-3'
+          new='./radar-filters.js?v=20261005-1'
+          if old not in s:
+              raise SystemExit('Expected stable Radar reference not found; refusing unsafe edit')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Verify CELOC is not injected into index.html
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -n 'celoc-analyzer\|jgapCeloc' index.html; then
+            echo 'Unsafe: CELOC code found inside index.html.'
             exit 1
           fi
+          test "$(grep -o 'radar-filters.js?v=20261005-1' index.html | wc -l)" -eq 1
       - name: Syntax-check application JavaScript
         shell: bash
         run: |
@@ -52,7 +68,7 @@ jobs:
           print(f'Validated {len(blocks)} inline script blocks')
           PY
           git diff --check
-      - name: Commit verified baseline only
+      - name: Commit verified app
         shell: bash
         run: |
           set -euo pipefail
@@ -60,8 +76,8 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html radar-filters.js
           if git diff --cached --quiet; then
-            echo 'Baseline already restored.'
+            echo 'Verified baseline already present.'
             exit 0
           fi
-          git commit -m 'Restore exact known-good JGAP app'
+          git commit -m 'Restore exact known-good app without inline CELOC injection'
           git push
