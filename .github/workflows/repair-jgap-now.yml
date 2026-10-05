@@ -27,8 +27,10 @@ jobs:
           s=p.read_text(encoding='utf-8')
           tag='<script defer src="./celoc-analyzer.js?v=20261005-1"></script>'
           s=s.replace(tag,'')
-          if s.count('</head>')!=1: raise SystemExit('unsafe: expected one head close')
-          s=s.replace('</head>',tag+'\n</head>',1)
+          marker='</head>'
+          pos=s.find(marker)
+          if pos < 0: raise SystemExit('unsafe: no HTML head close found')
+          s=s[:pos]+tag+'\n'+s[pos:]
           p.write_text(s,encoding='utf-8')
           if s.count(tag)!=1: raise SystemExit('unsafe: CELOC loader count')
           PY
