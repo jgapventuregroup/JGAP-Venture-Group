@@ -1,4 +1,4 @@
-name: Repair CELOC loader placement
+name: Restore verified JGAP and install isolated CELOC
 on:
   workflow_dispatch:
   push:
@@ -9,13 +9,22 @@ permissions:
   contents: write
 jobs:
   repair:
-    if: "!contains(github.event.head_commit.message, 'Repair CELOC loader placement')"
+    if: "!contains(github.event.head_commit.message, 'Restore verified JGAP and install isolated CELOC')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
-      - name: Repair CELOC placement
+          fetch-depth: 0
+      - name: Restore known-good application files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 3a1b3e1b47ca8cfe8d08974a9598dabebbbc9d32:index.html > index.html
+          git show dc00e9c4e7d4b819f5dfb50b377d9f68184b2d47:radar-filters.js > radar-filters.js
+          test -s index.html
+          test -s radar-filters.js
+          test -s celoc-analyzer.js
+      - name: Install CELOC only in document head
         shell: bash
         run: |
           set -euo pipefail
@@ -24,28 +33,51 @@ jobs:
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
           tag='<script defer src="./celoc-analyzer.js?v=20261005-1"></script>'
-          # Remove every existing CELOC loader first. This prevents it from
-          # living inside a JavaScript template/string as happened previously.
-          s=s.replace(tag+'\n','').replace(tag,'')
+          s=s.replace(tag,'')
           marker='</head>'
-          if marker not in s:
-              raise SystemExit('No </head>; refusing unsafe repair')
+          if s.count(marker)!=1:
+              raise SystemExit('Expected exactly one </head>; refusing unsafe edit')
           s=s.replace(marker,tag+'\n'+marker,1)
           p.write_text(s,encoding='utf-8')
+          if p.read_text(encoding='utf-8').count(tag)!=1:
+              raise SystemExit('CELOC loader count is not exactly one')
           PY
-      - name: Validate inline JavaScript
+      - name: Validate files and JavaScript syntax
         shell: bash
         run: |
           set -euo pipefail
-          node -e "const fs=require('fs'),s=fs.readFileSync('index.html','utf8'); const m=s.match(/<script(?:[^>]*)>([\\s\\S]*?)<\\/script>/gi)||[]; console.log('script blocks',m.length); for(let i=0;i<m.length;i++){const x=m[i].replace(/^<script[^>]*>|<\\/script>$/gi,''); if(x.trim()){try{new Function(x)}catch(e){console.error('Inline script',i,'failed:',e.message); process.exit(1)}}}"
+          test -s index.html
+          test -s radar-filters.js
+          test -s celoc-analyzer.js
           test "$(grep -o 'celoc-analyzer.js?v=20261005-1' index.html | wc -l)" -eq 1
-          grep -q '<script defer src="./celoc-analyzer.js?v=20261005-1"></script>' index.html
+          grep -q '</head>' index.html
+          node --check radar-filters.js
+          node --check celoc-analyzer.js
+          python - <<'PY'
+          import re, subprocess, tempfile
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          blocks=re.findall(r'<script(?![^>]*src=)[^>]*>([\s\S]*?)</script>',s,re.I)
+          for i,b in enumerate(blocks):
+              if not b.strip(): continue
+              f=tempfile.NamedTemporaryFile('w',suffix='.js',delete=False,encoding='utf-8')
+              f.write(b); f.close()
+              r=subprocess.run(['node','--check',f.name],capture_output=True,text=True)
+              if r.returncode:
+                  raise SystemExit(f'Inline script {i} failed syntax check: {r.stderr}')
+          print(f'Validated {len(blocks)} inline script blocks')
+          PY
           git diff --check
-      - name: Commit repair
+      - name: Commit verified repair
         shell: bash
         run: |
+          set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html
-          git commit -m 'Repair CELOC loader placement'
+          git add index.html radar-filters.js
+          if git diff --cached --quiet; then
+            echo 'No repair changes needed.'
+            exit 0
+          fi
+          git commit -m 'Restore verified app and install isolated CELOC'
           git push
