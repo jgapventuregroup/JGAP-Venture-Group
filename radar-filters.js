@@ -23,4 +23,14 @@
   function addCelocLive(){var debt=document.getElementById('r_debt');if(!debt||document.getElementById('jgapCelocLive'))return;var panel=debt.closest('.panel');if(!panel)return;var host=document.createElement('div');host.id='jgapCelocLive';host.className='stats';host.style.marginTop='10px';host.innerHTML='<div><span>CELOC amount</span><b>$0</b></div><div><span>CELOC payment</span><b>$0/mo</b></div><div><span>Total debt service</span><b>$0/mo</b></div><div><span>Cash actually invested</span><b>$0</b></div>';panel.appendChild(host);}
   function initCeloc(){if(!document.getElementById('d_down'))return;addCelocUI();addCelocLive();wrapDealCalc();window.calcDeal&&window.calcDeal();}
   var c=0,ct=setInterval(function(){if(document.getElementById('d_down')){initCeloc();if(++c>10)clearInterval(ct);}else if(++c>60)clearInterval(ct);},500);
+  window.__jgapCelocNavigationObserver=new MutationObserver(function(){
+    if(document.getElementById('d_down')){
+      addCelocUI();
+      addCelocLive();
+      wrapDealCalc();
+      window.calcDeal&&window.calcDeal();
+    }
+  });
+  if(document.body)window.__jgapCelocNavigationObserver.observe(document.body,{childList:true,subtree:true});
+
 })();
