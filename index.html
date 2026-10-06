@@ -1926,7 +1926,7 @@ async function loadPortfolioReport(reportType='portfolio'){
  const equity=value-debt, appreciation=value-purchase, monthlyRent=ps.reduce((a,x)=>a+num(x.monthly_rent),0), annualRent=monthlyRent*12;
  const annualFixed=ps.reduce((a,x)=>a+num(x.annual_property_tax)+num(x.annual_insurance)+num(x.monthly_hoa)*12+num(x.monthly_mortgage_payment)*12,0);
  const ledgerIncome=transactions.filter(x=>x.transaction_type==='income').reduce((a,x)=>a+num(x.amount),0), expenses=transactions.filter(x=>x.transaction_type==='expense').reduce((a,x)=>a+num(x.amount),0), collected=rp.reduce((a,x)=>a+num(x.amount_paid),0), income=ledgerIncome+collected, net=income-expenses;
- const collected=rp.reduce((a,x)=>a+num(x.amount_paid),0), due=rp.reduce((a,x)=>a+num(x.amount_due),0), outstanding=Math.max(0,due-collected), collectionRate=due?collected/due*100:0;
+ const due=rp.reduce((a,x)=>a+num(x.amount_due),0), outstanding=Math.max(0,due-collected), collectionRate=due?collected/due*100:0;
  const openRepairs=rs.filter(x=>x.status!=='completed').length, repairActual=rs.reduce((a,x)=>a+num(x.actual_cost),0), activeLeases=ls.filter(x=>x.status==='active').length;
  const capRate=value?annualRent/value*100:0, grossYield=purchase?annualRent/purchase*100:0, ltv=value?debt/value*100:0;
  const address=p=>[p.address_line1,p.city,p.state,p.postal_code].filter(Boolean).join(', ');
