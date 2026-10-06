@@ -1489,14 +1489,17 @@ function nextMonthString(month){const [y,m]=month.split("-").map(Number);const d
 
 async function loadDashboardSummary(){
   try{
-    const [{data:props,error:pe},{data:deals,error:de},{data:repairs,error:re},{data:tx,error:te}]=await Promise.all([
+    const [{data:props,error:pe},{data:deals,error:de},{data:repairs,error:re},{data:tx,error:te},{data:rentPayments,error:re2}]=await Promise.all([
       sb.from("properties").select("id,current_value,monthly_rent"),
       sb.from("deals").select("id,status").not("status","in","(closed,passed)"),
       sb.from("repairs").select("id,status").neq("status","completed"),
-      sb.from("financial_transactions").select("amount,transaction_type")
+      sb.from("financial_transactions").select("amount,transaction_type"),
+      sb.from("property_rent_payments").select("amount_paid")
     ]);
-    if(pe||de||re||te){console.warn("Dashboard live data:",pe||de||re||te);return;}
-    const income=(tx||[]).filter(x=>x.transaction_type==="income").reduce((a,x)=>a+Number(x.amount||0),0);
+    if(pe||de||re||te||re2){console.warn("Dashboard live data:",pe||de||re||te||re2);return;}
+    const ledgerIncome=(tx||[]).filter(x=>x.transaction_type==="income").reduce((a,x)=>a+Number(x.amount||0),0);
+    const rentCollected=(rentPayments||[]).reduce((a,x)=>a+Number(x.amount_paid||0),0);
+    const income=ledgerIncome+rentCollected;
     const expenses=(tx||[]).filter(x=>x.transaction_type==="expense").reduce((a,x)=>a+Number(x.amount||0),0);
     const value=(props||[]).reduce((a,x)=>a+Number(x.current_value||0),0);
     const rent=(props||[]).reduce((a,x)=>a+Number(x.monthly_rent||0),0);
@@ -1511,7 +1514,7 @@ async function loadDashboardSummary(){
     box.innerHTML=`
       <div class="card"><div class="muted">Portfolio Value</div><div class="metric">${money2(value)}</div><div class="muted">Known current values</div></div>
       <div class="card"><div class="muted">Monthly Rent</div><div class="metric">${money2(rent)}</div><div class="muted">Known scheduled rent</div></div>
-      <div class="card"><div class="muted">Recorded Income</div><div class="metric">${money2(income)}</div><div class="muted">Financial ledger</div></div>
+      <div class="card"><div class="muted">Total Collected Income</div><div class="metric">${money2(income)}</div><div class="muted">Rent + financial ledger income</div></div>
       <div class="card"><div class="muted">Recorded Expenses</div><div class="metric">${money2(expenses)}</div><div class="muted">Financial ledger</div></div>`;
     anchor.appendChild(box);
   }catch(e){console.warn("Dashboard summary:",e);}
@@ -1920,7 +1923,7 @@ async function loadPortfolioReport(reportType='portfolio'){
  const purchase=ps.reduce((a,x)=>a+num(x.purchase_price),0), value=ps.reduce((a,x)=>a+num(x.current_value),0), debt=ps.reduce((a,x)=>a+num(x.mortgage_balance),0);
  const equity=value-debt, appreciation=value-purchase, monthlyRent=ps.reduce((a,x)=>a+num(x.monthly_rent),0), annualRent=monthlyRent*12;
  const annualFixed=ps.reduce((a,x)=>a+num(x.annual_property_tax)+num(x.annual_insurance)+num(x.monthly_hoa)*12+num(x.monthly_mortgage_payment)*12,0);
- const income=transactions.filter(x=>x.transaction_type==='income').reduce((a,x)=>a+num(x.amount),0), expenses=transactions.filter(x=>x.transaction_type==='expense').reduce((a,x)=>a+num(x.amount),0), net=income-expenses;
+ const ledgerIncome=transactions.filter(x=>x.transaction_type==='income').reduce((a,x)=>a+num(x.amount),0), expenses=transactions.filter(x=>x.transaction_type==='expense').reduce((a,x)=>a+num(x.amount),0), collected=rp.reduce((a,x)=>a+num(x.amount_paid),0), income=ledgerIncome+collected, net=income-expenses;
  const collected=rp.reduce((a,x)=>a+num(x.amount_paid),0), due=rp.reduce((a,x)=>a+num(x.amount_due),0), outstanding=Math.max(0,due-collected), collectionRate=due?collected/due*100:0;
  const openRepairs=rs.filter(x=>x.status!=='completed').length, repairActual=rs.reduce((a,x)=>a+num(x.actual_cost),0), activeLeases=ls.filter(x=>x.status==='active').length;
  const capRate=value?annualRent/value*100:0, grossYield=purchase?annualRent/purchase*100:0, ltv=value?debt/value*100:0;
@@ -1933,7 +1936,7 @@ async function loadPortfolioReport(reportType='portfolio'){
  if(reportType==='finance'){
    const cat={}; transactions.forEach(x=>{const k=x.category||'Uncategorized'; if(!cat[k])cat[k]={income:0,expense:0}; if(x.transaction_type==='income')cat[k].income+=num(x.amount); else cat[k].expense+=num(x.amount);});
    const rows=Object.entries(cat).sort((a,b)=>(b[1].income+b[1].expense)-(a[1].income+a[1].expense)).map(([k,v])=>`<tr><td>${escapeHtml(k)}</td><td>${money(v.income)}</td><td>${money(v.expense)}</td><td>${money(v.income-v.expense)}</td></tr>`).join('');
-   host.innerHTML=`<h2>Income & Expense Report</h2><p class="muted">Recorded financial transactions only • Generated ${new Date().toLocaleDateString('en-US')}</p><div class="reportKpis"><div class="card"><div class="muted">Recorded Income</div><div class="metric">${money(income)}</div></div><div class="card"><div class="muted">Recorded Expenses</div><div class="metric">${money(expenses)}</div></div><div class="card"><div class="muted">Net Cash Flow</div><div class="metric">${money(net)}</div></div><div class="card"><div class="muted">Transactions</div><div class="metric">${transactions.length}</div></div></div><h3>Category Breakdown</h3><div style="overflow:auto"><table class="table"><thead><tr><th>Category</th><th>Income</th><th>Expenses</th><th>Net</th></tr></thead><tbody>${rows||'<tr><td colspan="4">No financial transactions recorded yet.</td></tr>'}</tbody></table></div>`;
+   host.innerHTML=`<h2>Income & Expense Report</h2><p class="muted">Rent payments plus recorded financial transactions • Generated ${new Date().toLocaleDateString('en-US')}</p><div class="reportKpis"><div class="card"><div class="muted">Rent Collected</div><div class="metric">${money(collected)}</div></div><div class="card"><div class="muted">Other Recorded Income</div><div class="metric">${money(ledgerIncome)}</div></div><div class="card"><div class="muted">Recorded Expenses</div><div class="metric">${money(expenses)}</div></div><div class="card"><div class="muted">Net Cash Flow</div><div class="metric">${money(net)}</div></div></div><h3>Category Breakdown</h3><div style="overflow:auto"><table class="table"><thead><tr><th>Category</th><th>Income</th><th>Expenses</th><th>Net</th></tr></thead><tbody>${rows||'<tr><td colspan="4">No financial transactions recorded yet.</td></tr>'}</tbody></table></div>`;
    return;
  }
  if(reportType==='deals'){
