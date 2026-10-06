@@ -9,3 +9,28 @@
   window.openDistressLead=async function(id){var r=(window.__jgapDistressRows||[]).find(x=>x.id===id);if(!r)return;var addr=r.address||[r.city,r.state,r.postal_code].filter(Boolean).join(', ');renderDealAnalyzer({name:r.name||addr||'Distress Opportunity',property_type:r.property_type||'single_family',property_address:addr,property_county:r.county||'',purchase_price:r.asking_price||0,asking_price:r.asking_price||0,units:r.units||'',monthly_rent:r.estimated_monthly_rent||0,monthly_operating_expenses:0,rehab_cost:r.estimated_repairs||0,target_cap_rate:8,target_cash_on_cash:8,status:'analyzing',notes:'Imported from JGAP Distress Radar. Source: '+(r.source_name||r.source_type||'')+(r.source_url?' '+r.source_url:'')+' Reason: '+(r.reason||'')});try{await sb.from('distress_opportunities').update({status:'analyzing',last_seen_at:new Date().toISOString()}).eq('id',id);}catch(e){}};
   window.loadJGAPDistressRadar=loadDistressRadar;var attempts=0,watch=setInterval(function(){if(document.getElementById('radarInbox')&&!document.getElementById('jgapDistressRadar')){loadDistressRadar();clearInterval(watch);}if(++attempts>40)clearInterval(watch);},500);
 })();
+
+(function(){
+  var tries=0;
+  var handoffWatch=setInterval(function(){
+    if(typeof window.analyzeRadarOpportunity!=='function'){if(++tries>40)clearInterval(handoffWatch);return;}
+    if(window.__jgapRadarAnalyzerHandoffInstalled){clearInterval(handoffWatch);return;}
+    var original=window.analyzeRadarOpportunity;
+    window.analyzeRadarOpportunity=async function(id){
+      var rows=window.__jgapRadarRows||[],r=rows.find(function(x){return x.id===id;});
+      if(!r)return;
+      try{
+        var result=await sb.rpc('handoff_radar_opportunity_to_analyzer',{p_opportunity_id:id});
+        if(result.error)throw result.error;
+        if(!result.data)throw new Error('Radar handoff did not return a deal ID.');
+        var dealResult=await sb.from('deals').select('*').eq('id',result.data).single();
+        if(dealResult.error)throw dealResult.error;
+        renderDealAnalyzer(dealResult.data);
+      }catch(e){
+        alert('Could not open this Radar opportunity in Deal Analyzer: '+(e.message||e));
+      }
+    };
+    window.__jgapRadarAnalyzerHandoffInstalled=true;
+    clearInterval(handoffWatch);
+  },250);
+})();
