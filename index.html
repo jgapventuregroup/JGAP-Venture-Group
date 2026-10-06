@@ -1963,13 +1963,17 @@ async function loadDashboardRentSummary(){
  const ids=["dashRentScheduled","dashRentCollected","dashRentOutstanding","dashRentLate"];
  const els=ids.map(id=>document.getElementById(id));
  if(els.some(x=>!x))return;
- const {data,error}=await sb.from("property_rent_collection_summary").select("total_due,total_paid,outstanding,late_outstanding");
+ const {data,error}=await sb.from("property_rent_payments").select("amount_due,amount_paid,due_date");
  if(error){console.warn("Rent dashboard summary:",error);return;}
  const rows=data||[];
- const due=rows.reduce((a,r)=>a+Number(r.total_due||0),0);
- const paid=rows.reduce((a,r)=>a+Number(r.total_paid||0),0);
- const outstanding=rows.reduce((a,r)=>a+Number(r.outstanding||0),0);
- const late=rows.reduce((a,r)=>a+Number(r.late_outstanding||0),0);
+ const due=rows.reduce((a,r)=>a+Number(r.amount_due||0),0);
+ const paid=rows.reduce((a,r)=>a+Number(r.amount_paid||0),0);
+ const outstanding=rows.reduce((a,r)=>a+Math.max(Number(r.amount_due||0)-Number(r.amount_paid||0),0),0);
+ const today=new Date().toISOString().slice(0,10);
+ const late=rows.reduce((a,r)=>{
+   const unpaid=Math.max(Number(r.amount_due||0)-Number(r.amount_paid||0),0);
+   return a+(r.due_date && r.due_date<today ? unpaid : 0);
+ },0);
  els[0].textContent=money2(due); els[1].textContent=money2(paid);
  els[2].textContent=money2(outstanding); els[3].textContent=money2(late);
 }
