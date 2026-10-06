@@ -119,8 +119,8 @@ function openJGAPMarketMap(){
   window.addEventListener('unhandledrejection',function(e){lastError=(e.reason&&e.reason.message)||String(e.reason||'Promise rejected');});
   setTimeout(function(){
     var app=document.getElementById('app');
-    if(app && !app.children.length){
-      app.innerHTML='<div class="auth"><div class="panel"><h1>JGAP Venture Group</h1><p class="error">The app did not finish starting.</p><p style="font-size:13px">Startup error: '+String(lastError||'No startup error was reported. The app may be loading an outdated deployment.') .replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];})+'</p><p class="muted" style="font-size:12px">This recovery screen is built into the app so a startup failure can be diagnosed without losing your data.</p></div></div>';
+    if(app && !window.__jgapStartupReachedAuth){
+      app.innerHTML='<div class="auth"><div class="panel"><h1>JGAP Venture Group</h1><p class="error">The app did not finish starting.</p><p style="font-size:13px">Startup error: '+String(lastError||'The startup code stopped before the authentication screen could load.') .replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];})+'</p><p class="muted" style="font-size:12px">This recovery screen is built into the app so a startup failure can be diagnosed without changing your data.</p></div></div>';
     }
   },7000);
 })();
@@ -199,6 +199,7 @@ function openJGAPMarketMap(){
 const SUPABASE_URL="https://sfsyphmnzxaplundaljy.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_rhaw9mnxluiZAzSOcRZmjw_odxescT_";
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+window.__jgapStartupReachedAuth=true;
 
 function authView(message=""){
 document.getElementById("app").innerHTML=`<div class="auth"><div class="panel">
