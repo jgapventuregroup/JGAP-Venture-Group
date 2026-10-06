@@ -659,7 +659,8 @@ async function editRentPayment(propertyId,paymentId){
 async function generateMonthlyRent(propertyId){
  const dueDate=prompt("Generate rent for due date (YYYY-MM-DD):",new Date().toISOString().slice(0,10));
  if(dueDate===null)return;
- const {data,error}=await sb.rpc("generate_current_user_monthly_rent",{p_due_date:dueDate});
+ if(!propertyId){alert("Select a property first.");return;}
+ const {data,error}=await sb.rpc("generate_current_user_monthly_rent",{p_due_date:dueDate,p_property_id:propertyId});
  if(error){alert(error.message);return;}
  alert(`Rent schedule updated. ${Number(data?.created||0)} rent charge(s) created for ${dueDate}.`);
  loadPropertyRentCollection(propertyId);
