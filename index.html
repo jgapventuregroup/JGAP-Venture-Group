@@ -931,13 +931,13 @@ async function openClosedDealProperty(dealId){
  renderPropertyDetail(data.id);
 }
 async function closeDealToProperty(id){
- const {error:updateError}=await sb.from("deals").update({status:"closed"}).eq("id",id);
- if(updateError){alert(updateError.message);return;}
+ // The database RPC performs the close + property handoff in one transaction.
+ // Do not update the deal separately first: if the RPC fails, the deal must remain unchanged.
  const {data,error}=await sb.rpc("convert_closed_deal_to_property",{p_deal_id:id});
- if(error){alert(error.message);return;}
+ if(error){alert("Could not close the deal and create the property: "+error.message);return;}
  // RPC returns the new property UUID directly. Open the property record immediately.
  const propertyId=typeof data==="string"?data:(data?.id||data?.property_id);
- if(!propertyId){alert("The deal was closed, but the property handoff did not return a property ID.");return;}
+ if(!propertyId){alert("The deal was not completed because the property handoff did not return a property ID.");return;}
  renderPropertyDetail(propertyId);
 }
 
