@@ -8,25 +8,4 @@
   function renderDistressRows(){var rows=window.__jgapDistressRows||[],source=document.getElementById('drSource')?.value||'',type=document.getElementById('drType')?.value||'',status=document.getElementById('drStatus')?.value||'',q=(document.getElementById('drSearch')?.value||'').toLowerCase().trim();var f=rows.filter(function(r){var h=[r.name,r.owner_name,r.address,r.city,r.state,r.postal_code,r.county,r.source_name].join(' ').toLowerCase();return(!source||r.source_type===source)&&(!type||r.property_type===type)&&(!status||r.status===status)&&(!q||h.indexOf(q)>=0)});var low=rows.filter(r=>Number(r.asking_price||0)>0&&Number(r.asking_price)<=40000).length,pri=rows.filter(r=>String(r.priority||'').toLowerCase()==='high').length,cf=rows.reduce((a,r)=>a+Number(r.projected_monthly_cash_flow||0),0),set=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};set('drCount',rows.length);set('drPriority',pri);set('drLowCost',low);set('drCashFlow',money2(cf));var host=document.getElementById('drTable'),msg=document.getElementById('drMsg');if(!host)return;if(msg)msg.textContent=f.length+' distress lead'+(f.length===1?'':'s')+' shown';if(!f.length){host.innerHTML='<div class="card"><b>No distress leads yet.</b><p class="muted">The database is ready. Leads will appear here as they are researched.</p></div>';return;}host.innerHTML='<table><thead><tr><th>Property</th><th>Source</th><th>Location</th><th>Price</th><th>Rent</th><th>Repairs</th><th>Cash Flow</th><th>JGAP Score</th><th>Action</th></tr></thead><tbody>'+f.map(function(r){return '<tr><td><b>'+escapeHtml(cleanTitle(r.name||r.address||'Untitled'))+'</b>'+(r.owner_name?'<div class="muted">Owner: '+escapeHtml(r.owner_name)+'</div>':'')+'</td><td><span class="pill">'+escapeHtml(String(r.source_type||'').replaceAll('_',' '))+'</span></td><td>'+escapeHtml([r.city,r.state,r.postal_code].filter(Boolean).join(', ')||r.county||'—')+'</td><td>'+(r.asking_price==null?'—':money2(r.asking_price))+'</td><td>'+(r.estimated_monthly_rent==null?'—':money2(r.estimated_monthly_rent))+'</td><td>'+(r.estimated_repairs==null?'—':money2(r.estimated_repairs))+'</td><td>'+(r.projected_monthly_cash_flow==null?'—':money2(r.projected_monthly_cash_flow))+'</td><td><b>'+(r.jgap_score==null?'—':Number(r.jgap_score).toFixed(0))+'</b>'+(r.priority?'<div class="muted">'+escapeHtml(r.priority)+'</div>':'')+'</td><td><button class="secondary" onclick="openDistressLead(\''+r.id+'\')">Review</button>'+(r.source_url?' <a class="secondary" target="_blank" rel="noopener" href="'+escapeHtml(r.source_url)+'">Source</a>':'')+'</td></tr>';}).join('')+'</tbody></table>';}
   window.openDistressLead=async function(id){var r=(window.__jgapDistressRows||[]).find(x=>x.id===id);if(!r)return;var addr=r.address||[r.city,r.state,r.postal_code].filter(Boolean).join(', ');renderDealAnalyzer({name:r.name||addr||'Distress Opportunity',property_type:r.property_type||'single_family',property_address:addr,property_county:r.county||'',purchase_price:r.asking_price||0,asking_price:r.asking_price||0,units:r.units||'',monthly_rent:r.estimated_monthly_rent||0,monthly_operating_expenses:0,rehab_cost:r.estimated_repairs||0,target_cap_rate:8,target_cash_on_cash:8,status:'analyzing',notes:'Imported from JGAP Distress Radar. Source: '+(r.source_name||r.source_type||'')+(r.source_url?' '+r.source_url:'')+' Reason: '+(r.reason||'')});try{await sb.from('distress_opportunities').update({status:'analyzing',last_seen_at:new Date().toISOString()}).eq('id',id);}catch(e){}};
   window.loadJGAPDistressRadar=loadDistressRadar;var attempts=0,watch=setInterval(function(){if(document.getElementById('radarInbox')&&!document.getElementById('jgapDistressRadar')){loadDistressRadar();clearInterval(watch);}if(++attempts>40)clearInterval(watch);},500);
-
-  // Persistent Radar -> Analyzer handoff. The main app previously only opened
-  // the Analyzer UI with an in-memory object. This override creates/links the
-  // real deals record first, then opens that persisted deal.
-  window.analyzeRadarOpportunity=async function(id){
-    const rows=window.__jgapRadarRows||[];
-    const r=rows.find(x=>x.id===id);
-    if(!r)return;
-    try{
-      const {data:dealId,error}=await sb.rpc('handoff_radar_opportunity_to_analyzer',{p_opportunity_id:id});
-      if(error)throw error;
-      if(!dealId)throw new Error('Radar handoff returned no Analyzer deal ID.');
-      await sb.from('radar_opportunities').update({status:'reviewing'}).eq('id',id);
-      const {data:deal,error:dealError}=await sb.from('deals').select('*').eq('id',dealId).single();
-      if(dealError)throw dealError;
-      renderDealAnalyzer(deal);
-    }catch(e){
-      console.error('Radar Analyzer handoff failed:',e);
-      alert('JGAP could not create the Analyzer deal: '+(e.message||e));
-    }
-  };
 })();
