@@ -2352,27 +2352,12 @@ function filterRadarInbox(){
 async function analyzeRadarOpportunity(id){
   const r=(window.__jgapRadarRows||[]).find(x=>x.id===id);
   if(!r)return;
-  renderDealAnalyzer({
-    name:r.name||r.address||'Radar Opportunity',
-    property_type:r.property_type||'multifamily',
-    property_address:r.address||[r.city,r.state,r.postal_code].filter(Boolean).join(', '),
-    property_county:r.property_county||'',
-    offer_state:r.state||'TN',
-    purchase_price:r.asking_price??'',
-    asking_price:r.asking_price??'',
-    units:r.units??'',
-    monthly_rent:r.monthly_rent??'',
-    monthly_operating_expenses:r.monthly_operating_expenses??'',
-    vacancy_rate:r.vacancy_rate??5,
-    source_url:r.source_url||'',
-    source:r.source||'',
-    target_cap_rate:8,
-    target_cash_on_cash:8,
-    target_monthly_cash_flow:0,
-    target_dscr:r.dscr??'',
-    status:'analyzing',
-    notes:'Imported from Deal Radar.'+(r.source?' Source: '+r.source+'.':'')+(r.source_url?' '+r.source_url:'')
-  });
+  const {data:dealId,error:handoffError}=await sb.rpc('handoff_radar_opportunity_to_analyzer',{p_opportunity_id:id});
+  if(handoffError){alert('Could not send this Radar opportunity to Deal Analyzer: '+handoffError.message);return;}
+  if(!dealId){alert('Radar handoff returned no Analyzer deal.');return;}
+  const {data:deal,error:dealError}=await sb.from('deals').select('*').eq('id',dealId).single();
+  if(dealError||!deal){alert('The Analyzer deal was created, but could not be loaded: '+(dealError?.message||'Unknown error'));return;}
+  renderDealAnalyzer(deal);
 }
 
 async function updateRadarOpportunityStatus(id,status){
