@@ -17,9 +17,6 @@ begin
   if length(v_name) < 2 or length(v_name) > 100 then
     raise exception 'Company name must be 2 to 100 characters';
   end if;
-  if pg_catalog.strpos(v_name, chr(0)) > 0 then
-    raise exception 'Invalid company name';
-  end if;
   -- Serializes simultaneous onboarding attempts for the same authenticated user.
   perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(v_uid::text, 0));
   select cm.company_id into v_company
