@@ -177,10 +177,39 @@ function openJGAPMarketMap(){
   window.applyDashboardLayout=applyLayout;
 })();
 </script>
-<script>
-const SUPABASE_URL="https://sfsyphmnzxaplundaljy.supabase.co";
+<script src="workspace-client.js"></script>\n<script src="workspace-picker.js"></script>\n<script>\nconst SUPABASE_URL="https://sfsyphmnzxaplundaljy.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_rhaw9mnxluiZAzSOcRZmjw_odxescT_";
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+// Preview is opt-in on the development branch. Never use this as an access-control boundary.
+const JGAP_WORKSPACE_PREVIEW = new URLSearchParams(window.location.search).get("workspace_preview")==="1";
+let jgapPreviewWorkspaceId = null;
+async function mountJGAPWorkspacePreview(){
+  if(!JGAP_WORKSPACE_PREVIEW || !window.JGAPWorkspaceClient || !window.JGAPWorkspacePicker)return;
+  const status=document.getElementById("accountStatus");
+  if(!status)return;
+  const area=document.createElement("section");
+  area.id="jgapWorkspacePreview";
+  area.setAttribute("aria-label","Company workspace preview");
+  status.after(area);
+  try{
+    const workspaces=await window.JGAPWorkspaceClient.listWorkspaces(sb);
+    const picker=document.createElement("div");
+    const message=document.createElement("p");
+    area.replaceChildren(picker,message);
+    window.JGAPWorkspacePicker.mount(picker,workspaces,async selected=>{
+      jgapPreviewWorkspaceId=selected.id;
+      message.textContent="Loading deals for "+selected.name+"…";
+      try{
+        const deals=await window.JGAPWorkspaceClient.listDeals(sb,selected.id);
+        if(jgapPreviewWorkspaceId!==selected.id)return;
+        message.textContent=selected.name+": "+deals.length+" deal(s). Preview only; existing dashboard remains unchanged.";
+      }catch(error){message.textContent="Workspace deal preview unavailable: "+(error.message||"Request failed");}
+    });
+  }catch(error){
+    area.textContent="Workspace preview unavailable until the new database functions are deployed: "+(error.message||"Request failed");
+  }
+}
+
 window.__jgapStartupReachedAuth=true;
 
 function authView(message=""){
@@ -2463,7 +2492,7 @@ async function deleteJGAPNote(){
 async function render(){
 const {data:{user}}=await sb.auth.getUser();
 if(!user){authView();return;}
-shell(); await window.loadDashboardLayoutFromAccount(); if(window.loadNavOrderFromAccount) await window.loadNavOrderFromAccount(); window.applyDashboardLayout(); document.getElementById("who").textContent="Signed in as "+user.email; loadDashboardRentSummary(); loadDashboardPrimeRate(); loadDashboardPropertyManagementCenter(); loadDashboardLeaseExpirations(); loadDashboardDelinquency(); loadDashboardPortfolioPerformance(); loadDashboardTasks();
+shell(); if(JGAP_WORKSPACE_PREVIEW) await mountJGAPWorkspacePreview(); await window.loadDashboardLayoutFromAccount(); if(window.loadNavOrderFromAccount) await window.loadNavOrderFromAccount(); window.applyDashboardLayout(); document.getElementById("who").textContent="Signed in as "+user.email; loadDashboardRentSummary(); loadDashboardPrimeRate(); loadDashboardPropertyManagementCenter(); loadDashboardLeaseExpirations(); loadDashboardDelinquency(); loadDashboardPortfolioPerformance(); loadDashboardTasks();
 try {
   const { data: body, error: rpcError } = await sb.rpc("bootstrap_current_user");
   if (rpcError) {
