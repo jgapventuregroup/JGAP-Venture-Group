@@ -1,4 +1,4 @@
-/* JGAP SaaS workspace client (development only; not loaded by index.html).
+/* JGAP SaaS workspace client (development only; loaded by dev index.html for opt-in preview).
  * Requires reviewed workspace RPC deployment before enabling in the app.
  * Never infer a workspace from the first membership when multiple exist.
  */
@@ -70,6 +70,8 @@
     if (!workspaceId || !dealId) throw new Error('Workspace and deal are required');
     if (!patch || Array.isArray(patch) || typeof patch !== 'object' || !Object.keys(patch).length)
       throw new Error('A nonempty deal patch is required');
+    if (Object.getPrototypeOf(patch) !== Object.prototype && Object.getPrototypeOf(patch) !== null)
+      throw new Error('Deal patch must be a plain object');
     for (const field of Object.keys(patch)) {
       if (!editableDealFields.has(field)) throw new Error('Field not editable: ' + field);
     }
