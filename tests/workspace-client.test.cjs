@@ -183,3 +183,11 @@ test('simulated two-company backend keeps reads scoped to selected workspace', a
   await assert.rejects(client.listDeals(db, 'beta'), /Not a company member/);
   await assert.rejects(client.getDeal(db, 'beta', 'deal-b'), /Not a company member/);
 });
+
+test('workspace normalization accepts already normalized records and rejects unauthorized selections', () => {
+  const normalized = client.normalizeWorkspaces([alpha, beta]);
+  assert.deepEqual(client.normalizeWorkspaces(normalized), normalized);
+  assert.equal(client.selectWorkspace(normalized, 'beta').role, 'viewer');
+  assert.throws(() => client.selectWorkspace(normalized, 'outsider'), /not authorized/);
+  assert.throws(() => client.selectWorkspace(normalized, null), /Choose a workspace/);
+});
