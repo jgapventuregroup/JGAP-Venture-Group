@@ -40,3 +40,10 @@ E. After passing acceptance tests, stage controlled rollout and review rollback.
 - No browser-shipped service-role keys or browser-only subscription enforcement.
 - Test accounts and staging data are isolated from production.
 - Explicitly approved production migration with rollback and backups.
+
+## Additional verified backend dependencies (2026-10-10)
+- `companies` has a primary key on `id`; `company_members` has a composite primary key `(company_id,user_id)` and a nonunique `user_id` index. A user can technically belong to multiple companies. New onboarding must not assume one membership per user.
+- The current `accept_current_user_company_invitation()` inserts an invitation's company membership and marks the invitation accepted. Therefore, the proposed `create_my_company` draft checks for pending invitations before creating a workspace. Invitation precedence and multi-company choice still require product review.
+- The frontend currently invokes `bootstrap_current_user()` on dashboard rendering and labels new users `Authorization pending`. It does not yet call `create_my_company`. The new RPC must not be deployed alone with the expectation that onboarding automatically works.
+- `list_current_user_company_access()` selects the first membership by creation time. It is another RPC requiring explicit workspace selection for future multi-company support.
+- SQL draft `backend/staging_create_my_company.sql` is additive and remains unexecuted; test in isolated staging before any production use.
