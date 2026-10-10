@@ -80,6 +80,10 @@ begin
      and ((p_patch->>'loan_term_years')::integer < 0 or (p_patch->>'loan_term_years')::integer > 100) then
     raise exception 'Loan term must be between 0 and 100 years';
   end if;
+  if p_patch ? 'interest_rate' and p_patch->>'interest_rate' is not null
+     and ((p_patch->>'interest_rate')::numeric < 0 or (p_patch->>'interest_rate')::numeric > 100) then
+    raise exception 'Interest rate must be between 0 and 100';
+  end if;
   v_sql := 'update public.deals set ' || v_set ||
     ' where id = $2 and company_id = $3 returning *';
   execute v_sql into v_deal using p_patch,p_deal_id,p_company_id;
