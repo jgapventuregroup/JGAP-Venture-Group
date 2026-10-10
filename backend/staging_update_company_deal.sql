@@ -48,7 +48,7 @@ begin
     end if;
     -- Column identifiers come only from the fixed allowlist.
     v_set := v_set || case when v_set = '' then '' else ', ' end ||
-      format('%I = jsonb_populate_record(null::public.deals, $1).%I',v_column,v_column);
+      format('%I = (jsonb_populate_record(null::public.deals, $1)).%I',v_column,v_column);
   end loop;
   v_sql := 'update public.deals set ' || v_set ||
     ' where id = $2 and company_id = $3 returning *';
