@@ -1094,7 +1094,6 @@ function calcDeal(){
  if(structure!=="none" && price>0 && down>price)underwritingIssues.push("Down payment exceeds the purchase price.");
  if(structure!=="none" && rate<0)underwritingIssues.push("Interest rate cannot be negative.");
  if(structure!=="none" && rate>1)underwritingIssues.push("Interest rate cannot exceed 100%.");
- if(structure!=="none" && down===0)underwritingIssues.push("Enter a down payment, or select an all-cash structure if appropriate.");
  if(structure!=="none" && document.getElementById("d_rate")?.value==="")underwritingIssues.push("Interest rate is missing.");
  if(down<0)underwritingIssues.push("Down payment cannot be negative.");
  if(rent<0 || exp<0 || close<0 || rehab<0)underwritingIssues.push("Rent, expenses, closing costs, and rehab costs cannot be negative.");
