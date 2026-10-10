@@ -270,3 +270,10 @@ test('both draft deal creation RPCs reject blank status and property type', () =
     assert.ok(sql.includes('Property type is required'), file);
   }
 });
+
+test('staging JSON patch aggregate is schema-qualified under empty search path', () => {
+  const sql = load('staging_update_company_deal.sql');
+  assert.match(sql, /set search_path\s*=\s*''/i);
+  assert.match(sql, /pg_catalog\.array_agg\(k order by k\)/i);
+  assert.match(sql, /pg_catalog\.jsonb_object_keys\(p_patch\)/i);
+});
