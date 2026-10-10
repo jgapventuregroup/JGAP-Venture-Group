@@ -1,14 +1,17 @@
 # JGAP SaaS staging execution runbook
 
-**Status: isolated staging project created and read-only connectivity verified; schema migration NOT RUN. Do not execute on the production Supabase project.**
+**Status: staging foundation tables and six RLS policies installed and verified; tenant integration tests NOT RUN. Do not execute on the production Supabase project.**
 
 ## Verified staging environment (2026-10-10)
 - Project: **JGAP SaaS Staging.**, project ID `qfszapteuxuogoselprp`, region `us-east-1`, status `ACTIVE_HEALTHY`.
 - Production project: **JGAP Venture Group**, ID `sfsyphmnzxaplundaljy`. **Never run staging SQL on this project.**
 - Supabase reported project creation cost **$0/month**.
-- Read-only query found **zero public application tables** in staging; a separate read-only query confirmed PostgreSQL 17.11 and database role `postgres`.
-- No schema, test users, policies, or RPCs have been created. SQL drafts reference tables that do not yet exist; **do not execute them on this empty database**.
-- Next gate: author and review a minimal synthetic-only staging schema, its RLS and role constraints, then apply only to the staging project after review. Preserve an evidence trail and verify rollback.
+- Initially empty staging schema; subsequently installed **four tables**: companies, company_members, company_invitations, deals. All have RLS enabled.
+- Installed and verified **six policies**: company_read, membership_self_read, deal_read, deal_insert, deal_update, deal_delete.
+- Installed `jgap_private.member_role(uuid)` and `public.is_company_member(uuid)`; verified anonymous EXECUTE is denied on both.
+- **No synthetic authenticated tenant tests have been run.** RPC installation attempted afterward hit repeated approval prompts; **do not assume those RPCs were installed**.
+- **Approval-loop safeguard:** Do not retry connector writes automatically. First finish offline review, then schedule a single clearly scoped staging-only installation with the user's agreement. Do not ask the user to repeatedly click Allow.
+- Next gate: inspect staging RPC state once access is stable; review the remaining SQL against actual schema; run authenticated cross-company tests.
 
 ## Prerequisites
 1. Obtain explicit owner approval for a **separate, isolated test environment** and confirm its cost is $0 before provisioning. If free staging is unavailable, stop and request a decision.
