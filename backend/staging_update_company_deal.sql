@@ -112,6 +112,16 @@ begin
      and ((p_patch->>'selling_cost_percent')::numeric < 0 or (p_patch->>'selling_cost_percent')::numeric > 100) then
     raise exception 'Selling cost percent must be between 0 and 100';
   end if;
+  -- Never accept SQL JSON null for fields required by the Analyzer.
+  -- Explicit JSON null is permitted for optional offer fields only.
+  if p_patch ? 'status' and (p_patch->>'status' is null
+     or pg_catalog.btrim(p_patch->>'status') = '') then
+    raise exception 'Deal status is required';
+  end if;
+  if p_patch ? 'property_type' and (p_patch->>'property_type' is null
+     or pg_catalog.btrim(p_patch->>'property_type') = '') then
+    raise exception 'Property type is required';
+  end if;
   v_sql := 'update public.deals set ' || v_set ||
     ' where id = $2 and company_id = $3 returning *';
   execute v_sql into v_deal using p_patch,p_deal_id,p_company_id;
