@@ -35,7 +35,34 @@
     if (error) throw error;
     return data || [];
   }
-  const api = { normalizeWorkspaces, selectWorkspace, listWorkspaces, listDeals };
+  async function getDeal(client, workspaceId, dealId) {
+    if (!workspaceId || !dealId) throw new Error('Workspace and deal are required');
+    const { data, error } = await client.rpc('get_company_deal', {
+      p_company_id: workspaceId, p_deal_id: dealId
+    });
+    if (error) throw error;
+    return Array.isArray(data) ? (data[0] || null) : (data || null);
+  }
+  async function updateDeal(client, workspaceId, dealId, patch) {
+    if (!workspaceId || !dealId) throw new Error('Workspace and deal are required');
+    if (!patch || Array.isArray(patch) || typeof patch !== 'object' || !Object.keys(patch).length)
+      throw new Error('A nonempty deal patch is required');
+    const { data, error } = await client.rpc('update_company_deal', {
+      p_company_id: workspaceId, p_deal_id: dealId, p_patch: patch
+    });
+    if (error) throw error;
+    return data;
+  }
+  async function deleteDeal(client, workspaceId, dealId, confirmed) {
+    if (confirmed !== true) throw new Error('Confirm deal deletion first');
+    if (!workspaceId || !dealId) throw new Error('Workspace and deal are required');
+    const { data, error } = await client.rpc('delete_company_deal', {
+      p_company_id: workspaceId, p_deal_id: dealId
+    });
+    if (error) throw error;
+    return data === true;
+  }
+  const api = { normalizeWorkspaces, selectWorkspace, listWorkspaces, listDeals, getDeal, updateDeal, deleteDeal };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.JGAPWorkspaceClient = api;
 })(typeof window !== 'undefined' ? window : globalThis);
