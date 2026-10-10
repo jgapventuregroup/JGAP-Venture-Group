@@ -31,6 +31,9 @@ begin
   if p_name is null or length(pg_catalog.btrim(p_name)) < 1 then
     raise exception 'Deal name is required';
   end if;
+  if p_purchase_price is null or p_purchase_price < 0 then
+    raise exception 'Purchase price must be zero or greater';
+  end if;
   insert into public.deals (
     company_id,name,status,property_type,purchase_price,down_payment,interest_rate,
     loan_term_years,closing_costs,rehab_cost,monthly_rent,vacancy_rate,
@@ -53,6 +56,7 @@ set search_path = ''
 as $$
   select d.* from public.deals d
   where d.company_id = p_company_id
+    and (select auth.uid()) is not null
     and public.is_company_member(p_company_id)
   order by d.created_at desc;
 $$;
