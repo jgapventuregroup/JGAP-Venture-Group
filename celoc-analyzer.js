@@ -1,7 +1,7 @@
 /* JGAP CELOC Analyzer - isolated module. Never edits existing analyzer calculations. */
 (function(){
   'use strict';
-  var VERSION='20261005-1';
+  var VERSION='20261010-2';
   var RATE_DEFAULT=7.5;
   var panelId='jgapCelocPanel';
   var stateKey='jgap_celoc_v1';
@@ -29,15 +29,18 @@
   function findPurchasePrice(){
     var app=document.getElementById('app'); if(!app) return 0;
     var inputs=Array.prototype.slice.call(app.querySelectorAll('input'));
-    for(var i=0;i<inputs.length;i++){
-      var el=inputs[i], meta=((el.name||'')+' '+(el.id||'')+' '+(el.placeholder||'')).toLowerCase();
-      if(/purchase.*price|asking.*price|offer.*price|purchaseprice/.test(meta)) return num(el.value);
-    }
-    var labels=Array.prototype.slice.call(app.querySelectorAll('label'));
-    for(var j=0;j<labels.length;j++){
-      var t=(labels[j].textContent||'').toLowerCase();
-      if(/purchase price|asking price|offer price/.test(t)){
-        var inp=labels[j].querySelector('input'); if(inp) return num(inp.value);
+    // Prefer the proposed purchase/offer amount over the seller's asking price.
+    // Only fall back to asking price if no usable offer or purchase price exists.
+    var groups=[/\\b(?:offer|proposed|bid)\\b.*\\bprice\\b|\\bofferprice\\b|\\boffer_price\\b/,
+                /\\bpurchase\\b.*\\bprice\\b|\\bpurchaseprice\\b|\\bpurchase_price\\b/,
+                /\\basking\\b.*\\bprice\\b|\\blist(?:ing)?\\b.*\\bprice\\b|\\baskingprice\\b|\\basking_price\\b/];
+    for(var g=0;g<groups.length;g++){
+      for(var i=0;i<inputs.length;i++){
+        var el=inputs[i];
+        if(el.closest && el.closest('#'+panelId)) continue;
+        var label=el.closest && el.closest('label');
+        var meta=((el.name||'')+' '+(el.id||'')+' '+(el.placeholder||'')+' '+(label?label.textContent:'')).toLowerCase();
+        if(groups[g].test(meta) && num(el.value)>0) return num(el.value);
       }
     }
     return 0;
