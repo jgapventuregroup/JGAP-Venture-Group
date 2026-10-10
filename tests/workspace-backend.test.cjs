@@ -260,3 +260,13 @@ test('simple deal creation enforces analyzer numeric boundaries in SQL draft', (
   assert.match(sql, /p_vacancy_rate > 100/);
   assert.match(sql, /p_loan_term_years > 100/);
 });
+
+test('both draft deal creation RPCs reject blank status and property type', () => {
+  for (const file of ['staging_company_deals.sql','staging_company_deal_with_offer.sql']) {
+    const sql = load(file);
+    assert.ok(sql.includes("p_status is null or pg_catalog.btrim(p_status) = ''"), file);
+    assert.ok(sql.includes("p_property_type is null or pg_catalog.btrim(p_property_type) = ''"), file);
+    assert.ok(sql.includes('Deal status is required'), file);
+    assert.ok(sql.includes('Property type is required'), file);
+  }
+});
