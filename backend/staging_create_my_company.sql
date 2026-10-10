@@ -17,6 +17,9 @@ begin
   if length(v_name) < 2 or length(v_name) > 100 then
     raise exception 'Company name must be 2 to 100 characters';
   end if;
+  if pg_catalog.strpos(v_name, chr(0)) > 0 then
+    raise exception 'Invalid company name';
+  end if;
   -- Serializes simultaneous onboarding attempts for the same authenticated user.
   perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(v_uid::text, 0));
   select cm.company_id into v_company
@@ -26,6 +29,15 @@ begin
     limit 1;
   if v_company is not null then
     return pg_catalog.jsonb_build_object('company_id',v_company,'status','already_member');
+  end if;
+  -- A pending invitation should be accepted via the existing invitation flow,
+  -- rather than creating a workspace that may strand the invited user.
+  if exists (
+    select 1 from public.company_invitations ci
+    where pg_catalog.lower(ci.email) = pg_catalog.lower(coalesce((select email from auth.users where id=v_uid),''))
+      and ci.status = 'pending'
+  ) then
+    raise exception 'Pending company invitation: accept your invitation first';
   end if;
   insert into public.companies(name) values(v_name) returning id into v_company;
   insert into public.company_members(company_id,user_id,role)
