@@ -34,3 +34,12 @@ Run every scenario in `TENANT_ISOLATION_TEST_PLAN.md` and capture the signed-in 
 Immediately stop on any cross-company data exposure, viewer write access, privilege escalation, missing original records, SQL errors, unexpected charges, or failed rollback verification.
 
 **Approval boundary:** This document authorizes no deployment, production SQL, customer data changes, merges, or paid services.
+
+## Email verification decision before onboarding activation
+- The draft `create_my_company` RPC currently requires authentication but does **not** require a verified email. This is an open policy decision, not a completed safeguard.
+- Before enabling public customer signup, decide whether email verification is mandatory. If yes, add a server-side check of the authenticated user's verified-email timestamp, and test both verified and unverified users in isolated staging.
+- Do not rely solely on a disabled frontend button or on the email value supplied by the browser. Preserve existing company memberships; any verification gate should apply to **new workspace creation**, not block existing members from accessing their properties.
+- Confirm the chosen email-confirmation behavior with the actual Supabase Auth configuration and identity-provider flows. Do not modify production Auth settings without separate approval.
+
+## Release evidence record template
+For each staging test, record: `test_id`, `schema_commit`, `test_project_id`, `account_role`, `company_id`, `endpoint`, `expected`, `observed`, `pass_fail`, and `reviewer`. Use synthetic identifiers in shared reports. A passing static CI run is not a substitute for these records.
