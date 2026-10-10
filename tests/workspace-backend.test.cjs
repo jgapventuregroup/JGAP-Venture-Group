@@ -97,3 +97,11 @@ test('deal edits reject empty names and preserve Analyzer update fields', () => 
     assert.ok(allowed && allowed[1].includes("'" + field + "'"), field);
   }
 });
+
+test('restricted-search-path update qualifies JSON and formatting helpers', () => {
+  const sql = load('staging_update_company_deal.sql');
+  for (const fn of ['pg_catalog.jsonb_typeof','pg_catalog.jsonb_object_keys',
+    'pg_catalog.jsonb_populate_record','pg_catalog.format','pg_catalog.cardinality']) {
+    assert.ok(sql.includes(fn), fn);
+  }
+});
