@@ -72,7 +72,7 @@
     'projected_sale_price','loan_structure'
   ]);
   async function updateDeal(client, workspaceId, dealId, patch) {
-    if (!workspaceId || !dealId) throw new Error('Workspace and deal are required');
+    if (typeof workspaceId !== 'string' || !workspaceId.trim() || typeof dealId !== 'string' || !dealId.trim()) throw new Error('Workspace and deal are required');
     if (!patch || Array.isArray(patch) || typeof patch !== 'object' || !Object.keys(patch).length)
       throw new Error('A nonempty deal patch is required');
     if (Object.getPrototypeOf(patch) !== Object.prototype && Object.getPrototypeOf(patch) !== null)
@@ -88,7 +88,7 @@
   }
   async function deleteDeal(client, workspaceId, dealId, confirmed) {
     if (confirmed !== true) throw new Error('Confirm deal deletion first');
-    if (!workspaceId || !dealId) throw new Error('Workspace and deal are required');
+    if (typeof workspaceId !== 'string' || !workspaceId.trim() || typeof dealId !== 'string' || !dealId.trim()) throw new Error('Workspace and deal are required');
     const { data, error } = await client.rpc('delete_company_deal', {
       p_company_id: workspaceId, p_deal_id: dealId
     });
