@@ -68,10 +68,10 @@
 
     var store=getStore(), key=dealKey(), saved=store[key]||{};
     var purchase=findPurchasePrice();
-    var downPct=Number(saved.downPct||findDownPct()||20);
-    var amount=Number(saved.amount||0);
+    var downPct=Number(saved.d ?? saved.downPct ?? findDownPct() ?? 20);
+    var amount=Number(saved.a ?? saved.amount ?? 0);
     if(!amount && purchase) amount=Math.round(purchase*downPct/100*100)/100;
-    var rate=Number(saved.rate||RATE_DEFAULT);
+    var rate=Number(saved.r ?? saved.rate ?? RATE_DEFAULT);
 
     var panel=document.createElement('section');
     panel.id=panelId;
