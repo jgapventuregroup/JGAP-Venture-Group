@@ -191,3 +191,14 @@ test('workspace normalization accepts already normalized records and rejects una
   assert.throws(() => client.selectWorkspace(normalized, 'outsider'), /not authorized/);
   assert.throws(() => client.selectWorkspace(normalized, null), /Choose a workspace/);
 });
+
+test('blank workspace and deal identifiers never reach RPC', async () => {
+  let calls = 0;
+  const db = {rpc: async () => { calls++; return {data:null,error:null}; }};
+  await assert.rejects(client.listDeals(db, '   '), /Select a workspace/);
+  await assert.rejects(client.createDeal(db, '   ', {name:'Property'}), /Select a workspace/);
+  await assert.rejects(client.getDeal(db, 'alpha', '   '), /Workspace and deal/);
+  await assert.rejects(client.updateDeal(db, 'alpha', '   ', {name:'Updated'}), /Workspace and deal/);
+  await assert.rejects(client.deleteDeal(db, 'alpha', '   ', true), /Workspace and deal/);
+  assert.equal(calls, 0);
+});
