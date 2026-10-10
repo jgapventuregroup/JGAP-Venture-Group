@@ -41,7 +41,7 @@ test('missing operating expenses blocks maximum offer recommendation',()=>{
 test('cash comparison uses full purchase price and zero loan',()=>{
  const get=evaluate({...baseline,d_loan_structure:'none',d_down:0});
  const html=get('financingComparison').innerHTML;
- assert.match(html,/\$250,000/);
+ assert.match(html,/<td>\$0<\/td><td>\$265,000<\/td><td>\$0<\/td>/);
  assert.match(html,/\$265,000/);
  assert.match(html,/\$0/);
  assert.doesNotMatch(html,/\$225,000/);
