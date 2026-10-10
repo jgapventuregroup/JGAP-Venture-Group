@@ -204,7 +204,7 @@ test('customer app excludes private JGAP Book scripts and navigation', () => {
     'navLearningBook', 'openJGAPLearningBook', 'renderLearningBookPage']) {
     assert.ok(!html.includes(token), 'Customer index still references ' + token);
   }
-  for (const file of ['learning-book.js', 'learning-book-runtime.js']) {
+  for (const file of ['learning-book.js', 'learning-book-runtime.js', 'jgap-book-cover.jpg', '.github/workflows/wire-book-export.yml']) {
     assert.ok(!fs.existsSync(path.join(root, file)), 'Customer bundle still ships ' + file);
   }
 });
