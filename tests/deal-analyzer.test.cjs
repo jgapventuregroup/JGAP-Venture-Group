@@ -165,3 +165,14 @@ test('cash purchase can have a blank interest rate',()=>{
  const get=evaluate({...baseline,d_loan_structure:'none',d_down:0,d_rate:''});
  assert.notEqual(get('r_jgap_max_price').textContent,'Incomplete');
 });
+
+test('syncDealTestPrice clears stale purchase price when both price fields are blank',()=>{
+ const begin=source.indexOf('function syncDealTestPrice(){');
+ const end=source.indexOf('function calcDeal(){',begin);
+ assert.ok(begin>=0&&end>begin);
+ const values={d_price:{value:'999999'},d_asking:{value:''},d_target_offer:{value:''}};
+ vm.runInNewContext(source.slice(begin,end)+';syncDealTestPrice()',{
+  document:{getElementById:id=>values[id]}
+ });
+ assert.equal(values.d_price.value,'');
+});
