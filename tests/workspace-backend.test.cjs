@@ -105,3 +105,17 @@ test('restricted-search-path update qualifies JSON and formatting helpers', () =
     assert.ok(sql.includes(fn), fn);
   }
 });
+
+test('offer creation execute grants exactly match the declared SQL signature', () => {
+  const sql = load('staging_company_deal_with_offer.sql');
+  const declaration = sql.match(/create or replace function public\.create_company_deal_with_offer\(([\s\S]*?)\)\s*returns uuid/);
+  assert.ok(declaration);
+  const types = declaration[1].split('\n').map(x => x.trim())
+    .filter(x => x.startsWith('p_'))
+    .map(x => x.match(/^p_\w+\s+(\w+)/)[1]);
+  const grants = [...sql.matchAll(/(?:revoke all|grant execute) on function public\.create_company_deal_with_offer\(([\s\S]*?)\)\s+(?:from|to)/g)];
+  assert.equal(grants.length, 2);
+  for (const grant of grants) {
+    assert.deepEqual(grant[1].replace(/\s/g, '').split(','), types);
+  }
+});
