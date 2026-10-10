@@ -111,3 +111,23 @@ test('read-only deal preview renders user-controlled names as text, not HTML', (
   assert.match(html, /for\(const deal of deals\.slice\(0,10\)\)/);
   assert.match(html, /message\.replaceChildren\(\)/);
 });
+
+test('workspace creation requires explicit confirmation and valid name', async () => {
+  let calls = 0;
+  const db = { rpc: async (name, args) => {
+    calls++;
+    assert.equal(name, 'create_my_company');
+    assert.deepEqual(args, { p_company_name: 'New Company' });
+    return { data: { company_id: 'new-company-id', status: 'created' }, error: null };
+  }};
+  await assert.rejects(client.createWorkspace(db, 'New Company', false), /Confirm/);
+  await assert.rejects(client.createWorkspace(db, ' ', true), /2 to 100/);
+  assert.equal(calls, 0);
+  const result = await client.createWorkspace(db, ' New Company ', true);
+  assert.equal(result.company_id, 'new-company-id');
+  assert.equal(calls, 1);
+});
+test('workspace creation propagates backend errors and rejects malformed replies', async () => {
+  await assert.rejects(client.createWorkspace({ rpc: async () => ({error: new Error('Pending invitation')}) }, 'Valid', true), /Pending invitation/);
+  await assert.rejects(client.createWorkspace({ rpc: async () => ({data: {status:'created'}}) }, 'Valid', true), /invalid result/);
+});
