@@ -132,3 +132,8 @@ test('deal edits enforce vacancy and loan term bounds', () => {
   assert.ok(sql.includes('Vacancy rate must be between 0 and 100'));
   assert.ok(sql.includes('Loan term must be between 0 and 100 years'));
 });
+
+test('deal edits enforce interest rate bounds', () => {
+  const sql = load('staging_update_company_deal.sql');
+  assert.ok(sql.includes('Interest rate must be between 0 and 100'));
+});
