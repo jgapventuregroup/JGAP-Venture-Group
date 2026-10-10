@@ -77,3 +77,14 @@ test('all-cash deal uses full purchase price for invested capital and cash-on-ca
  assert.match(get('priceSensitivity').innerHTML,/\$265,000/);
  assert.match(get('offerWorksheet').innerHTML,/\$255,000/);
 });
+
+test('missing loan term blocks underwriting instead of silently assuming one year',()=>{
+ const get=evaluate({...baseline,d_term:0});
+ assert.equal(get('r_target').textContent,'Incomplete underwriting');
+ assert.equal(get('r_jgap_max_price').textContent,'Incomplete');
+ assert.match(get('dealStatus').innerHTML,/Loan term is missing/);
+});
+test('cash deals do not require a loan term',()=>{
+ const get=evaluate({...baseline,d_loan_structure:'none',d_down:0,d_term:0});
+ assert.notEqual(get('r_target').textContent,'Incomplete underwriting');
+});
