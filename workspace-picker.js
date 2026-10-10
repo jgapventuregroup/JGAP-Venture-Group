@@ -40,7 +40,10 @@
         if (!selected) throw new Error('Choose a company');
         status.textContent = '';
         const requestSequence = selectionSequence;
-        Promise.resolve().then(() => onSelect(selected)).catch(error => {
+        Promise.resolve().then(() => {
+          if (requestSequence !== selectionSequence || !container.isConnected) return;
+          return onSelect(selected);
+        }).catch(error => {
           if (requestSequence !== selectionSequence || !container.isConnected) return;
           status.textContent = 'Unable to open workspace: ' + (error && error.message ? error.message : 'Request failed');
         });
@@ -52,8 +55,11 @@
     container.replaceChildren(label, select, status);
     if (model.selectedId) {
       const requestSequence = ++selectionSequence;
-      Promise.resolve().then(() => onSelect(clientApi.selectWorkspace(workspaces, model.selectedId))).catch(error => {
-        if (requestSequence !== selectionSequence) return;
+      Promise.resolve().then(() => {
+        if (requestSequence !== selectionSequence || !container.isConnected) return;
+        return onSelect(clientApi.selectWorkspace(workspaces, model.selectedId));
+      }).catch(error => {
+        if (requestSequence !== selectionSequence || !container.isConnected) return;
         status.textContent = 'Unable to open workspace: ' + (error && error.message ? error.message : 'Request failed');
       });
     }
