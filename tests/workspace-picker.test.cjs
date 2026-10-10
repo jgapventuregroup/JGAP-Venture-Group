@@ -87,3 +87,19 @@ test('unmounted picker ignores subsequent selection events', async () => {
   await Promise.resolve();
   assert.equal(called, 0);
 });
+
+test('queued automatic selection is cancelled if picker unmounts before microtask', async () => {
+  const container = new Element(doc, 'div'); let called = 0;
+  mount(container, [workspace('alpha')], () => { called++; });
+  container.isConnected = false;
+  await Promise.resolve();
+  assert.equal(called, 0);
+});
+test('queued selection is cancelled if picker unmounts before microtask', async () => {
+  const container = new Element(doc, 'div'); let called = 0;
+  const {select} = mount(container, [workspace('alpha'), workspace('beta')], () => { called++; });
+  select.value = 'beta'; select.listeners.change();
+  container.isConnected = false;
+  await Promise.resolve();
+  assert.equal(called, 0);
+});
