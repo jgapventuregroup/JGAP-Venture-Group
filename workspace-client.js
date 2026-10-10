@@ -88,7 +88,20 @@
     if (error) throw error;
     return data;
   }
-  const api = { normalizeWorkspaces, selectWorkspace, listWorkspaces, listDeals, getDeal, createDeal, updateDeal, deleteDeal };
+  function renderWorkspacePicker(workspaces, selectedId) {
+    const rows = normalizeWorkspaces(workspaces);
+    const selected = selectedId ? selectWorkspace(workspaces, selectedId) : null;
+    const choices = rows.map(row => ({
+      value: row.id,
+      label: row.name + ' (' + row.role + ')'
+    }));
+    return {
+      required: rows.length > 1 && !selected,
+      selectedId: selected ? selected.id : (rows.length === 1 ? rows[0].id : null),
+      choices
+    };
+  }
+  const api = { normalizeWorkspaces, selectWorkspace, renderWorkspacePicker, listWorkspaces, listDeals, getDeal, createDeal, updateDeal, deleteDeal };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.JGAPWorkspaceClient = api;
 })(typeof window !== 'undefined' ? window : globalThis);
