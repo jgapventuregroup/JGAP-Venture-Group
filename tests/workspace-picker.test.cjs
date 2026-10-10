@@ -47,3 +47,20 @@ test('async selection failures appear in accessible status', async () => {
   await new Promise(resolve => setImmediate(resolve));
   assert.match(status.textContent, /Backend unavailable/);
 });
+
+test('stale async failure cannot overwrite newer company selection', async () => {
+  const container = new Element(doc, 'div');
+  let rejectOld;
+  const pending = new Promise((_, reject) => { rejectOld = reject; });
+  const { select, status } = mount(container, [workspace('alpha'), workspace('beta')], row => {
+    if (row.id === 'alpha') return pending;
+    return Promise.resolve();
+  });
+  select.value = 'alpha'; select.listeners.change();
+  await Promise.resolve();
+  select.value = 'beta'; select.listeners.change();
+  await Promise.resolve();
+  rejectOld(new Error('Old workspace failed'));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.doesNotMatch(status.textContent, /Old workspace failed/);
+});
