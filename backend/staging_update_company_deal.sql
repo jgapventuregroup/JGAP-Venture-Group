@@ -47,7 +47,7 @@ begin
   if p_patch is null or pg_catalog.jsonb_typeof(p_patch) <> 'object' then
     raise exception 'Patch must be a JSON object';
   end if;
-  select array_agg(k order by k) into v_columns
+  select pg_catalog.array_agg(k order by k) into v_columns
   from pg_catalog.jsonb_object_keys(p_patch) as k;
   if v_columns is null or pg_catalog.cardinality(v_columns) = 0 then
     raise exception 'Patch must not be empty';
