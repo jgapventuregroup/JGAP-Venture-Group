@@ -141,3 +141,11 @@ test('deal update rejects tenant identity and unexpected fields before RPC', asy
   await client.updateDeal(db, 'alpha', 'deal', {name:'Renamed'});
   assert.equal(calls, 1);
 });
+
+test('deal patch rejects non-plain objects without contacting backend', async () => {
+  let calls = 0;
+  const db = { rpc: async () => { calls++; return {data:{},error:null}; } };
+  await assert.rejects(client.updateDeal(db, 'alpha', 'deal', new Date()), /nonempty|plain object/);
+  await assert.rejects(client.updateDeal(db, 'alpha', 'deal', Object.assign(new Date(), {name:'x'})), /plain object/);
+  assert.equal(calls, 0);
+});
