@@ -18,6 +18,7 @@ end;
 $$;
 
 revoke all on function jgap_private.prevent_deal_company_reassignment() from public,anon,authenticated;
+-- Trigger invocation uses the table trigger mechanism, not direct RPC EXECUTE.
 
 drop trigger if exists prevent_deal_company_reassignment on public.deals;
 create trigger prevent_deal_company_reassignment
