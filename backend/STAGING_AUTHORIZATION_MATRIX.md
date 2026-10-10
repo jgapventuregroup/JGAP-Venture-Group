@@ -63,3 +63,28 @@ test_id,utc_timestamp,git_commit,staging_project,actor_role,actor_company,target
 ```
 
 **Launch gate:** All tests must pass with evidence and a reviewed rollback plan. Mock client tests and GitHub CI do not establish database isolation. No production SQL, merge, public signup, or subscription payments without separate approval.
+
+## JSON deal-update validation cases
+
+Run these against a disposable staging deal as an authorized editor, then re-read the row after each attempt. These specifically exercise the dynamic JSON update RPC, not just the browser client.
+
+| Patch | Expected |
+|---|---|
+| `{}` | Rejected; no changes |
+| `{"company_id":"<other-company>"}` | Rejected; cannot transfer deal |
+| `{"owner_id":"<other-user>"}` | Rejected; cannot alter ownership |
+| `{"name":""}` | Rejected; original name retained |
+| `{"status":null}` | Rejected; status retained |
+| `{"property_type":"   "}` | Rejected; type retained |
+| `{"purchase_price":null}` | Rejected; price retained |
+| `{"purchase_price":-1}` | Rejected; price retained |
+| `{"vacancy_rate":101}` | Rejected; rate retained |
+| `{"interest_rate":-1}` | Rejected; rate retained |
+| `{"loan_term_years":101}` | Rejected; term retained |
+| `{"units":0}` | Rejected; units retained |
+| `{"name":"Valid updated name"}` | Allowed; only name changes |
+
+For a cross-company UUID, every patch must fail even when the actor has editor rights in another company. Confirm database constraints and RLS enforce this independently of the client-side allowlist.
+
+### Review finding: SQL patch implementation
+The draft `staging_update_company_deal.sql` builds a dynamic update from a fixed field allowlist and uses `jsonb_populate_record` for typed conversion. This implementation **has not been executed on a staging schema**. Confirm PostgreSQL function resolution, column types, null handling, SQL permissions, and the generated `UPDATE ... RETURNING` behavior before approving the migration. Do not infer SQL correctness from JavaScript tests.
