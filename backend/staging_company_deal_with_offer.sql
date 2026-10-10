@@ -49,6 +49,22 @@ begin
   if p_name is null or length(pg_catalog.btrim(p_name)) = 0 then
     raise exception 'Deal name is required';
   end if;
+  -- Creation must enforce the same core financial constraints as edits.
+  if p_purchase_price < 0 or p_down_payment < 0 or p_closing_costs < 0
+     or p_rehab_cost < 0 or p_monthly_rent < 0
+     or p_monthly_operating_expenses < 0 or p_other_monthly_income < 0
+     or p_asking_price < 0 or p_target_offer_price < 0
+     or p_offer_earnest_money < 0 then
+    raise exception 'Deal amounts cannot be negative';
+  end if;
+  if p_interest_rate < 0 or p_interest_rate > 100
+     or p_vacancy_rate < 0 or p_vacancy_rate > 100 then
+    raise exception 'Interest and vacancy rates must be between 0 and 100';
+  end if;
+  if p_loan_term_years < 0 or p_loan_term_years > 100
+     or p_offer_due_diligence_days < 0 or p_offer_closing_days < 0 then
+    raise exception 'Deal timeline values are outside permitted bounds';
+  end if;
   insert into public.deals (
     company_id,name,property_type,status,purchase_price,down_payment,interest_rate,
     loan_term_years,closing_costs,rehab_cost,monthly_rent,vacancy_rate,
