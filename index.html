@@ -1088,10 +1088,13 @@ function calcDeal(){
  const tc=n("d_target_coc")/100,tp=n("d_target_cap")/100,tdv=document.getElementById("d_target_dscr")?.value,td=tdv===""?null:Number(tdv);
  const underwritingIssues=[];
  if(price<=0)underwritingIssues.push("Purchase price is missing or zero.");
+ if(document.getElementById("d_price")?.value!=="" && !Number.isFinite(Number(document.getElementById("d_price")?.value)))underwritingIssues.push("Purchase price must be a valid number.");
  if(rent<=0)underwritingIssues.push("Monthly rent / gross revenue is missing or zero.");
  if(exp<=0)underwritingIssues.push("Monthly operating expenses are zero or missing; returns may be overstated until real/estimated OpEx is entered.");
  if(structure!=="none" && price>0 && down>price)underwritingIssues.push("Down payment exceeds the purchase price.");
  if(structure!=="none" && rate<0)underwritingIssues.push("Interest rate cannot be negative.");
+ if(structure!=="none" && rate>1)underwritingIssues.push("Interest rate cannot exceed 100%.");
+ if(structure!=="none" && down===0)underwritingIssues.push("Enter a down payment, or select an all-cash structure if appropriate.");
  if(structure!=="none" && document.getElementById("d_rate")?.value==="")underwritingIssues.push("Interest rate is missing.");
  if(down<0)underwritingIssues.push("Down payment cannot be negative.");
  if(rent<0 || exp<0 || close<0 || rehab<0)underwritingIssues.push("Rent, expenses, closing costs, and rehab costs cannot be negative.");
