@@ -11,10 +11,10 @@ as $$
 declare
   v_uid uuid := (select auth.uid());
   v_company uuid;
-  v_name text := btrim(coalesce(p_company_name,''));
+  v_name text := pg_catalog.btrim(pg_catalog.coalesce(p_company_name,''));
 begin
   if v_uid is null then raise exception 'Authentication required'; end if;
-  if length(v_name) < 2 or length(v_name) > 100 then
+  if pg_catalog.length(v_name) < 2 or pg_catalog.length(v_name) > 100 then
     raise exception 'Company name must be 2 to 100 characters';
   end if;
   -- Serializes simultaneous onboarding attempts for the same authenticated user.
@@ -31,7 +31,7 @@ begin
   -- rather than creating a workspace that may strand the invited user.
   if exists (
     select 1 from public.company_invitations ci
-    where pg_catalog.lower(ci.email) = pg_catalog.lower(coalesce((select email from auth.users where id=v_uid),''))
+    where pg_catalog.lower(ci.email) = pg_catalog.lower(pg_catalog.coalesce((select email from auth.users where id=v_uid),''))
       and ci.status = 'pending'
   ) then
     raise exception 'Pending company invitation: accept your invitation first';
