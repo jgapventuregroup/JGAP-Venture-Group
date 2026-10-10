@@ -193,17 +193,19 @@ async function mountJGAPWorkspacePreview(){
   status.after(area);
   try{
     const workspaces=await window.JGAPWorkspaceClient.listWorkspaces(sb);
+    if(!area.isConnected)return;
     const picker=document.createElement("div");
     const message=document.createElement("p");
     area.replaceChildren(picker,message);
     window.JGAPWorkspacePicker.mount(picker,workspaces,async selected=>{
+      if(!area.isConnected)return;
       jgapPreviewWorkspaceId=selected.id;
       message.textContent="Loading deals for "+selected.name+"…";
       try{
         const deals=await window.JGAPWorkspaceClient.listDeals(sb,selected.id);
-        if(jgapPreviewWorkspaceId!==selected.id)return;
+        if(!area.isConnected || jgapPreviewWorkspaceId!==selected.id)return;
         message.textContent=selected.name+": "+deals.length+" deal(s). Preview only; existing dashboard remains unchanged.";
-      }catch(error){if(jgapPreviewWorkspaceId===selected.id)message.textContent="Workspace deal preview unavailable: "+(error.message||"Request failed");}
+      }catch(error){if(area.isConnected && jgapPreviewWorkspaceId===selected.id)message.textContent="Workspace deal preview unavailable: "+(error.message||"Request failed");}
     });
   }catch(error){
     area.textContent="Workspace preview unavailable until the new database functions are deployed: "+(error.message||"Request failed");
