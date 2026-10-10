@@ -25,3 +25,12 @@ Scope: static repository inspection and GitHub Actions tests on draft branch `au
 
 ## Release gate
 Do **not** merge PR #73 or onboard paying customers until data isolation, browser smoke tests, and billing enforcement are verified. No changes to production Supabase data or production branch were made by this report.
+
+## Live Supabase read-only security findings (2026-10-10)
+- Inspected project `sfsyphmnzxaplundaljy` using read-only metadata SQL and the Supabase security advisor. **No database mutations.**
+- All public tables returned by the metadata query had RLS enabled. Core `deals`, `properties`, and related operational tables have `is_company_member(company_id)` access policies. This is encouraging but does not substitute for an authenticated two-account isolation test.
+- Supabase advisor reports **17 tables with RLS enabled but no policies**, chiefly Deal Intelligence and Radar support tables. These default-deny for ordinary API users; determine whether they are intentionally backend-only or missing necessary client policies. Reference: https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy
+- Advisor also reports **63 authenticated-executable SECURITY DEFINER functions**. This is a review list, not proof of exploitability. Audit grants, search paths, argument validation and tenant checks before public onboarding. Reference: https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable
+- **Confirmed customer onboarding design blocker:** `public.bootstrap_current_user()` looks up a company by hard-coded name `JGAP Venture Group LLC`, creates it if absent, and returns `not_authorized` for newly signed-in users once membership exists. It does **not** provision a separate tenant/company per customer. Preserve the existing private company and its data. Design a safe self-service tenant-creation/invitation flow with isolated ownership and verified RLS before subscriptions.
+- `create_current_user_deal_with_offer()` selects the first company membership for the current authenticated user, which may be ambiguous if users can join multiple organizations; address during tenant onboarding design.
+- Recommended immediate action: keep public self-service sales disabled; draft and review tenant model, then test with two distinct test accounts. Do not loosen RLS to make onboarding work.
