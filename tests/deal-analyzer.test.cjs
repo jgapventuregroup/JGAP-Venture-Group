@@ -16,7 +16,7 @@ function evaluate(fields){
   const elements=new Map();
   for(const [id,value] of Object.entries(fields))elements.set(id,{value:String(value),textContent:'',innerHTML:'',style:{}});
   const get=id=>{if(!elements.has(id))elements.set(id,{value:'',textContent:'',innerHTML:'',style:{}});return elements.get(id)};
-  const ctx={document:{getElementById:get},n:id=>Number(get(id).value)||0,money2:v=>'$'+Math.round(Number(v)||0).toLocaleString('en-US'),setupDealAnalyzerCollapsibles:()=>{}};
+  const ctx={document:{getElementById:get},n:id=>Number(get(id).value)||0,money2:v=>'$'+Math.round(Number(v)||0).toLocaleString('en-US'),setupDealAnalyzerCollapsibles:()=>{},escapeHtml:v=>String(v)};
   vm.runInNewContext(calc+';calcDeal()',ctx);
   return get;
 }
