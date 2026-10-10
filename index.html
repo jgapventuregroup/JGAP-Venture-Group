@@ -204,7 +204,22 @@ async function mountJGAPWorkspacePreview(){
       try{
         const deals=await window.JGAPWorkspaceClient.listDeals(sb,selected.id);
         if(!area.isConnected || jgapPreviewWorkspaceId!==selected.id)return;
-        message.textContent=selected.name+": "+deals.length+" deal(s). Preview only; existing dashboard remains unchanged.";
+        message.replaceChildren();
+        const summary=document.createElement("p");
+        summary.textContent=selected.name+": "+deals.length+" deal(s). Read-only preview; existing dashboard remains unchanged.";
+        message.appendChild(summary);
+        const list=document.createElement("ul");
+        for(const deal of deals.slice(0,10)){
+          const item=document.createElement("li");
+          item.textContent=String(deal.name||"Unnamed deal")+" — "+String(deal.status||"No status");
+          list.appendChild(item);
+        }
+        if(deals.length>10){
+          const more=document.createElement("li");
+          more.textContent="And "+(deals.length-10)+" more deals.";
+          list.appendChild(more);
+        }
+        message.appendChild(list);
       }catch(error){if(area.isConnected && jgapPreviewWorkspaceId===selected.id)message.textContent="Workspace deal preview unavailable: "+(error.message||"Request failed");}
     });
   }catch(error){
