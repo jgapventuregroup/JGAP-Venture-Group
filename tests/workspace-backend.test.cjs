@@ -171,7 +171,8 @@ test('basic workspace deal RPCs require explicit authenticated company scope', (
   assert.ok(sql.includes('p_company_id is null'));
   assert.ok(sql.includes('public.is_company_member(p_company_id)'));
   assert.ok(sql.includes('(select auth.uid()) is not null'));
-  assert.ok(sql.includes('Purchase price must be zero or greater'));
+  assert.ok(sql.includes('Deal amounts cannot be negative'));
+  assert.ok(sql.includes('Required deal financial inputs cannot be null'));
   assert.ok(sql.includes('d.company_id = p_company_id'));
 });
 
