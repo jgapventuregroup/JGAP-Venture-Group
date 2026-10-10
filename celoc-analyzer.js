@@ -28,9 +28,14 @@
   }
   function findPurchasePrice(){
     var app=document.getElementById('app'); if(!app) return 0;
+    // The actual Deal Analyzer uses these IDs, not descriptive name attributes.
+    // Our explicit offer wins; otherwise use the tested price, then asking.
+    var priority=['visibleOfferInput','d_price','visibleAskingInput'];
+    for(var p=0;p<priority.length;p++){
+      var field=document.getElementById(priority[p]);
+      if(field && num(field.value)>0) return num(field.value);
+    }
     var inputs=Array.prototype.slice.call(app.querySelectorAll('input'));
-    // Prefer the proposed purchase/offer amount over the seller's asking price.
-    // Only fall back to asking price if no usable offer or purchase price exists.
     var groups=[/\\b(?:offer|proposed|bid)\\b.*\\bprice\\b|\\bofferprice\\b|\\boffer_price\\b/,
                 /\\bpurchase\\b.*\\bprice\\b|\\bpurchaseprice\\b|\\bpurchase_price\\b/,
                 /\\basking\\b.*\\bprice\\b|\\blist(?:ing)?\\b.*\\bprice\\b|\\baskingprice\\b|\\basking_price\\b/];
