@@ -29,6 +29,17 @@
     if (error) throw error;
     return normalizeWorkspaces(data);
   }
+  async function createWorkspace(client, companyName, confirmed) {
+    if (confirmed !== true) throw new Error('Confirm workspace creation first');
+    if (typeof companyName !== 'string') throw new Error('Company name must be 2 to 100 characters');
+    const name = companyName.trim();
+    if (name.length < 2 || name.length > 100) throw new Error('Company name must be 2 to 100 characters');
+    const { data, error } = await client.rpc('create_my_company', { p_company_name: name });
+    if (error) throw error;
+    if (!data || !data.company_id || !['created', 'already_member'].includes(data.status))
+      throw new Error('Workspace creation returned an invalid result');
+    return data;
+  }
   async function listDeals(client, workspaceId) {
     if (!workspaceId) throw new Error('Select a workspace first');
     const { data, error } = await client.rpc('list_company_deals', { p_company_id: workspaceId });
@@ -101,7 +112,7 @@
       choices
     };
   }
-  const api = { normalizeWorkspaces, selectWorkspace, renderWorkspacePicker, listWorkspaces, listDeals, getDeal, createDeal, updateDeal, deleteDeal };
+  const api = { normalizeWorkspaces, selectWorkspace, renderWorkspacePicker, listWorkspaces, createWorkspace, listDeals, getDeal, createDeal, updateDeal, deleteDeal };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.JGAPWorkspaceClient = api;
 })(typeof window !== 'undefined' ? window : globalThis);
