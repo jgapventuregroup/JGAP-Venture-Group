@@ -20,8 +20,10 @@
   }
   function selectWorkspace(workspaces, requestedId) {
     const rows = normalizeWorkspaces(workspaces);
-    if (requestedId) {
-      const match = rows.find(w => w.id === requestedId);
+    if (requestedId !== null && requestedId !== undefined && requestedId !== '') {
+      if (typeof requestedId !== 'string' || !requestedId.trim())
+        throw new Error('Selected workspace is not authorized');
+      const match = rows.find(w => w.id === requestedId.trim());
       if (!match) throw new Error('Selected workspace is not authorized');
       return match;
     }
