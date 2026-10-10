@@ -119,3 +119,9 @@ test('offer creation execute grants exactly match the declared SQL signature', (
     assert.deepEqual(grant[1].replace(/\s/g, '').split(','), types);
   }
 });
+
+test('deal update rejects negative purchase prices', () => {
+  const sql = load('staging_update_company_deal.sql');
+  assert.ok(sql.includes("p_patch ? 'purchase_price'"));
+  assert.ok(sql.includes("Purchase price cannot be negative"));
+});
