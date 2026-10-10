@@ -62,7 +62,33 @@
     if (error) throw error;
     return data === true;
   }
-  const api = { normalizeWorkspaces, selectWorkspace, listWorkspaces, listDeals, getDeal, updateDeal, deleteDeal };
+  async function createDeal(client, workspaceId, payload) {
+    if (!workspaceId) throw new Error('Select a workspace first');
+    if (!payload || Array.isArray(payload) || typeof payload !== 'object')
+      throw new Error('Deal details are required');
+    const name = typeof payload.name === 'string' ? payload.name.trim() : '';
+    if (!name) throw new Error('Deal name is required');
+    const args = { p_company_id: workspaceId, p_name: name };
+    const fields = [
+      'property_type', 'status', 'purchase_price', 'down_payment',
+      'interest_rate', 'loan_term_years', 'closing_costs', 'rehab_cost',
+      'monthly_rent', 'vacancy_rate', 'monthly_operating_expenses',
+      'other_monthly_income', 'notes', 'asking_price', 'target_offer_price',
+      'offer_notes', 'target_cap_rate', 'target_cash_on_cash',
+      'target_monthly_cash_flow', 'target_dscr', 'offer_earnest_money',
+      'offer_due_diligence_days', 'offer_closing_days', 'offer_financing_type',
+      'offer_contingencies', 'property_address', 'property_county',
+      'seller_name', 'offer_state', 'offer_template'
+    ];
+    for (const field of fields) {
+      if (Object.prototype.hasOwnProperty.call(payload, field))
+        args['p_' + field] = payload[field];
+    }
+    const { data, error } = await client.rpc('create_company_deal_with_offer', args);
+    if (error) throw error;
+    return data;
+  }
+  const api = { normalizeWorkspaces, selectWorkspace, listWorkspaces, listDeals, getDeal, createDeal, updateDeal, deleteDeal };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.JGAPWorkspaceClient = api;
 })(typeof window !== 'undefined' ? window : globalThis);
