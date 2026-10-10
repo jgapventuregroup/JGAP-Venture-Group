@@ -146,3 +146,11 @@ test('deal edits validate unit counts and timeline integers', () => {
   assert.ok(sql.includes('Units must be greater than zero'));
   assert.ok(sql.includes("p_patch->>v_column)::integer < 0"));
 });
+
+test('new deal creation validates financial amounts and rates before insert', () => {
+  const sql = load('staging_company_deal_with_offer.sql');
+  assert.ok(sql.includes('Deal amounts cannot be negative'));
+  assert.ok(sql.includes('Interest and vacancy rates must be between 0 and 100'));
+  assert.ok(sql.includes('Deal timeline values are outside permitted bounds'));
+  assert.ok(sql.indexOf('Deal amounts cannot be negative') < sql.indexOf('insert into public.deals'));
+});
