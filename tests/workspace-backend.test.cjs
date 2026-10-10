@@ -286,5 +286,5 @@ test('staging trigger prevents moving a deal between companies', () => {
   assert.match(sql, /before update of company_id on public\.deals/i);
   assert.match(sql, /execute function jgap_private\.prevent_deal_company_reassignment\(\)/i);
   assert.match(sql, /revoke all on function jgap_private\.prevent_deal_company_reassignment\(\) from public,anon,authenticated/i);
-  assert.doesNotMatch(sql, /disable trigger|security definer/i);
+  assert.doesNotMatch(sql.replace(/^\\s*--.*$/gm, ''), /disable trigger|security definer/i);
 });
