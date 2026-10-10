@@ -1,4 +1,4 @@
-/* Standalone workspace selector UI. Not loaded by production index.html.
+/* Standalone workspace selector UI. Loaded only by development branch's opt-in preview.
  * Caller must deploy and verify list_my_companies before invoking mount().
  */
 (function (root) {
@@ -32,6 +32,7 @@
     // Keep the selected workspace stable across rerenders; the caller owns any
     // asynchronous deal-loading race checks.
     select.addEventListener('change', () => {
+      if (!container.isConnected) return;
       // Invalidate in-flight selections even when the new choice is invalid.
       ++selectionSequence;
       try {
@@ -40,7 +41,7 @@
         status.textContent = '';
         const requestSequence = selectionSequence;
         Promise.resolve().then(() => onSelect(selected)).catch(error => {
-          if (requestSequence !== selectionSequence) return;
+          if (requestSequence !== selectionSequence || !container.isConnected) return;
           status.textContent = 'Unable to open workspace: ' + (error && error.message ? error.message : 'Request failed');
         });
       } catch (error) {
