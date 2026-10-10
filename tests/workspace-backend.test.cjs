@@ -247,3 +247,15 @@ test('every draft deal write RPC rejects read-only workspace roles', () => {
     assert.ok(sql.includes('security invoker'), file);
   }
 });
+
+test('simple deal creation enforces analyzer numeric boundaries in SQL draft', () => {
+  const sql = load('staging_company_deals.sql');
+  for (const field of ['p_purchase_price','p_down_payment','p_interest_rate','p_loan_term_years',
+    'p_closing_costs','p_rehab_cost','p_monthly_rent','p_vacancy_rate',
+    'p_monthly_operating_expenses','p_other_monthly_income']) {
+    assert.match(sql, new RegExp(field.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' is null'));
+  }
+  assert.match(sql, /p_interest_rate > 100/);
+  assert.match(sql, /p_vacancy_rate > 100/);
+  assert.match(sql, /p_loan_term_years > 100/);
+});
