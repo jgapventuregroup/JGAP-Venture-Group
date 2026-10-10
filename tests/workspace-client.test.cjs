@@ -85,3 +85,13 @@ test('workspace picker never silently selects among multiple companies', () => {
   assert.equal(client.renderWorkspacePicker([alpha, beta], 'beta').selectedId, 'beta');
   assert.throws(() => client.renderWorkspacePicker([alpha], 'beta'), /not authorized/);
 });
+
+test('development dashboard workspace preview is opt-in and preserves legacy flow', () => {
+  const fs = require('node:fs');
+  const html = fs.readFileSync(require('node:path').join(__dirname, '..', 'index.html'), 'utf8');
+  assert.match(html, /src="workspace-client\.js"/);
+  assert.match(html, /src="workspace-picker\.js"/);
+  assert.match(html, /workspace_preview/);
+  assert.match(html, /if\(JGAP_WORKSPACE_PREVIEW\) await mountJGAPWorkspacePreview\(\)/);
+  assert.match(html, /sb\.rpc\("bootstrap_current_user"\)/);
+});
