@@ -32,11 +32,13 @@
     // Keep the selected workspace stable across rerenders; the caller owns any
     // asynchronous deal-loading race checks.
     select.addEventListener('change', () => {
+      // Invalidate in-flight selections even when the new choice is invalid.
+      ++selectionSequence;
       try {
         const selected = clientApi.selectWorkspace(workspaces, select.value || null);
         if (!selected) throw new Error('Choose a company');
         status.textContent = '';
-        const requestSequence = ++selectionSequence;
+        const requestSequence = selectionSequence;
         Promise.resolve().then(() => onSelect(selected)).catch(error => {
           if (requestSequence !== selectionSequence) return;
           status.textContent = 'Unable to open workspace: ' + (error && error.message ? error.message : 'Request failed');
