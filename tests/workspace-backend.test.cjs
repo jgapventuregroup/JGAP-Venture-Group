@@ -220,3 +220,15 @@ test('single deal lookup requires both explicit workspace and deal IDs', () => {
   assert.ok(sql.includes('to authenticated'));
   assert.ok(!sql.includes('security definer'));
 });
+
+test('deal deletion is scoped to a selected company and requires an editing role', () => {
+  const sql = load('staging_delete_company_deal.sql');
+  assert.ok(sql.includes('security invoker'));
+  assert.ok(sql.includes('d.company_id = p_company_id'));
+  assert.ok(sql.includes('d.id = p_deal_id'));
+  assert.ok(sql.includes('public.is_company_member(p_company_id)'));
+  assert.ok(sql.includes("cm.role in ('owner', 'admin', 'editor')"));
+  assert.ok(sql.includes('Workspace role cannot delete deals'));
+  assert.ok(sql.includes('from public,anon'));
+  assert.ok(!sql.includes('security definer'));
+});
