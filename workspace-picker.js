@@ -35,14 +35,20 @@
         const selected = clientApi.selectWorkspace(workspaces, select.value || null);
         if (!selected) throw new Error('Choose a company');
         status.textContent = '';
-        onSelect(selected);
+        Promise.resolve().then(() => onSelect(selected)).catch(error => {
+          status.textContent = 'Unable to open workspace: ' + (error && error.message ? error.message : 'Request failed');
+        });
       } catch (error) {
         status.textContent = error.message;
         select.value = '';
       }
     });
     container.replaceChildren(label, select, status);
-    if (model.selectedId) onSelect(clientApi.selectWorkspace(workspaces, model.selectedId));
+    if (model.selectedId) {
+      Promise.resolve().then(() => onSelect(clientApi.selectWorkspace(workspaces, model.selectedId))).catch(error => {
+        status.textContent = 'Unable to open workspace: ' + (error && error.message ? error.message : 'Request failed');
+      });
+    }
     return { select, status };
   }
   const api = { mount };
