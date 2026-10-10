@@ -154,3 +154,14 @@ test('new deal creation validates financial amounts and rates before insert', ()
   assert.ok(sql.includes('Deal timeline values are outside permitted bounds'));
   assert.ok(sql.indexOf('Deal amounts cannot be negative') < sql.indexOf('insert into public.deals'));
 });
+
+test('new deal creation rejects null required financial inputs before comparisons', () => {
+  const sql = load('staging_company_deal_with_offer.sql');
+  assert.ok(sql.includes('Required deal financial inputs cannot be null'));
+  for (const field of ['purchase_price', 'down_payment', 'interest_rate', 'loan_term_years',
+    'closing_costs', 'rehab_cost', 'monthly_rent', 'vacancy_rate',
+    'monthly_operating_expenses', 'other_monthly_income']) {
+    assert.ok(sql.includes('p_' + field + ' is null'));
+  }
+  assert.ok(sql.indexOf('Required deal financial inputs cannot be null') < sql.indexOf('Deal amounts cannot be negative'));
+});
