@@ -108,10 +108,6 @@ begin
      and ((p_patch->>'selling_cost_percent')::numeric < 0 or (p_patch->>'selling_cost_percent')::numeric > 100) then
     raise exception 'Selling cost percent must be between 0 and 100';
   end if;
-  if p_patch ? 'selling_cost_percent' and p_patch->>'selling_cost_percent' is not null
-     and ((p_patch->>'selling_cost_percent')::numeric < 0 or (p_patch->>'selling_cost_percent')::numeric > 100) then
-    raise exception 'Selling cost percent must be between 0 and 100';
-  end if;
   -- Never accept SQL JSON null for fields required by the Analyzer.
   -- Explicit JSON null is permitted for optional offer fields only.
   if p_patch ? 'status' and (p_patch->>'status' is null
