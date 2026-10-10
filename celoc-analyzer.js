@@ -36,9 +36,9 @@
       if(field && num(field.value)>0) return num(field.value);
     }
     var inputs=Array.prototype.slice.call(app.querySelectorAll('input'));
-    var groups=[/\\b(?:offer|proposed|bid)\\b.*\\bprice\\b|\\bofferprice\\b|\\boffer_price\\b/,
-                /\\bpurchase\\b.*\\bprice\\b|\\bpurchaseprice\\b|\\bpurchase_price\\b/,
-                /\\basking\\b.*\\bprice\\b|\\blist(?:ing)?\\b.*\\bprice\\b|\\baskingprice\\b|\\basking_price\\b/];
+    var groups=[/offer.*price|proposed.*price|bid.*price|offerprice|offer_price/,
+                /purchase.*price|purchaseprice|purchase_price/,
+                /asking.*price|list.*price|askingprice|asking_price/];
     for(var g=0;g<groups.length;g++){
       for(var i=0;i<inputs.length;i++){
         var el=inputs[i];
@@ -68,6 +68,7 @@
 
     var store=getStore(), key=dealKey(), saved=store[key]||{};
     var purchase=findPurchasePrice();
+    if(!purchase) purchase=Number(saved.p ?? saved.purchase ?? 0);
     var downPct=Number(saved.d ?? saved.downPct ?? findDownPct() ?? 20);
     var amount=Number(saved.a ?? saved.amount ?? 0);
     if(!amount && purchase) amount=Math.round(purchase*downPct/100*100)/100;
