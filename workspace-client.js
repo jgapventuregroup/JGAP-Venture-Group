@@ -94,6 +94,8 @@
     if (!workspaceId) throw new Error('Select a workspace first');
     if (!payload || Array.isArray(payload) || typeof payload !== 'object')
       throw new Error('Deal details are required');
+    if (Object.getPrototypeOf(payload) !== Object.prototype && Object.getPrototypeOf(payload) !== null)
+      throw new Error('Deal details must be a plain object');
     const name = typeof payload.name === 'string' ? payload.name.trim() : '';
     if (!name) throw new Error('Deal name is required');
     const args = { p_company_id: workspaceId, p_name: name };
@@ -108,6 +110,10 @@
       'offer_contingencies', 'property_address', 'property_county',
       'seller_name', 'offer_state', 'offer_template'
     ];
+    const allowed = new Set(['name', ...fields]);
+    for (const field of Object.keys(payload)) {
+      if (!allowed.has(field)) throw new Error('Field not accepted for deal creation: ' + field);
+    }
     for (const field of fields) {
       if (Object.prototype.hasOwnProperty.call(payload, field))
         args['p_' + field] = payload[field];
