@@ -1054,7 +1054,7 @@ function applyVisibleOfferInputs(){
  if(pi)pi.value=o||a;
  try{calcDeal()}catch(e){console.error("Deal analysis error:",e);alert("The offer was entered, but the analyzer hit an error. Please check the deal inputs below.");return;}
  const result=document.getElementById("visibleOfferResult");
- if(result)result.textContent="Offer analyzed. Scroll down to see the full cash-flow and return analysis.";
+ if(result)result.textContent=document.getElementById("r_target")?.textContent==="Incomplete underwriting"?"Offer entered, but underwriting is incomplete. Add missing income, expense, and financing details before relying on the maximum offer.":"Offer analyzed. Scroll down to see the full cash-flow and return analysis.";
  const max=document.getElementById("visibleMaxOffer");
  if(max && max.textContent==="$0.00")max.textContent=document.getElementById("r_jgap_max_price")?.textContent||"—";
 }
