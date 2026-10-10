@@ -37,8 +37,14 @@ begin
   ) then
     raise exception 'Workspace role cannot create deals';
   end if;
-  if p_name is null or length(pg_catalog.btrim(p_name)) < 1 then
+  if p_name is null or pg_catalog.length(pg_catalog.btrim(p_name)) < 1 then
     raise exception 'Deal name is required';
+  end if;
+  if p_status is null or pg_catalog.btrim(p_status) = '' then
+    raise exception 'Deal status is required';
+  end if;
+  if p_property_type is null or pg_catalog.btrim(p_property_type) = '' then
+    raise exception 'Property type is required';
   end if;
   if p_purchase_price is null or p_down_payment is null or p_interest_rate is null
      or p_loan_term_years is null or p_closing_costs is null or p_rehab_cost is null
