@@ -1,0 +1,42 @@
+-- STAGING-ONLY PROPOSAL. DO NOT RUN ON PRODUCTION WITHOUT REVIEW.
+-- This additive RPC does not replace bootstrap_current_user() or alter existing company rows.
+-- The caller must be authenticated. Company creation and owner membership are atomic.
+-- Idempotent for a user who already belongs to a company.
+create or replace function public.create_my_company(p_company_name text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := (select auth.uid());
+  v_company uuid;
+  v_name text := btrim(coalesce(p_company_name,''));
+begin
+  if v_uid is null then raise exception 'Authentication required'; end if;
+  if length(v_name) < 2 or length(v_name) > 100 then
+    raise exception 'Company name must be 2 to 100 characters';
+  end if;
+  -- Serializes simultaneous onboarding attempts for the same authenticated user.
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(v_uid::text, 0));
+  select cm.company_id into v_company
+    from public.company_members cm
+    where cm.user_id = v_uid
+    order by cm.created_at, cm.company_id
+    limit 1;
+  if v_company is not null then
+    return pg_catalog.jsonb_build_object('company_id',v_company,'status','already_member');
+  end if;
+  insert into public.companies(name) values(v_name) returning id into v_company;
+  insert into public.company_members(company_id,user_id,role)
+    values(v_company,v_uid,'owner');
+  return pg_catalog.jsonb_build_object('company_id',v_company,'status','created');
+end;
+$$;
+revoke all on function public.create_my_company(text) from public;
+revoke all on function public.create_my_company(text) from anon;
+grant execute on function public.create_my_company(text) to authenticated;
+
+-- Follow-up migration (separate review): update frontend bootstrap to call this
+-- only when a signed-in user chooses to create a new workspace.
+-- Do not enable a public signup flow until two-tenant isolation tests pass.
