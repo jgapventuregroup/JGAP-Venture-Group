@@ -203,7 +203,7 @@ async function mountJGAPWorkspacePreview(){
         const deals=await window.JGAPWorkspaceClient.listDeals(sb,selected.id);
         if(jgapPreviewWorkspaceId!==selected.id)return;
         message.textContent=selected.name+": "+deals.length+" deal(s). Preview only; existing dashboard remains unchanged.";
-      }catch(error){message.textContent="Workspace deal preview unavailable: "+(error.message||"Request failed");}
+      }catch(error){if(jgapPreviewWorkspaceId===selected.id)message.textContent="Workspace deal preview unavailable: "+(error.message||"Request failed");}
     });
   }catch(error){
     area.textContent="Workspace preview unavailable until the new database functions are deployed: "+(error.message||"Request failed");
