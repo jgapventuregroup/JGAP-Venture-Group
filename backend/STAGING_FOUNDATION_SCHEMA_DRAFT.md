@@ -71,7 +71,16 @@ create table public.deals (
   financing_costs numeric,
   projected_sale_price numeric,
   loan_structure text,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  check (purchase_price >= 0 and down_payment >= 0 and closing_costs >= 0 and rehab_cost >= 0),
+  check (monthly_rent >= 0 and monthly_operating_expenses >= 0 and other_monthly_income >= 0),
+  check (interest_rate between 0 and 100 and vacancy_rate between 0 and 100),
+  check (loan_term_years between 0 and 100),
+  check (asking_price is null or asking_price >= 0),
+  check (target_offer_price is null or target_offer_price >= 0),
+  check (offer_earnest_money is null or offer_earnest_money >= 0),
+  check (units is null or units > 0),
+  check (selling_cost_percent is null or selling_cost_percent between 0 and 100)
 );
 
 create index deals_company_created_idx on public.deals(company_id,created_at desc);
