@@ -103,3 +103,11 @@ test('workspace preview ignores stale results after dashboard rerenders', () => 
   assert.match(html, /if\(!area\.isConnected \|\| jgapPreviewWorkspaceId!==selected\.id\)return;/);
   assert.match(html, /if\(area\.isConnected && jgapPreviewWorkspaceId===selected\.id\)/);
 });
+
+test('read-only deal preview renders user-controlled names as text, not HTML', () => {
+  const fs = require('node:fs');
+  const html = fs.readFileSync(require('node:path').join(__dirname, '..', 'index.html'), 'utf8');
+  assert.match(html, /item\.textContent=String\(deal\.name\|\|"Unnamed deal"\)/);
+  assert.match(html, /for\(const deal of deals\.slice\(0,10\)\)/);
+  assert.match(html, /message\.replaceChildren\(\)/);
+});
