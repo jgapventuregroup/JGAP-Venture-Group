@@ -6,11 +6,11 @@
   'use strict';
   function normalizeWorkspaces(rows) {
     return (Array.isArray(rows) ? rows : []).filter(row =>
-      row && typeof row.company_id === 'string' && row.company_id.length > 0
+      row && typeof (row.company_id || row.id) === 'string' && (row.company_id || row.id).length > 0
     ).map(row => ({
-      id: row.company_id,
-      name: String(row.company_name || 'Unnamed workspace'),
-      role: String(row.member_role || '')
+      id: row.company_id || row.id,
+      name: String(row.company_name || row.name || 'Unnamed workspace'),
+      role: String(row.member_role || row.role || '')
     }));
   }
   function selectWorkspace(workspaces, requestedId) {
