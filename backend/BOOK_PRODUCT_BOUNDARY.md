@@ -30,3 +30,9 @@ Confirmed in `index.html` on the development branch:
 **Required next change (not yet applied):** preserve the original book files in a private owner-controlled location, then produce a customer build that excludes the book scripts, navigation, dynamic loader, and manuscript-bearing static assets. Confirm no other module depends on the book globals before changing the live app. Because the current site may already publicly serve these files, the owner should treat previously published book content as potentially accessible.
 
 **Do not delete or move the book files until a verified private copy exists.** This audit only records exposure paths; it does not alter production.
+
+## Development branch inventory result
+
+The development branch's recursive Git tree was reviewed on 2026-10-10 (48 tracked entries, not truncated). Its remaining book-named path is this audit document. The customer HTML no longer references the Learning Book, and the tracked book scripts, cover, and book-only GitHub workflow were deleted from this branch. CI verified the asset exclusions.
+
+**Important limitations:** This inventory covers tracked repository paths, not every historical Git commit, cached public asset, or private Supabase storage/database record. GitHub Pages production remains on `main` until a separately approved deployment. Do not claim previously published book text is inaccessible or erased.
