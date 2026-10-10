@@ -96,6 +96,10 @@ begin
      and (p_patch->>'units')::integer = 0 then
     raise exception 'Units must be greater than zero';
   end if;
+  if p_patch ? 'selling_cost_percent' and p_patch->>'selling_cost_percent' is not null
+     and ((p_patch->>'selling_cost_percent')::numeric < 0 or (p_patch->>'selling_cost_percent')::numeric > 100) then
+    raise exception 'Selling cost percent must be between 0 and 100';
+  end if;
   v_sql := 'update public.deals set ' || v_set ||
     ' where id = $2 and company_id = $3 returning *';
   execute v_sql into v_deal using p_patch,p_deal_id,p_company_id;
