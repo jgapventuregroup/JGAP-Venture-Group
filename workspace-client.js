@@ -13,6 +13,11 @@
       role: String(row.member_role || row.role || '')
     }));
   }
+  function normalizeWorkspaceId(workspaceId) {
+    if (typeof workspaceId !== 'string' || !workspaceId.trim())
+      throw new Error('Select a workspace first');
+    return workspaceId.trim();
+  }
   function selectWorkspace(workspaces, requestedId) {
     const rows = normalizeWorkspaces(workspaces);
     if (requestedId) {
@@ -41,13 +46,13 @@
     return data;
   }
   async function listDeals(client, workspaceId) {
-    if (!workspaceId) throw new Error('Select a workspace first');
+    workspaceId = normalizeWorkspaceId(workspaceId);
     const { data, error } = await client.rpc('list_company_deals', { p_company_id: workspaceId });
     if (error) throw error;
     return data || [];
   }
   async function getDeal(client, workspaceId, dealId) {
-    if (!workspaceId || !dealId) throw new Error('Workspace and deal are required');
+    if (typeof workspaceId !== 'string' || !workspaceId.trim() || typeof dealId !== 'string' || !dealId.trim()) throw new Error('Workspace and deal are required');
     const { data, error } = await client.rpc('get_company_deal', {
       p_company_id: workspaceId, p_deal_id: dealId
     });
@@ -91,7 +96,7 @@
     return data === true;
   }
   async function createDeal(client, workspaceId, payload) {
-    if (!workspaceId) throw new Error('Select a workspace first');
+    workspaceId = normalizeWorkspaceId(workspaceId);
     if (!payload || Array.isArray(payload) || typeof payload !== 'object')
       throw new Error('Deal details are required');
     if (Object.getPrototypeOf(payload) !== Object.prototype && Object.getPrototypeOf(payload) !== null)
