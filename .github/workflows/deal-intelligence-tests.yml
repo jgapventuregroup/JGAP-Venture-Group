@@ -4,6 +4,7 @@ on:
     paths:
       - 'deal-intelligence-adapter.js'
       - 'celoc-analyzer.js'
+      - 'index.html'
       - 'tests/**'
       - '.github/workflows/deal-intelligence-tests.yml'
   workflow_dispatch:
