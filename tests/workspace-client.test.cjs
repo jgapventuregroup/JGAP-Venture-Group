@@ -209,3 +209,9 @@ test('explicit invalid workspace selection never falls back to a sole membership
   assert.equal(client.selectWorkspace([alpha], null).id, 'alpha');
   assert.equal(client.selectWorkspace([alpha], ' alpha ').id, 'alpha');
 });
+
+test('duplicate workspace memberships do not create duplicate company choices', () => {
+  const rows = client.normalizeWorkspaces([alpha, {...alpha}, {company_id:' alpha ',company_name:'Duplicate',member_role:'viewer'}, beta]);
+  assert.deepEqual(rows.map(row => row.id), ['alpha','beta']);
+  assert.equal(client.renderWorkspacePicker(rows, null).choices.length, 2);
+});
