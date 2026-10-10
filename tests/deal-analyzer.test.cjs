@@ -54,3 +54,16 @@ test('missing target does not create a fake asking-price gap',()=>{
  const get=evaluate({...baseline,d_target_cap:0,d_target_coc:0,d_target_dscr:'',d_min_cf:0});
  assert.match(get('offerAnalysisTable').innerHTML,/>—<\/td>/);
 });
+
+test('save synchronizes visible asking and offer prices before building payload',()=>{
+ const save=source.slice(source.indexOf('async function saveDeal(){'),source.indexOf('async function loadClosingTracker(',source.indexOf('async function saveDeal(){')));
+ assert.ok(save.includes('if(visibleAsk&&askField)askField.value=visibleAsk.value;'));
+ assert.ok(save.includes('if(visibleOffer&&offerField)offerField.value=visibleOffer.value;'));
+ assert.ok(save.includes('if(testPrice&&visibleOffer&&visibleOffer.value!=="")testPrice.value=visibleOffer.value;'));
+ assert.ok(save.indexOf('askField.value=visibleAsk.value')<save.indexOf('const payload='));
+ assert.ok(save.indexOf('offerField.value=visibleOffer.value')<save.indexOf('const payload='));
+});
+test('clearing both visible prices clears stale price before saving',()=>{
+ const save=source.slice(source.indexOf('async function saveDeal(){'),source.indexOf('async function loadClosingTracker(',source.indexOf('async function saveDeal(){')));
+ assert.match(save,/else if\(testPrice&&\(visibleOffer\|\|visibleAsk\)\)testPrice.value="";/);
+});
