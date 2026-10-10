@@ -55,6 +55,10 @@ begin
   if not v_exists then
     raise exception 'Deal not found in selected workspace';
   end if;
+  -- Reject edits to the deal name that would create an empty display label.
+  if p_patch ? 'name' and (p_patch->>'name' is null or pg_catalog.btrim(p_patch->>'name') = '') then
+    raise exception 'Deal name is required';
+  end if;
   v_sql := 'update public.deals set ' || v_set ||
     ' where id = $2 and company_id = $3 returning *';
   execute v_sql into v_deal using p_patch,p_deal_id,p_company_id;
