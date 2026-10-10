@@ -55,6 +55,14 @@ begin
   if not v_exists then
     raise exception 'Deal not found in selected workspace';
   end if;
+  -- Required analyzer fields must not be erased by JSON null patches.
+  foreach v_column in array array['purchase_price','down_payment','interest_rate',
+    'loan_term_years','closing_costs','rehab_cost','monthly_rent',
+    'vacancy_rate','monthly_operating_expenses','other_monthly_income'] loop
+    if p_patch ? v_column and p_patch->v_column = 'null'::jsonb then
+      raise exception 'Required deal input cannot be null: %', v_column;
+    end if;
+  end loop;
   -- Reject edits to the deal name that would create an empty display label.
   if p_patch ? 'name' and (p_patch->>'name' is null or pg_catalog.btrim(p_patch->>'name') = '') then
     raise exception 'Deal name is required';
@@ -95,6 +103,10 @@ begin
   if p_patch ? 'units' and p_patch->>'units' is not null
      and (p_patch->>'units')::integer = 0 then
     raise exception 'Units must be greater than zero';
+  end if;
+  if p_patch ? 'selling_cost_percent' and p_patch->>'selling_cost_percent' is not null
+     and ((p_patch->>'selling_cost_percent')::numeric < 0 or (p_patch->>'selling_cost_percent')::numeric > 100) then
+    raise exception 'Selling cost percent must be between 0 and 100';
   end if;
   if p_patch ? 'selling_cost_percent' and p_patch->>'selling_cost_percent' is not null
      and ((p_patch->>'selling_cost_percent')::numeric < 0 or (p_patch->>'selling_cost_percent')::numeric > 100) then
