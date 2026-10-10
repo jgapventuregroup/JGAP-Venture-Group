@@ -49,6 +49,14 @@ begin
   if p_name is null or length(pg_catalog.btrim(p_name)) = 0 then
     raise exception 'Deal name is required';
   end if;
+  -- NULL bypasses numeric comparisons, so reject missing required values first.
+  if p_purchase_price is null or p_down_payment is null
+     or p_interest_rate is null or p_loan_term_years is null
+     or p_closing_costs is null or p_rehab_cost is null
+     or p_monthly_rent is null or p_vacancy_rate is null
+     or p_monthly_operating_expenses is null or p_other_monthly_income is null then
+    raise exception 'Required deal financial inputs cannot be null';
+  end if;
   -- Creation must enforce the same core financial constraints as edits.
   if p_purchase_price < 0 or p_down_payment < 0 or p_closing_costs < 0
      or p_rehab_cost < 0 or p_monthly_rent < 0
