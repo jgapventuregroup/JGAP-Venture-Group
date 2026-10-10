@@ -12,18 +12,20 @@ class Element {
 const doc = new Element(null, 'document');
 doc.ownerDocument = doc;
 const workspace = (id) => ({ company_id: id, company_name: id.toUpperCase(), member_role: 'owner' });
-test('multi-company UI requires user selection', () => {
+test('multi-company UI requires user selection', async () => {
   const container = new Element(doc, 'div'); const selected = [];
   const { select } = mount(container, [workspace('alpha'), workspace('beta')], row => selected.push(row.id));
   assert.equal(select.value, '');
   assert.deepEqual(selected, []);
   select.value = 'beta'; select.listeners.change();
+  await Promise.resolve();
   assert.deepEqual(selected, ['beta']);
 });
-test('single-company UI selects authorized membership automatically', () => {
+test('single-company UI selects authorized membership automatically', async () => {
   const container = new Element(doc, 'div'); const selected = [];
   const { select } = mount(container, [workspace('alpha')], row => selected.push(row.id));
   assert.equal(select.value, 'alpha');
+  await Promise.resolve();
   assert.deepEqual(selected, ['alpha']);
 });
 test('unknown workspace is rejected and reset', () => {
@@ -33,4 +35,15 @@ test('unknown workspace is rejected and reset', () => {
   assert.equal(select.value, '');
   assert.match(status.textContent, /not authorized/);
   assert.deepEqual(selected, []);
+});
+
+test('async selection failures appear in accessible status', async () => {
+  const container = new Element(doc, 'div');
+  const { select, status } = mount(container, [workspace('alpha'), workspace('beta')], async () => {
+    throw new Error('Backend unavailable');
+  });
+  select.value = 'beta';
+  select.listeners.change();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.match(status.textContent, /Backend unavailable/);
 });
