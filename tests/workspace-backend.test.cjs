@@ -83,3 +83,17 @@ test('deal edits are limited to explicit company and allowlisted columns', () =>
     assert.ok(!match[1].includes("'" + field + "'"), field);
   }
 });
+
+test('deal edits reject empty names and preserve Analyzer update fields', () => {
+  const sql = load('staging_update_company_deal.sql');
+  assert.ok(sql.includes("p_patch ? 'name'"));
+  assert.ok(sql.includes("pg_catalog.btrim(p_patch->>'name') = ''"));
+  for (const field of [
+    'units','arv','holding_months','monthly_holding_costs','selling_cost_percent',
+    'financing_costs','projected_sale_price','loan_structure','asking_price',
+    'target_offer_price','offer_notes','offer_template'
+  ]) {
+    const allowed = sql.match(/v_allowed constant text\[\] := array\[([\s\S]*?)\];/);
+    assert.ok(allowed && allowed[1].includes("'" + field + "'"), field);
+  }
+});
