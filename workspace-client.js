@@ -54,10 +54,25 @@
     if (error) throw error;
     return Array.isArray(data) ? (data[0] || null) : (data || null);
   }
+  const editableDealFields = new Set([
+    'name','status','property_type','purchase_price','down_payment','interest_rate',
+    'loan_term_years','closing_costs','rehab_cost','monthly_rent','vacancy_rate',
+    'monthly_operating_expenses','other_monthly_income','notes','asking_price',
+    'target_offer_price','offer_notes','target_cap_rate','target_cash_on_cash',
+    'target_monthly_cash_flow','target_dscr','offer_earnest_money',
+    'offer_due_diligence_days','offer_closing_days','offer_financing_type',
+    'offer_contingencies','property_address','property_county','seller_name',
+    'offer_state','offer_template','units','arv','holding_months',
+    'monthly_holding_costs','selling_cost_percent','financing_costs',
+    'projected_sale_price','loan_structure'
+  ]);
   async function updateDeal(client, workspaceId, dealId, patch) {
     if (!workspaceId || !dealId) throw new Error('Workspace and deal are required');
     if (!patch || Array.isArray(patch) || typeof patch !== 'object' || !Object.keys(patch).length)
       throw new Error('A nonempty deal patch is required');
+    for (const field of Object.keys(patch)) {
+      if (!editableDealFields.has(field)) throw new Error('Field not editable: ' + field);
+    }
     const { data, error } = await client.rpc('update_company_deal', {
       p_company_id: workspaceId, p_deal_id: dealId, p_patch: patch
     });
