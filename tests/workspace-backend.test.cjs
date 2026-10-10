@@ -174,3 +174,10 @@ test('basic workspace deal RPCs require explicit authenticated company scope', (
   assert.ok(sql.includes('Purchase price must be zero or greater'));
   assert.ok(sql.includes('d.company_id = p_company_id'));
 });
+
+test('company onboarding qualifies builtin text helpers under restricted search path', () => {
+  const sql = load('staging_create_my_company.sql');
+  assert.ok(sql.includes('pg_catalog.btrim(pg_catalog.coalesce('));
+  assert.ok(sql.includes('pg_catalog.length(v_name)'));
+  assert.ok(sql.includes('pg_catalog.lower(pg_catalog.coalesce('));
+});
