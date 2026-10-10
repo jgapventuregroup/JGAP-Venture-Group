@@ -29,3 +29,30 @@ test('deal listing always supplies selected company ID', async () => {
   assert.equal(result[0].id, 'deal-b');
   await assert.rejects(client.listDeals({ rpc: () => { throw Error('should not call'); } }, ''), /Select a workspace/);
 });
+
+test('single-deal lookup supplies company and deal IDs', async () => {
+  const deal = await client.getDeal({ rpc: async (name, args) => {
+    assert.equal(name, 'get_company_deal');
+    assert.deepEqual(args, { p_company_id: 'alpha', p_deal_id: 'd1' });
+    return { data: [{ id: 'd1' }], error: null };
+  } }, 'alpha', 'd1');
+  assert.equal(deal.id, 'd1');
+});
+test('deal edits require nonempty patches and explicit scope', async () => {
+  await assert.rejects(client.updateDeal({ rpc: () => { throw Error('unexpected'); } }, 'alpha', 'd1', {}), /nonempty/);
+  const updated = await client.updateDeal({ rpc: async (name, args) => {
+    assert.equal(name, 'update_company_deal');
+    assert.deepEqual(args, { p_company_id: 'alpha', p_deal_id: 'd1', p_patch: { name: 'Updated' } });
+    return { data: { id: 'd1' }, error: null };
+  } }, 'alpha', 'd1', { name: 'Updated' });
+  assert.equal(updated.id, 'd1');
+});
+test('deal deletion requires confirmation and explicit scope', async () => {
+  const rpc = async (name, args) => {
+    assert.equal(name, 'delete_company_deal');
+    assert.deepEqual(args, { p_company_id: 'alpha', p_deal_id: 'd1' });
+    return { data: true, error: null };
+  };
+  await assert.rejects(client.deleteDeal({ rpc }, 'alpha', 'd1', false), /Confirm/);
+  assert.equal(await client.deleteDeal({ rpc }, 'alpha', 'd1', true), true);
+});
