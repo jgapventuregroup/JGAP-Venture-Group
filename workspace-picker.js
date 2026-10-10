@@ -28,6 +28,7 @@
     status.textContent = model.choices.length === 0
       ? 'No company membership found. Contact an administrator or create a workspace after onboarding is enabled.'
       : model.required ? 'Choose a company to view its deals.' : '';
+    let selectionSequence = 0;
     // Keep the selected workspace stable across rerenders; the caller owns any
     // asynchronous deal-loading race checks.
     select.addEventListener('change', () => {
@@ -35,7 +36,9 @@
         const selected = clientApi.selectWorkspace(workspaces, select.value || null);
         if (!selected) throw new Error('Choose a company');
         status.textContent = '';
+        const requestSequence = ++selectionSequence;
         Promise.resolve().then(() => onSelect(selected)).catch(error => {
+          if (requestSequence !== selectionSequence) return;
           status.textContent = 'Unable to open workspace: ' + (error && error.message ? error.message : 'Request failed');
         });
       } catch (error) {
@@ -45,7 +48,9 @@
     });
     container.replaceChildren(label, select, status);
     if (model.selectedId) {
+      const requestSequence = ++selectionSequence;
       Promise.resolve().then(() => onSelect(clientApi.selectWorkspace(workspaces, model.selectedId))).catch(error => {
+        if (requestSequence !== selectionSequence) return;
         status.textContent = 'Unable to open workspace: ' + (error && error.message ? error.message : 'Request failed');
       });
     }
