@@ -56,3 +56,22 @@ test('deal deletion requires confirmation and explicit scope', async () => {
   await assert.rejects(client.deleteDeal({ rpc }, 'alpha', 'd1', false), /Confirm/);
   assert.equal(await client.deleteDeal({ rpc }, 'alpha', 'd1', true), true);
 });
+
+test('Deal Analyzer creation preserves offers and scopes company', async () => {
+  const created = await client.createDeal({ rpc: async (name, args) => {
+    assert.equal(name, 'create_company_deal_with_offer');
+    assert.equal(args.p_company_id, 'alpha');
+    assert.equal(args.p_name, 'Duplex');
+    assert.equal(args.p_asking_price, 220000);
+    assert.equal(args.p_target_offer_price, 190000);
+    assert.equal(args.p_monthly_rent, 2400);
+    assert.equal(Object.prototype.hasOwnProperty.call(args, 'p_company_id'), true);
+    return { data: 'new-deal-id', error: null };
+  } }, 'alpha', { name: ' Duplex ', asking_price: 220000, target_offer_price: 190000, monthly_rent: 2400 });
+  assert.equal(created, 'new-deal-id');
+});
+test('deal creation rejects missing workspace or name before RPC', async () => {
+  const api = { rpc: () => { throw Error('unexpected RPC'); } };
+  await assert.rejects(client.createDeal(api, '', { name: 'Duplex' }), /Select a workspace/);
+  await assert.rejects(client.createDeal(api, 'alpha', { name: ' ' }), /Deal name/);
+});
