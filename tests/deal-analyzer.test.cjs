@@ -67,3 +67,13 @@ test('clearing both visible prices clears stale price before saving',()=>{
  const save=source.slice(source.indexOf('async function saveDeal(){'),source.indexOf('async function loadClosingTracker(',source.indexOf('async function saveDeal(){')));
  assert.match(save,/else if\(testPrice&&\(visibleOffer\|\|visibleAsk\)\)testPrice.value="";/);
 });
+
+test('all-cash deal uses full purchase price for invested capital and cash-on-cash',()=>{
+ const get=evaluate({...baseline,d_loan_structure:'none',d_down:0});
+ assert.equal(get('r_loan').textContent,'$0');
+ assert.equal(get('r_debt').textContent,'$0');
+ assert.equal(get('r_cash').textContent,'$265,000');
+ assert.equal(get('r_coc').textContent,'9.17%');
+ assert.match(get('priceSensitivity').innerHTML,/\$265,000/);
+ assert.match(get('offerWorksheet').innerHTML,/\$255,000/);
+});
