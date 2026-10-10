@@ -160,3 +160,26 @@ test('deal creation rejects protected and unexpected fields before backend calls
   await client.createDeal(db, 'alpha', {name:'Property',asking_price:125000,target_offer_price:100000});
   assert.equal(calls, 1);
 });
+
+test('simulated two-company backend keeps reads scoped to selected workspace', async () => {
+  const records = {
+    alpha: [{id:'deal-a',name:'Alpha property'}],
+    beta: [{id:'deal-b',name:'Beta property'}]
+  };
+  const membership = new Set(['alpha']);
+  const rpc = async (name, args = {}) => {
+    if (name === 'list_my_companies') return {data:[alpha],error:null};
+    if (!membership.has(args.p_company_id)) return {data:null,error:new Error('Not a company member')};
+    if (name === 'list_company_deals') return {data:records[args.p_company_id],error:null};
+    if (name === 'get_company_deal')
+      return {data:records[args.p_company_id].find(d => d.id === args.p_deal_id) || null,error:null};
+    throw Error('Unexpected mock endpoint');
+  };
+  const db = {rpc};
+  const workspaces = await client.listWorkspaces(db);
+  assert.equal(client.selectWorkspace(workspaces, null).id, 'alpha');
+  assert.deepEqual((await client.listDeals(db, 'alpha')).map(d => d.id), ['deal-a']);
+  assert.equal(await client.getDeal(db, 'alpha', 'deal-b'), null);
+  await assert.rejects(client.listDeals(db, 'beta'), /Not a company member/);
+  await assert.rejects(client.getDeal(db, 'beta', 'deal-b'), /Not a company member/);
+});
