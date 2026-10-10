@@ -27,3 +27,20 @@ test('malformed record collections do not crash', () => {
 test('drops listings without an external identifier', () => {
   assert.equal(adapter.normalizeMany({records:[{listPrice:100000}]},'test').length,0);
 });
+
+const importerSource=fs.readFileSync('deal-intelligence-importer.js','utf8').replace(/export function /g,'function ');
+const importerContext={};
+vm.runInNewContext(importerSource+';this.filterTargetMarket=filterTargetMarket;',importerContext);
+test('market filter accepts Tri-Cities TN multifamily and excludes distant TN/VA',()=>{
+ const records=[
+  {city:'Bristol',state:'TN',property_type:'duplex',units:2},
+  {city:'Johnson City',state:'Tennessee',property_type:'apartment',units:8},
+  {city:'Nashville',state:'TN',property_type:'apartment',units:8},
+  {city:'Richmond',state:'VA',property_type:'apartment',units:8},
+  {city:'Bristol',state:'VA',property_type:'duplex',units:2}
+ ];
+ const results=importerContext.filterTargetMarket(records);
+ assert.equal(results.length,2);
+ assert.equal(results[0].city,'Bristol');
+ assert.equal(results[1].city,'Johnson City');
+});
