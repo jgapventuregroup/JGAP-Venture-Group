@@ -1,0 +1,29 @@
+-- STAGING ONLY — NOT DEPLOYED.
+-- Optional future role-based write policy. Preserve current owner/admin editors.
+-- Run only after auditing every RPC that writes public.deals, verifying role
+-- vocabulary, and testing with isolated fake users.
+--
+-- This migration draft deliberately does NOT DROP or REPLACE live policies:
+-- PostgreSQL permissive policies are OR-combined. Adding a restrictive policy
+-- would require careful treatment of existing SELECT access and role rollout.
+--
+-- Proposed write predicate for future policies:
+-- exists (
+--   select 1 from public.company_members cm
+--   where cm.company_id = deals.company_id
+--     and cm.user_id = (select auth.uid())
+--     and cm.role in ('owner','admin','editor')
+-- )
+--
+-- Expected matrix:
+-- owner/admin/editor: SELECT, INSERT, UPDATE, DELETE (subject to business rules)
+-- viewer: SELECT only
+-- unrelated user / anon: no access
+--
+-- BEFORE ENABLING:
+-- 1. Inspect all SECURITY DEFINER functions; they can bypass deal RLS.
+-- 2. Confirm membership invitations cannot self-assign owner/admin/editor.
+-- 3. Verify both USING and WITH CHECK on UPDATE/INSERT.
+-- 4. Confirm direct table grants, SELECT policy, and DELETE behavior.
+-- 5. Test as owner, admin, editor, viewer, unrelated user, and multi-company user.
+-- 6. Preserve existing production owner/admin memberships and all deals.
