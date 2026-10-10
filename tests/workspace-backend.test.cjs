@@ -181,3 +181,10 @@ test('company onboarding qualifies builtin text helpers under restricted search 
   assert.ok(sql.includes('pg_catalog.length(v_name)'));
   assert.ok(sql.includes('pg_catalog.lower(pg_catalog.coalesce('));
 });
+
+test('deal edits cannot null required financial inputs or exceed selling cost bounds', () => {
+  const sql = load('staging_update_company_deal.sql');
+  assert.ok(sql.includes("p_patch->v_column = 'null'::jsonb"));
+  assert.ok(sql.includes('Required deal input cannot be null'));
+  assert.ok(sql.includes('Selling cost percent must be between 0 and 100'));
+});
