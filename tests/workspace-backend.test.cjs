@@ -277,3 +277,14 @@ test('staging JSON patch aggregate is schema-qualified under empty search path',
   assert.match(sql, /pg_catalog\.array_agg\(k order by k\)/i);
   assert.match(sql, /pg_catalog\.jsonb_object_keys\(p_patch\)/i);
 });
+
+test('staging trigger prevents moving a deal between companies', () => {
+  const sql = load('staging_prevent_deal_reassignment.sql');
+  assert.match(sql, /create or replace function jgap_private\.prevent_deal_company_reassignment\(\)/i);
+  assert.match(sql, /new\.company_id is distinct from old\.company_id/i);
+  assert.match(sql, /raise exception 'Deal company cannot be changed'/i);
+  assert.match(sql, /before update of company_id on public\.deals/i);
+  assert.match(sql, /execute function jgap_private\.prevent_deal_company_reassignment\(\)/i);
+  assert.match(sql, /revoke all on function jgap_private\.prevent_deal_company_reassignment\(\) from public,anon,authenticated/i);
+  assert.doesNotMatch(sql, /disable trigger|security definer/i);
+});
