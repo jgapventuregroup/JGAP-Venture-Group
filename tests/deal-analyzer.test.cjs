@@ -176,3 +176,13 @@ test('syncDealTestPrice clears stale purchase price when both price fields are b
  });
  assert.equal(values.d_price.value,'');
 });
+
+test('interest rates above 100 percent block underwriting',()=>{
+ const get=evaluate({...baseline,d_rate:150});
+ assert.equal(get('r_jgap_max_price').textContent,'Incomplete');
+ assert.match(get('dealStatus').innerHTML,/Interest rate cannot exceed 100%/);
+});
+test('legitimate zero-down financing is not automatically invalid',()=>{
+ const get=evaluate({...baseline,d_down:0});
+ assert.notEqual(get('r_jgap_max_price').textContent,'Incomplete');
+});
