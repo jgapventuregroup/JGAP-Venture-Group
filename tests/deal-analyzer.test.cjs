@@ -186,3 +186,19 @@ test('legitimate zero-down financing is not automatically invalid',()=>{
  const get=evaluate({...baseline,d_down:0});
  assert.notEqual(get('r_jgap_max_price').textContent,'Incomplete');
 });
+
+test('vacancy above 100 percent blocks a maximum offer',()=>{
+ const get=evaluate({...baseline,d_vacancy:125});
+ assert.equal(get('r_jgap_max_price').textContent,'Incomplete');
+ assert.match(get('dealStatus').innerHTML,/Vacancy must be between 0% and 100%/);
+});
+test('negative other monthly income blocks a maximum offer',()=>{
+ const get=evaluate({...baseline,d_other:-200});
+ assert.equal(get('r_jgap_max_price').textContent,'Incomplete');
+ assert.match(get('dealStatus').innerHTML,/Other monthly income cannot be negative/);
+});
+test('negative return target blocks a maximum offer',()=>{
+ const get=evaluate({...baseline,d_target_coc:-5});
+ assert.equal(get('r_jgap_max_price').textContent,'Incomplete');
+ assert.match(get('dealStatus').innerHTML,/Return targets cannot be negative/);
+});
