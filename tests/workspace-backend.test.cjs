@@ -67,3 +67,19 @@ test('offer-aware deal creation preserves every existing analyzer input', () => 
   assert.ok(sql.includes('return v_id;'));
   assert.ok(sql.includes('from public,anon'));
 });
+
+test('deal edits are limited to explicit company and allowlisted columns', () => {
+  const sql = load('staging_update_company_deal.sql');
+  assert.ok(sql.includes('public.is_company_member(p_company_id)'));
+  assert.ok(sql.includes('where id = $2 and company_id = $3'));
+  assert.ok(sql.includes('v_column = any(v_allowed)'));
+  assert.ok(sql.includes("jsonb_typeof(p_patch) <> 'object'"));
+  assert.ok(sql.includes('Deal not found in selected workspace'));
+  assert.ok(sql.includes('security invoker'));
+  assert.ok(sql.includes('from public,anon'));
+  for (const field of ['company_id','id','created_at','qualification_score']) {
+    const match = sql.match(/v_allowed constant text\[\] := array\[([\s\S]*?)\];/);
+    assert.ok(match);
+    assert.ok(!match[1].includes("'" + field + "'"), field);
+  }
+});
