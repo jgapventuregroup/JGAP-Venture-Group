@@ -131,3 +131,13 @@ test('workspace creation propagates backend errors and rejects malformed replies
   await assert.rejects(client.createWorkspace({ rpc: async () => ({error: new Error('Pending invitation')}) }, 'Valid', true), /Pending invitation/);
   await assert.rejects(client.createWorkspace({ rpc: async () => ({data: {status:'created'}}) }, 'Valid', true), /invalid result/);
 });
+
+test('deal update rejects tenant identity and unexpected fields before RPC', async () => {
+  let calls = 0;
+  const db = { rpc: async () => { calls++; return {data:{id:'deal'},error:null}; } };
+  await assert.rejects(client.updateDeal(db, 'alpha', 'deal', {company_id:'beta'}), /Field not editable/);
+  await assert.rejects(client.updateDeal(db, 'alpha', 'deal', {owner_id:'outsider'}), /Field not editable/);
+  assert.equal(calls, 0);
+  await client.updateDeal(db, 'alpha', 'deal', {name:'Renamed'});
+  assert.equal(calls, 1);
+});
