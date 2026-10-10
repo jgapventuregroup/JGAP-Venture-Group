@@ -88,3 +88,60 @@ test('cash deals do not require a loan term',()=>{
  const get=evaluate({...baseline,d_loan_structure:'none',d_down:0,d_term:0});
  assert.notEqual(get('r_target').textContent,'Incomplete underwriting');
 });
+
+async function evaluateSave(visibleAsk,visibleOffer){
+ const begin=source.indexOf('async function saveDeal(){');
+ const end=source.indexOf('async function loadClosingTracker(',begin);
+ assert.ok(begin>=0&&end>begin);
+ const elements=new Map();
+ const get=id=>{
+  if(!elements.has(id))elements.set(id,{value:'',dataset:{},textContent:'',innerHTML:'',style:{}});
+  return elements.get(id);
+ };
+ get('dealSaveMsg').dataset.id='test-existing-deal';
+ get('d_name').value='Test deal';
+ get('d_type').value='multifamily';
+ get('d_notes').value='';
+ get('d_asking').value='999999';
+ get('d_target_offer').value='888888';
+ get('d_price').value='777777';
+ get('visibleAskingInput').value=visibleAsk;
+ get('visibleOfferInput').value=visibleOffer;
+ let saved;
+ const context={
+  document:{getElementById:get},
+  n:id=>Number(get(id).value)||0,
+  sb:{from:table=>{
+   assert.equal(table,'deals');
+   return {update:payload=>({eq:async(column,id)=>{
+    assert.equal(column,'id');assert.equal(id,'test-existing-deal');
+    saved=payload;return {error:null};
+   }})};
+  }},
+  ensureDealChecklist:async()=>{},
+  setTimeout:()=>{},
+  renderDealsPage:()=>{},
+  window:{},
+  escapeHtml:String
+ };
+ await vm.runInNewContext(source.slice(begin,end)+';saveDeal()',context);
+ return {saved,get};
+}
+test('Save Deal actually writes edited visible prices to the update payload',async()=>{
+ const {saved}=await evaluateSave('325000','280000');
+ assert.equal(saved.asking_price,325000);
+ assert.equal(saved.target_offer_price,280000);
+ assert.equal(saved.purchase_price,280000);
+});
+test('Save Deal falls back to asking price when offer is empty',async()=>{
+ const {saved}=await evaluateSave('325000','');
+ assert.equal(saved.asking_price,325000);
+ assert.equal(saved.target_offer_price,null);
+ assert.equal(saved.purchase_price,325000);
+});
+test('Save Deal removes stale prices when both visible inputs are cleared',async()=>{
+ const {saved}=await evaluateSave('','');
+ assert.equal(saved.asking_price,null);
+ assert.equal(saved.target_offer_price,null);
+ assert.equal(saved.purchase_price,0);
+});
