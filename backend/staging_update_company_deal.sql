@@ -35,12 +35,12 @@ begin
     or not public.is_company_member(p_company_id) then
     raise exception 'Not authorized for selected workspace';
   end if;
-  if p_patch is null or jsonb_typeof(p_patch) <> 'object' then
+  if p_patch is null or pg_catalog.jsonb_typeof(p_patch) <> 'object' then
     raise exception 'Patch must be a JSON object';
   end if;
   select array_agg(k order by k) into v_columns
-  from jsonb_object_keys(p_patch) as k;
-  if v_columns is null or cardinality(v_columns) = 0 then
+  from pg_catalog.jsonb_object_keys(p_patch) as k;
+  if v_columns is null or pg_catalog.cardinality(v_columns) = 0 then
     raise exception 'Patch must not be empty';
   end if;
   foreach v_column in array v_columns loop
@@ -49,7 +49,7 @@ begin
     end if;
     -- Column identifiers come only from the fixed allowlist.
     v_set := v_set || case when v_set = '' then '' else ', ' end ||
-      format('%I = (jsonb_populate_record(null::public.deals, $1)).%I',v_column,v_column);
+      pg_catalog.format('%I = (pg_catalog.jsonb_populate_record(null::public.deals, $1)).%I',v_column,v_column);
   end loop;
   select exists (select 1 from public.deals d where d.id = p_deal_id and d.company_id = p_company_id) into v_exists;
   if not v_exists then
