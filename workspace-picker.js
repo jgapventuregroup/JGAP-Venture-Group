@@ -28,6 +28,8 @@
     status.textContent = model.choices.length === 0
       ? 'No company membership found. Contact an administrator or create a workspace after onboarding is enabled.'
       : model.required ? 'Choose a company to view its deals.' : '';
+    // Keep the selected workspace stable across rerenders; the caller owns any
+    // asynchronous deal-loading race checks.
     select.addEventListener('change', () => {
       try {
         const selected = clientApi.selectWorkspace(workspaces, select.value || null);
