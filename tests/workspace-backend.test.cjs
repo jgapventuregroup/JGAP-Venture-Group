@@ -232,3 +232,18 @@ test('deal deletion is scoped to a selected company and requires an editing role
   assert.ok(sql.includes('from public,anon'));
   assert.ok(!sql.includes('security definer'));
 });
+
+test('every draft deal write RPC rejects read-only workspace roles', () => {
+  for (const file of [
+    'staging_company_deals.sql',
+    'staging_company_deal_with_offer.sql',
+    'staging_update_company_deal.sql',
+    'staging_delete_company_deal.sql'
+  ]) {
+    const sql = load(file);
+    assert.ok(sql.includes("cm.role in ('owner', 'admin', 'editor')"), file);
+    assert.ok(sql.includes('cm.company_id = p_company_id'), file);
+    assert.ok(sql.includes('cm.user_id = (select auth.uid())'), file);
+    assert.ok(sql.includes('security invoker'), file);
+  }
+});
