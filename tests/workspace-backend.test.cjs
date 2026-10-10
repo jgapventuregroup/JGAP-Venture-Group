@@ -165,3 +165,12 @@ test('new deal creation rejects null required financial inputs before comparison
   }
   assert.ok(sql.indexOf('Required deal financial inputs cannot be null') < sql.indexOf('Deal amounts cannot be negative'));
 });
+
+test('basic workspace deal RPCs require explicit authenticated company scope', () => {
+  const sql = load('staging_company_deals.sql');
+  assert.ok(sql.includes('p_company_id is null'));
+  assert.ok(sql.includes('public.is_company_member(p_company_id)'));
+  assert.ok(sql.includes('(select auth.uid()) is not null'));
+  assert.ok(sql.includes('Purchase price must be zero or greater'));
+  assert.ok(sql.includes('d.company_id = p_company_id'));
+});
