@@ -60,6 +60,8 @@ begin
     raise exception 'Deal name is required';
   end if;
   -- Reject invalid negative amounts. Cast errors also reject malformed numeric text.
+  -- The numeric list is limited to amounts that cannot be negative; metrics such
+  -- as cash flow and financing rates have separate domain requirements.
   foreach v_column in array array['purchase_price','asking_price','target_offer_price',
     'down_payment','closing_costs','rehab_cost','monthly_rent',
     'monthly_operating_expenses','other_monthly_income','arv','financing_costs',
@@ -69,6 +71,15 @@ begin
       raise exception '% cannot be negative', v_column;
     end if;
   end loop;
+  -- Keep rate and period inputs within reasonable bounds.
+  if p_patch ? 'vacancy_rate' and p_patch->>'vacancy_rate' is not null
+     and ((p_patch->>'vacancy_rate')::numeric < 0 or (p_patch->>'vacancy_rate')::numeric > 100) then
+    raise exception 'Vacancy rate must be between 0 and 100';
+  end if;
+  if p_patch ? 'loan_term_years' and p_patch->>'loan_term_years' is not null
+     and ((p_patch->>'loan_term_years')::integer < 0 or (p_patch->>'loan_term_years')::integer > 100) then
+    raise exception 'Loan term must be between 0 and 100 years';
+  end if;
   v_sql := 'update public.deals set ' || v_set ||
     ' where id = $2 and company_id = $3 returning *';
   execute v_sql into v_deal using p_patch,p_deal_id,p_company_id;
