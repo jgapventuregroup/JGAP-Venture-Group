@@ -59,6 +59,11 @@ begin
   if p_patch ? 'name' and (p_patch->>'name' is null or pg_catalog.btrim(p_patch->>'name') = '') then
     raise exception 'Deal name is required';
   end if;
+  -- Enforce finite, sensible numeric inputs before PostgreSQL casts.
+  if p_patch ? 'purchase_price' and p_patch->>'purchase_price' is not null
+     and (p_patch->>'purchase_price')::numeric < 0 then
+    raise exception 'Purchase price cannot be negative';
+  end if;
   v_sql := 'update public.deals set ' || v_set ||
     ' where id = $2 and company_id = $3 returning *';
   execute v_sql into v_deal using p_patch,p_deal_id,p_company_id;
