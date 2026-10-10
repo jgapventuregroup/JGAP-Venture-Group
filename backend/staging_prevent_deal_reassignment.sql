@@ -32,3 +32,5 @@ execute function jgap_private.prevent_deal_company_reassignment();
 -- 3. UPDATE company_id to the existing value succeeds.
 -- 4. Viewer and unrelated company member cannot edit.
 -- 5. No production deployment without review.
+-- 6. Verify trigger existence with pg_trigger and that its function resides in jgap_private.
+-- 7. Verify the authenticated role cannot disable triggers or change table ownership.
