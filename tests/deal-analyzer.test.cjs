@@ -202,3 +202,15 @@ test('negative return target blocks a maximum offer',()=>{
  assert.equal(get('r_jgap_max_price').textContent,'Incomplete');
  assert.match(get('dealStatus').innerHTML,/Return targets cannot be negative/);
 });
+
+test('all-cash deal does not fail a DSCR target when no debt exists',()=>{
+ const get=evaluate({...baseline,d_loan_structure:'none',d_down:0,d_target_dscr:1.25,d_target_cap:1,d_target_coc:1});
+ assert.equal(get('r_dscr').textContent,'—');
+ assert.equal(get('r_max_dscr').textContent,'—');
+ assert.equal(get('r_target').textContent,'Meets all entered targets');
+ assert.equal(get('maxDscrBox').style.display,'none');
+});
+test('financed deal still applies the entered DSCR target',()=>{
+ const get=evaluate({...baseline,d_target_dscr:100});
+ assert.equal(get('r_target').textContent,'Below one or more entered targets');
+});
