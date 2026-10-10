@@ -47,3 +47,8 @@ E. After passing acceptance tests, stage controlled rollout and review rollback.
 - The frontend currently invokes `bootstrap_current_user()` on dashboard rendering and labels new users `Authorization pending`. It does not yet call `create_my_company`. The new RPC must not be deployed alone with the expectation that onboarding automatically works.
 - `list_current_user_company_access()` selects the first membership by creation time. It is another RPC requiring explicit workspace selection for future multi-company support.
 - SQL draft `backend/staging_create_my_company.sql` is additive and remains unexecuted; test in isolated staging before any production use.
+
+## CI validation (2026-10-10)
+- GitHub Actions run 38088793250 succeeded on commit 622d8422b9f9258e6f4f817cc11d9e2c8e0c767d, including the static workspace SQL checks.
+- These checks inspect draft SQL text. They do **not** execute the SQL, validate database permissions, or establish tenant isolation.
+- Paid Supabase branching was declined. Continue no-cost review and CI checks; do not provision a paid branch.
