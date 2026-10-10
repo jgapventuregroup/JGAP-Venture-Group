@@ -194,3 +194,17 @@ test('deal edits require nonempty status and property type', () => {
   assert.ok(sql.includes('Deal status is required'));
   assert.ok(sql.includes('Property type is required'));
 });
+
+test('customer app excludes private JGAP Book scripts and navigation', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.resolve(__dirname, '..');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  for (const token of ['learning-book.js', 'learning-book-runtime.js',
+    'navLearningBook', 'openJGAPLearningBook', 'renderLearningBookPage']) {
+    assert.ok(!html.includes(token), 'Customer index still references ' + token);
+  }
+  for (const file of ['learning-book.js', 'learning-book-runtime.js']) {
+    assert.ok(!fs.existsSync(path.join(root, file)), 'Customer bundle still ships ' + file);
+  }
+});
