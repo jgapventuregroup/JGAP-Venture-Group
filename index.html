@@ -1072,6 +1072,7 @@ function syncDealTestPrice(){
  if(!price)return;
  if(offer!=="" && offer!=null) price.value=offer;
  else if(asking!=="" && asking!=null) price.value=asking;
+ else price.value="";
 }
 function calcDeal(){
  const dq=document.getElementById("analyzerDataQuality"); if(dq){const miss=[]; const price=Number(document.getElementById("d_price")?.value||0),rent=Number(document.getElementById("d_rent")?.value||0),exp=Number(document.getElementById("d_exp")?.value||0),arv=Number(document.getElementById("d_arv")?.value||0),down=Number(document.getElementById("d_down")?.value||0),rate=Number(document.getElementById("d_rate")?.value||0); if(!price)miss.push("price"); if(!rent)miss.push("rent"); if(!exp)miss.push("operating expenses"); if(!down && document.getElementById("d_loan_structure")?.value!=="none")miss.push("down payment"); if(!rate && document.getElementById("d_loan_structure")?.value!=="none")miss.push("interest rate"); const type=document.getElementById("d_type")?.value; if((type==="house_flip"||arv>0)&&!arv)miss.push("ARV"); dq.textContent=miss.length?"⚠ Missing inputs: "+miss.join(", "):"✓ Core underwriting inputs are populated";}
