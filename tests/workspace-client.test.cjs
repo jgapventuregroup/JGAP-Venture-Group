@@ -202,3 +202,10 @@ test('blank workspace and deal identifiers never reach RPC', async () => {
   await assert.rejects(client.deleteDeal(db, 'alpha', '   ', true), /Workspace and deal/);
   assert.equal(calls, 0);
 });
+
+test('explicit invalid workspace selection never falls back to a sole membership', () => {
+  assert.throws(() => client.selectWorkspace([alpha], '   '), /not authorized/);
+  assert.throws(() => client.selectWorkspace([alpha], 42), /not authorized/);
+  assert.equal(client.selectWorkspace([alpha], null).id, 'alpha');
+  assert.equal(client.selectWorkspace([alpha], ' alpha ').id, 'alpha');
+});
