@@ -35,6 +35,15 @@ begin
     or not public.is_company_member(p_company_id) then
     raise exception 'Not authorized for selected workspace';
   end if;
+  -- Membership alone is insufficient for writes: viewers are read-only.
+  if not exists (
+    select 1 from public.company_members cm
+    where cm.company_id = p_company_id
+      and cm.user_id = (select auth.uid())
+      and cm.role in ('owner', 'admin', 'editor')
+  ) then
+    raise exception 'Workspace role cannot edit deals';
+  end if;
   if p_patch is null or pg_catalog.jsonb_typeof(p_patch) <> 'object' then
     raise exception 'Patch must be a JSON object';
   end if;
