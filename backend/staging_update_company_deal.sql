@@ -16,6 +16,7 @@ declare
   v_columns text[];
   v_column text;
   v_sql text;
+  v_exists boolean;
   v_set text := '';
   v_allowed constant text[] := array[
     'name','status','property_type','purchase_price','down_payment','interest_rate',
@@ -50,6 +51,10 @@ begin
     v_set := v_set || case when v_set = '' then '' else ', ' end ||
       format('%I = (jsonb_populate_record(null::public.deals, $1)).%I',v_column,v_column);
   end loop;
+  select exists (select 1 from public.deals d where d.id = p_deal_id and d.company_id = p_company_id) into v_exists;
+  if not v_exists then
+    raise exception 'Deal not found in selected workspace';
+  end if;
   v_sql := 'update public.deals set ' || v_set ||
     ' where id = $2 and company_id = $3 returning *';
   execute v_sql into v_deal using p_patch,p_deal_id,p_company_id;
