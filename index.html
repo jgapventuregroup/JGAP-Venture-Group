@@ -1077,7 +1077,7 @@ function calcDeal(){
  const dq=document.getElementById("analyzerDataQuality"); if(dq){const miss=[]; const price=Number(document.getElementById("d_price")?.value||0),rent=Number(document.getElementById("d_rent")?.value||0),exp=Number(document.getElementById("d_exp")?.value||0),arv=Number(document.getElementById("d_arv")?.value||0),down=Number(document.getElementById("d_down")?.value||0),rate=Number(document.getElementById("d_rate")?.value||0); if(!price)miss.push("price"); if(!rent)miss.push("rent"); if(!exp)miss.push("operating expenses"); if(!down && document.getElementById("d_loan_structure")?.value!=="none")miss.push("down payment"); if(!rate && document.getElementById("d_loan_structure")?.value!=="none")miss.push("interest rate"); const type=document.getElementById("d_type")?.value; if((type==="house_flip"||arv>0)&&!arv)miss.push("ARV"); dq.textContent=miss.length?"⚠ Missing inputs: "+miss.join(", "):"✓ Core underwriting inputs are populated";}
 
  if(!document.getElementById("d_price"))return;
- const price=n("d_price"),down=n("d_down"),rate=n("d_rate")/100,term=Math.max(1,n("d_term")),close=n("d_close"),rehab=n("d_rehab"),rent=n("d_rent"),vacancy=Math.min(.99,Math.max(0,n("d_vacancy")/100)),exp=n("d_exp"),other=n("d_other"),structure=document.getElementById("d_loan_structure")?.value||"amortizing";
+ const price=n("d_price"),down=n("d_down"),rate=n("d_rate")/100,rawTerm=n("d_term"),term=Math.max(1,rawTerm),close=n("d_close"),rehab=n("d_rehab"),rent=n("d_rent"),vacancy=Math.min(.99,Math.max(0,n("d_vacancy")/100)),exp=n("d_exp"),other=n("d_other"),structure=document.getElementById("d_loan_structure")?.value||"amortizing";
  const loan=structure==="none"?0:Math.max(0,price-down),mr=rate/12,months=term*12;
  const paymentFor=p=>{if(p<=0||structure==="none")return 0;if(structure==="interest_only")return p*mr;return mr?p*mr*Math.pow(1+mr,months)/(Math.pow(1+mr,months)-1):p/months};
  const debt=paymentFor(loan),income=rent*(1-vacancy)+other,noi=income-exp,anoi=noi*12,cf=noi-debt,cash=(structure==="none"?Math.max(0,price):Math.max(0,Math.min(down,price)))+close+rehab;
@@ -1091,7 +1091,7 @@ function calcDeal(){
  if(exp<=0)underwritingIssues.push("Monthly operating expenses are zero or missing; returns may be overstated until real/estimated OpEx is entered.");
  if(structure!=="none" && price>0 && down>price)underwritingIssues.push("Down payment exceeds the purchase price.");
  if(structure!=="none" && rate<0)underwritingIssues.push("Interest rate cannot be negative.");
- if(structure!=="none" && term<=0)underwritingIssues.push("Loan term is missing.");
+ if(structure!=="none" && rawTerm<=0)underwritingIssues.push("Loan term is missing.");
  const underwritingComplete=underwritingIssues.length===0;
  const meets=coc>=tc&&cap>=tp&&(td===null||dscr>=td);
  set("r_target",!underwritingComplete?"Incomplete underwriting":(meets?"Meets all entered targets":"Below one or more entered targets"));
