@@ -52,6 +52,9 @@
   }
   function findDownPct(){
     var app=document.getElementById('app'); if(!app) return 20;
+    var dealPrice=num(document.getElementById('d_price')?.value);
+    var dealDown=num(document.getElementById('d_down')?.value);
+    if(dealPrice>0 && dealDown>=0) return dealDown/dealPrice*100;
     var inputs=Array.prototype.slice.call(app.querySelectorAll('input'));
     for(var i=0;i<inputs.length;i++){
       var el=inputs[i], meta=((el.name||'')+' '+(el.id||'')+' '+(el.placeholder||'')).toLowerCase();
