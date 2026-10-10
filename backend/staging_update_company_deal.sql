@@ -84,6 +84,18 @@ begin
      and ((p_patch->>'interest_rate')::numeric < 0 or (p_patch->>'interest_rate')::numeric > 100) then
     raise exception 'Interest rate must be between 0 and 100';
   end if;
+  -- Integer quantities must be nonnegative; a unit count cannot be zero.
+  foreach v_column in array array['units','holding_months',
+    'offer_due_diligence_days','offer_closing_days'] loop
+    if p_patch ? v_column and p_patch->>v_column is not null
+       and (p_patch->>v_column)::integer < 0 then
+      raise exception '% cannot be negative', v_column;
+    end if;
+  end loop;
+  if p_patch ? 'units' and p_patch->>'units' is not null
+     and (p_patch->>'units')::integer = 0 then
+    raise exception 'Units must be greater than zero';
+  end if;
   v_sql := 'update public.deals set ' || v_set ||
     ' where id = $2 and company_id = $3 returning *';
   execute v_sql into v_deal using p_patch,p_deal_id,p_company_id;
