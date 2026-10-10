@@ -137,3 +137,12 @@ test('deal edits enforce interest rate bounds', () => {
   const sql = load('staging_update_company_deal.sql');
   assert.ok(sql.includes('Interest rate must be between 0 and 100'));
 });
+
+test('deal edits validate unit counts and timeline integers', () => {
+  const sql = load('staging_update_company_deal.sql');
+  for (const field of ['units', 'holding_months', 'offer_due_diligence_days', 'offer_closing_days']) {
+    assert.ok(sql.includes("'" + field + "'"));
+  }
+  assert.ok(sql.includes('Units must be greater than zero'));
+  assert.ok(sql.includes("p_patch->>v_column)::integer < 0"));
+});
