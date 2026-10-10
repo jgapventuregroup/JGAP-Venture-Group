@@ -149,3 +149,14 @@ test('deal patch rejects non-plain objects without contacting backend', async ()
   await assert.rejects(client.updateDeal(db, 'alpha', 'deal', Object.assign(new Date(), {name:'x'})), /plain object/);
   assert.equal(calls, 0);
 });
+
+test('deal creation rejects protected and unexpected fields before backend calls', async () => {
+  let calls = 0;
+  const db = { rpc: async () => { calls++; return {data:'deal-id',error:null}; } };
+  await assert.rejects(client.createDeal(db, 'alpha', {name:'Property',company_id:'beta'}), /Field not accepted/);
+  await assert.rejects(client.createDeal(db, 'alpha', {name:'Property',owner_id:'outsider'}), /Field not accepted/);
+  await assert.rejects(client.createDeal(db, 'alpha', Object.assign(new Date(), {name:'Property'})), /plain object/);
+  assert.equal(calls, 0);
+  await client.createDeal(db, 'alpha', {name:'Property',asking_price:125000,target_offer_price:100000});
+  assert.equal(calls, 1);
+});
