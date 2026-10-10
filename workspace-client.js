@@ -5,10 +5,14 @@
 (function (root) {
   'use strict';
   function normalizeWorkspaces(rows) {
-    return (Array.isArray(rows) ? rows : []).filter(row =>
-      row && typeof (row.company_id || row.id) === 'string' && (row.company_id || row.id).length > 0
-    ).map(row => ({
-      id: row.company_id || row.id,
+    const seen = new Set();
+    return (Array.isArray(rows) ? rows : []).filter(row => {
+      const id = row && (row.company_id || row.id);
+      if (typeof id !== 'string' || !id.trim() || seen.has(id.trim())) return false;
+      seen.add(id.trim());
+      return true;
+    }).map(row => ({
+      id: (row.company_id || row.id).trim(),
       name: String(row.company_name || row.name || 'Unnamed workspace'),
       role: String(row.member_role || row.role || '')
     }));
