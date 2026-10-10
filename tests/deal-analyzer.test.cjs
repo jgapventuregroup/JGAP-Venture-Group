@@ -145,3 +145,23 @@ test('Save Deal removes stale prices when both visible inputs are cleared',async
  assert.equal(saved.target_offer_price,null);
  assert.equal(saved.purchase_price,0);
 });
+
+test('blank financing interest rate marks underwriting incomplete',()=>{
+ const get=evaluate({...baseline,d_rate:''});
+ assert.equal(get('r_jgap_max_price').textContent,'Incomplete');
+ assert.match(get('dealStatus').innerHTML,/Interest rate is missing/);
+});
+test('negative down payment blocks maximum offer',()=>{
+ const get=evaluate({...baseline,d_down:-1000});
+ assert.equal(get('r_jgap_max_price').textContent,'Incomplete');
+ assert.match(get('dealStatus').innerHTML,/Down payment cannot be negative/);
+});
+test('negative closing costs block maximum offer',()=>{
+ const get=evaluate({...baseline,d_close:-5000});
+ assert.equal(get('r_jgap_max_price').textContent,'Incomplete');
+ assert.match(get('dealStatus').innerHTML,/cannot be negative/);
+});
+test('cash purchase can have a blank interest rate',()=>{
+ const get=evaluate({...baseline,d_loan_structure:'none',d_down:0,d_rate:''});
+ assert.notEqual(get('r_jgap_max_price').textContent,'Incomplete');
+});
