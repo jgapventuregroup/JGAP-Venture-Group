@@ -17,3 +17,16 @@ Decision (2026-10-10): The JGAP Book is a separate owner project, **not a featur
 4. Confirm removing book access from the customer product does not delete the owner's manuscript or affect the real-estate tools.
 
 **Status:** Policy documented only; inventory and technical enforcement pending. No production change authorized.
+
+## Initial code inventory (2026-10-10)
+
+Confirmed in `index.html` on the development branch:
+- The page loads `./learning-book.js` and `./learning-book-runtime.js` using public `<script defer>` tags.
+- `openJGAPLearningBook()` dynamically loads `learning-book-runtime.js` again.
+- A `navLearningBook` button links to the book; the navigation ordering and page-renderer registry also reference it.
+
+**Security implication:** Hiding the navigation button is not access control. Static files published through GitHub Pages remain directly retrievable. A customer build must not publish manuscript-bearing book files at all. Do not treat authentication checks in JavaScript as a substitute for separating assets.
+
+**Required next change (not yet applied):** preserve the original book files in a private owner-controlled location, then produce a customer build that excludes the book scripts, navigation, dynamic loader, and manuscript-bearing static assets. Confirm no other module depends on the book globals before changing the live app. Because the current site may already publicly serve these files, the owner should treat previously published book content as potentially accessible.
+
+**Do not delete or move the book files until a verified private copy exists.** This audit only records exposure paths; it does not alter production.
