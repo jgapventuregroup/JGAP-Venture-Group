@@ -126,3 +126,9 @@ test('deal update rejects negative purchase prices', () => {
   assert.ok(sql.includes("p_patch ? v_column"));
   assert.ok(sql.includes("cannot be negative"));
 });
+
+test('deal edits enforce vacancy and loan term bounds', () => {
+  const sql = load('staging_update_company_deal.sql');
+  assert.ok(sql.includes('Vacancy rate must be between 0 and 100'));
+  assert.ok(sql.includes('Loan term must be between 0 and 100 years'));
+});
