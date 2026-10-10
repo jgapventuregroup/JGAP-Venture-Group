@@ -26,3 +26,16 @@ Setup: create two staging accounts A and B, and deploy the reviewed staging-only
 20. Multi-company membership requires explicit workspace selection.
 
 Release gate: No cross-customer reads, writes, deletes, or membership changes. No production rollout until evidence is captured, migration reviewed, and rollback approved. Static tests do not substitute for integration tests.
+
+## Additional role and workspace tests
+
+21. Existing owners and admins retain access to their original deals.
+22. Editors can update their company's deals but cannot elevate their membership role.
+23. Viewers can read deals but cannot create, update, or delete them.
+24. Viewer write attempts through legacy backend functions must also fail.
+25. Unrelated accounts cannot read or change a deal using a known deal ID.
+26. Invitation recipients cannot change their assigned role.
+27. Removing a membership prevents subsequent authorized access.
+28. Users in two workspaces must create deals only in the workspace they selected.
+29. Customer app builds contain no JGAP Book manuscript assets.
+30. Existing JGAP Venture Group data remains intact after migration.
