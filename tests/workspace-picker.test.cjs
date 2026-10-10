@@ -64,3 +64,17 @@ test('stale async failure cannot overwrite newer company selection', async () =>
   await new Promise(resolve => setImmediate(resolve));
   assert.doesNotMatch(status.textContent, /Old workspace failed/);
 });
+
+test('invalid selection also invalidates an earlier in-flight failure', async () => {
+  const container = new Element(doc, 'div');
+  let rejectOld;
+  const pending = new Promise((_, reject) => { rejectOld = reject; });
+  const { select, status } = mount(container, [workspace('alpha'), workspace('beta')], () => pending);
+  select.value = 'alpha'; select.listeners.change();
+  await Promise.resolve();
+  select.value = 'outsider'; select.listeners.change();
+  rejectOld(new Error('Outdated backend error'));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.match(status.textContent, /not authorized/);
+  assert.doesNotMatch(status.textContent, /Outdated backend error/);
+});
