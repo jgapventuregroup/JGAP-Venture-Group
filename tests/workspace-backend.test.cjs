@@ -50,3 +50,20 @@ test('deal creation binds inserted deal to selected workspace', () => {
   assert.ok(sql.includes('Not authorized for selected workspace'));
   assert.ok(sql.includes('revoke all on function public.create_company_deal'));
 });
+
+test('offer-aware deal creation preserves every existing analyzer input', () => {
+  const sql = load('staging_company_deal_with_offer.sql');
+  const fields = [
+    'p_asking_price','p_target_offer_price','p_offer_notes','p_target_cap_rate',
+    'p_target_cash_on_cash','p_target_monthly_cash_flow','p_target_dscr',
+    'p_offer_earnest_money','p_offer_due_diligence_days','p_offer_closing_days',
+    'p_offer_financing_type','p_offer_contingencies','p_property_address',
+    'p_property_county','p_seller_name','p_offer_state','p_offer_template'
+  ];
+  for (const field of fields) assert.ok(sql.includes(field), field);
+  assert.ok(sql.includes('returns uuid'));
+  assert.ok(sql.includes('security invoker'));
+  assert.ok(sql.includes('public.is_company_member(p_company_id)'));
+  assert.ok(sql.includes('return v_id;'));
+  assert.ok(sql.includes('from public,anon'));
+});
