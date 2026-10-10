@@ -75,3 +75,13 @@ test('deal creation rejects missing workspace or name before RPC', async () => {
   await assert.rejects(client.createDeal(api, '', { name: 'Duplex' }), /Select a workspace/);
   await assert.rejects(client.createDeal(api, 'alpha', { name: ' ' }), /Deal name/);
 });
+
+test('workspace picker never silently selects among multiple companies', () => {
+  const picker = client.renderWorkspacePicker([alpha, beta], null);
+  assert.equal(picker.required, true);
+  assert.equal(picker.selectedId, null);
+  assert.deepEqual(picker.choices.map(x => x.value), ['alpha', 'beta']);
+  assert.equal(client.renderWorkspacePicker([alpha], null).selectedId, 'alpha');
+  assert.equal(client.renderWorkspacePicker([alpha, beta], 'beta').selectedId, 'beta');
+  assert.throws(() => client.renderWorkspacePicker([alpha], 'beta'), /not authorized/);
+});
