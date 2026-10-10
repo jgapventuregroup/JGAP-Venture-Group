@@ -188,3 +188,9 @@ test('deal edits cannot null required financial inputs or exceed selling cost bo
   assert.ok(sql.includes('Required deal input cannot be null'));
   assert.ok(sql.includes('Selling cost percent must be between 0 and 100'));
 });
+
+test('deal edits require nonempty status and property type', () => {
+  const sql = load('staging_update_company_deal.sql');
+  assert.ok(sql.includes('Deal status is required'));
+  assert.ok(sql.includes('Property type is required'));
+});
