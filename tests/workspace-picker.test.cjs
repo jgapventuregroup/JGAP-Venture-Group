@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { mount } = require('../workspace-picker.js');
 class Element {
-  constructor(doc, tag) { this.ownerDocument = doc; this.tag = tag; this.children = []; this.listeners = {}; this.value = ''; this.textContent = ''; this.disabled = false; }
+  constructor(doc, tag) { this.ownerDocument = doc; this.tag = tag; this.children = []; this.listeners = {}; this.value = ''; this.textContent = ''; this.disabled = false; this.isConnected = true; }
   createElement(tag) { return new Element(this, tag); }
   appendChild(child) { this.children.push(child); return child; }
   replaceChildren(...children) { this.children = children; }
@@ -77,4 +77,13 @@ test('invalid selection also invalidates an earlier in-flight failure', async ()
   await new Promise(resolve => setImmediate(resolve));
   assert.match(status.textContent, /not authorized/);
   assert.doesNotMatch(status.textContent, /Outdated backend error/);
+});
+
+test('unmounted picker ignores subsequent selection events', async () => {
+  const container = new Element(doc, 'div'); let called = 0;
+  const { select } = mount(container, [workspace('alpha'), workspace('beta')], () => { called++; });
+  container.isConnected = false;
+  select.value = 'beta'; select.listeners.change();
+  await Promise.resolve();
+  assert.equal(called, 0);
 });
