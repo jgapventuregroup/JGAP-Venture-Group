@@ -208,3 +208,15 @@ test('customer app excludes private JGAP Book scripts and navigation', () => {
     assert.ok(!fs.existsSync(path.join(root, file)), 'Customer bundle still ships ' + file);
   }
 });
+
+test('single deal lookup requires both explicit workspace and deal IDs', () => {
+  const sql = load('staging_get_company_deal.sql');
+  assert.ok(sql.includes('security invoker'));
+  assert.ok(sql.includes('d.company_id = p_company_id'));
+  assert.ok(sql.includes('d.id = p_deal_id'));
+  assert.ok(sql.includes('public.is_company_member(p_company_id)'));
+  assert.ok(sql.includes('(select auth.uid()) is not null'));
+  assert.ok(sql.includes('from public,anon'));
+  assert.ok(sql.includes('to authenticated'));
+  assert.ok(!sql.includes('security definer'));
+});
