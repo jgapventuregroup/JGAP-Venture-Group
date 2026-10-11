@@ -321,3 +321,10 @@ test('single deal lookup rejects cross-company and wrong deal identities', async
     rpc: async () => ({data:[],error:null})
   }, 'alpha','d1'), null);
 });
+
+test('workspace preview scripts use actual HTML newlines, not escaped text', () => {
+  const fs = require('node:fs');
+  const html = fs.readFileSync(require('node:path').join(__dirname, '..', 'index.html'), 'utf8');
+  assert.match(html, /<script src="workspace-client\.js"><\/script>\n<script src="workspace-picker\.js"><\/script>\n<script>\nconst SUPABASE_URL=/);
+  assert.doesNotMatch(html, /<script src="workspace-client\.js"><\/script>\\n/);
+});
