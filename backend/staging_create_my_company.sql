@@ -36,6 +36,14 @@ begin
   ) then
     raise exception 'Pending company invitation: accept your invitation first';
   end if;
+  -- Require verified email before granting ownership of a new customer workspace.
+  -- Existing memberships remain accessible above, without creating anything.
+  if not exists (
+    select 1 from auth.users u
+    where u.id = v_uid and u.email_confirmed_at is not null
+  ) then
+    raise exception 'Verify your email before creating a company workspace';
+  end if;
   insert into public.companies(name) values(v_name) returning id into v_company;
   insert into public.company_members(company_id,user_id,role)
     values(v_company,v_uid,'owner');
