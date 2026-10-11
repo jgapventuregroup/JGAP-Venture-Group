@@ -10,7 +10,7 @@ test('customer flow never runs without explicit confirmation',async()=>{
 test('synthetic customer flow scopes create, lookup and list to selected company',async()=>{
   const calls=[];
   const deal={id:'deal1',company_id:'alpha',name:'JGAP STAGING TEST: Duplex'};
-  const client={rpc:async(name,args)=>{
+  const client={supabaseUrl:'https://qfszapteuxuogoselprp.supabase.co',rpc:async(name,args)=>{
     calls.push({name,args});
     if(name==='list_my_companies')return {data:[{company_id:'alpha',company_name:'Alpha',member_role:'owner'}],error:null};
     if(name==='create_company_deal_with_offer')return {data:'deal1',error:null};
@@ -25,7 +25,7 @@ test('synthetic customer flow scopes create, lookup and list to selected company
 });
 test('synthetic customer flow refuses ambiguous multi-company membership',async()=>{
   const calls=[];
-  const client={rpc:async(name)=>{calls.push(name);return {data:[
+  const client={supabaseUrl:'https://qfszapteuxuogoselprp.supabase.co',rpc:async(name)=>{calls.push(name);return {data:[
     {company_id:'alpha',company_name:'Alpha',member_role:'owner'},
     {company_id:'beta',company_name:'Beta',member_role:'owner'}
   ],error:null};}};
@@ -35,7 +35,7 @@ test('synthetic customer flow refuses ambiguous multi-company membership',async(
 
 test('viewer workspace never attempts synthetic deal creation',async()=>{
   const calls=[];
-  const client={rpc:async(name)=>{
+  const client={supabaseUrl:'https://qfszapteuxuogoselprp.supabase.co',rpc:async(name)=>{
     calls.push(name);
     if(name==='list_my_companies')return {data:[{
       company_id:'alpha',company_name:'Alpha',member_role:'viewer'
@@ -48,7 +48,7 @@ test('viewer workspace never attempts synthetic deal creation',async()=>{
 
 test('synthetic flow cannot silently create a new company',async()=>{
   const calls=[];
-  const client={rpc:async(name)=>{
+  const client={supabaseUrl:'https://qfszapteuxuogoselprp.supabase.co',rpc:async(name)=>{
     calls.push(name);
     if(name==='list_my_companies')return {data:[],error:null};
     throw Error('no company creation permitted');
@@ -59,7 +59,7 @@ test('synthetic flow cannot silently create a new company',async()=>{
 
 test('explicit company selection uses only the authorized selected company',async()=>{
   const calls=[];
-  const client={rpc:async(name,args)=>{
+  const client={supabaseUrl:'https://qfszapteuxuogoselprp.supabase.co',rpc:async(name,args)=>{
     calls.push({name,args});
     if(name==='list_my_companies')return {data:[
       {company_id:'alpha',company_name:'Alpha',member_role:'viewer'},
@@ -76,7 +76,7 @@ test('explicit company selection uses only the authorized selected company',asyn
 });
 test('explicit company selection refuses an unlisted company before writes',async()=>{
   const calls=[];
-  const client={rpc:async(name)=>{
+  const client={supabaseUrl:'https://qfszapteuxuogoselprp.supabase.co',rpc:async(name)=>{
     calls.push(name);
     return {data:[
       {company_id:'alpha',company_name:'Alpha',member_role:'owner'},
@@ -85,4 +85,17 @@ test('explicit company selection refuses an unlisted company before writes',asyn
   }};
   await assert.rejects(exerciseCustomerFlow(client,'Other','Duplex',true,'gamma'),/not authorized/);
   assert.deepEqual(calls,['list_my_companies']);
+});
+
+test('production Supabase client is rejected before any RPC',async()=>{
+  let calls=0;
+  const client={supabaseUrl:'https://sfsyphmnzxaplundaljy.supabase.co',rpc:async()=>{calls++;}};
+  await assert.rejects(exerciseCustomerFlow(client,'Test','Duplex',true),/Staging project URL mismatch/);
+  assert.equal(calls,0);
+});
+test('unverifiable Supabase client is rejected before any RPC',async()=>{
+  let calls=0;
+  const client={rpc:async()=>{calls++;}};
+  await assert.rejects(exerciseCustomerFlow(client,'Test','Duplex',true),/Staging project URL mismatch/);
+  assert.equal(calls,0);
 });
