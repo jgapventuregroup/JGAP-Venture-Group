@@ -23,7 +23,7 @@
 1. Review and apply a role-aware RLS migration to every deal write path, **including direct table access**. The current production deal policy allows any member to write.
 2. Audit and replace legacy SECURITY DEFINER deal functions, especially functions that silently choose the first company membership. Do not revoke until callers are migrated.
 3. Review and apply `staging_list_my_companies.sql` and `staging_create_my_company.sql`.
-4. Review and apply `staging_company_deals.sql`, `staging_company_deal_with_offer.sql`, `staging_get_company_deal.sql`, `staging_update_company_deal.sql`, and `staging_delete_company_deal.sql`.
+4. Review and apply `staging_prevent_deal_reassignment.sql` and test a dual-company owner cannot transfer a deal by changing `company_id`; then review and apply `staging_company_deals.sql`, `staging_company_deal_with_offer.sql`, `staging_get_company_deal.sql`, `staging_update_company_deal.sql`, and `staging_delete_company_deal.sql`.
 5. Verify EXECUTE grants, default function privileges, RLS enforcement, and the behavior of all preexisting RPCs. An authenticated user must not be able to bypass roles via a different endpoint.
 
 ## Test evidence
@@ -47,8 +47,8 @@ Immediately stop on any cross-company data exposure, viewer write access, privil
 **Approval boundary:** This document authorizes no deployment, production SQL, customer data changes, merges, or paid services.
 
 ## Email verification decision before onboarding activation
-- The draft `create_my_company` RPC currently requires authentication but does **not** require a verified email. This is an open policy decision, not a completed safeguard.
-- Before enabling public customer signup, decide whether email verification is mandatory. If yes, add a server-side check of the authenticated user's verified-email timestamp, and test both verified and unverified users in isolated staging.
+- The current GitHub draft `create_my_company` RPC requires a verified, nonempty account email **for new workspace creation**. This is code-level preparation only: the updated RPC has not been confirmed installed in staging and has not been tested with real authenticated accounts.
+- Before enabling public customer signup, decide whether email verification is mandatory. The proposed server-side check uses `auth.users.email_confirmed_at`; test verified and unverified accounts in isolated staging before activation.
 - Do not rely solely on a disabled frontend button or on the email value supplied by the browser. Preserve existing company memberships; any verification gate should apply to **new workspace creation**, not block existing members from accessing their properties.
 - Confirm the chosen email-confirmation behavior with the actual Supabase Auth configuration and identity-provider flows. Do not modify production Auth settings without separate approval.
 
