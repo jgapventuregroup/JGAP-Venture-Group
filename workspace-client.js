@@ -63,7 +63,8 @@
     workspaceId = normalizeWorkspaceId(workspaceId);
     const { data, error } = await client.rpc('list_company_deals', { p_company_id: workspaceId });
     if (error) throw error;
-    return data || [];
+    if (!Array.isArray(data)) throw new Error('Deal listing returned an invalid result');
+    return data;
   }
   async function getDeal(client, workspaceId, dealId) {
     workspaceId = normalizeWorkspaceId(workspaceId);
