@@ -277,3 +277,14 @@ test('workspace creation refuses malformed company IDs and trims valid replies',
   }, 'Valid Company', true);
   assert.equal(result.company_id, 'alpha');
 });
+
+test('deal listing fails closed on missing or malformed backend results', async () => {
+  for (const data of [null, undefined, {}, {id:'deal'}, 'unexpected']) {
+    await assert.rejects(client.listDeals({
+      rpc: async () => ({data,error:null})
+    }, 'alpha'), /invalid result/);
+  }
+  assert.deepEqual(await client.listDeals({
+    rpc: async () => ({data:[],error:null})
+  }, 'alpha'), []);
+});
