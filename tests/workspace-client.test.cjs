@@ -34,7 +34,7 @@ test('single-deal lookup supplies company and deal IDs', async () => {
   const deal = await client.getDeal({ rpc: async (name, args) => {
     assert.equal(name, 'get_company_deal');
     assert.deepEqual(args, { p_company_id: 'alpha', p_deal_id: 'd1' });
-    return { data: [{ id: 'd1' }], error: null };
+    return { data: [{ id: 'd1', company_id: 'alpha' }], error: null };
   } }, 'alpha', 'd1');
   assert.equal(deal.id, 'd1');
 });
@@ -303,4 +303,21 @@ test('workspace listing rejects mixed-company or unscoped deal records', async (
     rpc: async () => ({data:[{id:'one',company_id:'alpha'}],error:null})
   }, 'alpha');
   assert.equal(records.length, 1);
+});
+
+test('single deal lookup rejects cross-company and wrong deal identities', async () => {
+  for (const data of [
+    [{id:'d1',company_id:'beta'}],
+    [{id:'d2',company_id:'alpha'}],
+    [{id:'d1'}],
+    [{id:'d1',company_id:'alpha'},{id:'d1',company_id:'alpha'}],
+    'unexpected'
+  ]) {
+    await assert.rejects(client.getDeal({
+      rpc: async () => ({data,error:null})
+    }, 'alpha', 'd1'), /outside the selected workspace|multiple records/);
+  }
+  assert.equal(await client.getDeal({
+    rpc: async () => ({data:[],error:null})
+  }, 'alpha','d1'), null);
 });
