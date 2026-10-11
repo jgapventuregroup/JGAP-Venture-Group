@@ -9,6 +9,10 @@ const workspace = require('../workspace-client.js');
 async function exerciseCustomerFlow(client, companyName, dealName, confirmed, selectedCompanyId = null) {
   if (confirmed !== true) throw new Error('Explicit synthetic staging test confirmation required');
   if (!client || typeof client.rpc !== 'function') throw new Error('Staging RPC client required');
+  // Supabase-js exposes supabaseUrl. Fail closed before any RPC when the
+  // supplied client is not demonstrably attached to the dedicated staging DB.
+  if (client.supabaseUrl !== 'https://qfszapteuxuogoselprp.supabase.co')
+    throw new Error('Staging project URL mismatch: refusing all RPC requests');
   let state = await onboarding.resolveOnboarding(client);
   if (state.state === 'needs_workspace')
     throw new Error('No workspace exists; create a synthetic company separately with explicit approval');
