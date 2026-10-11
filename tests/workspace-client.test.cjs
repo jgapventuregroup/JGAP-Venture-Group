@@ -24,7 +24,7 @@ test('deal listing always supplies selected company ID', async () => {
   const result = await client.listDeals({ rpc: async (name, args) => {
     assert.equal(name, 'list_company_deals');
     assert.deepEqual(args, { p_company_id: 'beta' });
-    return { data: [{ id: 'deal-b' }], error: null };
+    return { data: [{ id: 'deal-b', company_id: 'beta' }], error: null };
   }}, 'beta');
   assert.equal(result[0].id, 'deal-b');
   await assert.rejects(client.listDeals({ rpc: () => { throw Error('should not call'); } }, ''), /Select a workspace/);
@@ -163,8 +163,8 @@ test('deal creation rejects protected and unexpected fields before backend calls
 
 test('simulated two-company backend keeps reads scoped to selected workspace', async () => {
   const records = {
-    alpha: [{id:'deal-a',name:'Alpha property'}],
-    beta: [{id:'deal-b',name:'Beta property'}]
+    alpha: [{id:'deal-a',company_id:'alpha',name:'Alpha property'}],
+    beta: [{id:'deal-b',company_id:'beta',name:'Beta property'}]
   };
   const membership = new Set(['alpha']);
   const rpc = async (name, args = {}) => {
@@ -287,4 +287,20 @@ test('deal listing fails closed on missing or malformed backend results', async 
   assert.deepEqual(await client.listDeals({
     rpc: async () => ({data:[],error:null})
   }, 'alpha'), []);
+});
+
+test('workspace listing rejects mixed-company or unscoped deal records', async () => {
+  for (const records of [
+    [{id:'one',company_id:'alpha'}, {id:'two',company_id:'beta'}],
+    [{id:'missing-company'}],
+    [null]
+  ]) {
+    await assert.rejects(client.listDeals({
+      rpc: async () => ({data:records,error:null})
+    }, 'alpha'), /outside the selected workspace/);
+  }
+  const records = await client.listDeals({
+    rpc: async () => ({data:[{id:'one',company_id:'alpha'}],error:null})
+  }, 'alpha');
+  assert.equal(records.length, 1);
 });
