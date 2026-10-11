@@ -9,7 +9,7 @@ function entitlement(record, nowSeconds) {
   if (status !== 'active' && status !== 'trialing')
     return {allowed:false,reason:'payment_required'};
   const end=status==='trialing'?record.trial_end:record.current_period_end;
-  if (!Number.isFinite(end) || end <= nowSeconds)
+  if (!Number.isSafeInteger(end) || end <= nowSeconds)
     return {allowed:false,reason:'expired'};
   return {allowed:true,reason:'entitled'};
 }
