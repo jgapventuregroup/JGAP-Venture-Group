@@ -328,3 +328,15 @@ test('workspace preview scripts use actual HTML newlines, not escaped text', () 
   assert.match(html, /<script src="workspace-client\.js"><\/script>\n<script src="workspace-picker\.js"><\/script>\n<script>\nconst SUPABASE_URL=/);
   assert.doesNotMatch(html, /<script src="workspace-client\.js"><\/script>\\n/);
 });
+
+test('opt-in workspace preview blocks production Supabase RPCs', () => {
+  const fs = require('node:fs');
+  const html = fs.readFileSync(require('node:path').join(__dirname, '..', 'index.html'), 'utf8');
+  const start = html.indexOf('async function mountJGAPWorkspacePreview()');
+  const end = html.indexOf('window.__jgapStartupReachedAuth',start);
+  const preview = html.slice(start,end);
+  assert.ok(start>=0 && end>start);
+  assert.match(preview,/qfszapteuxuogoselprp\.supabase\.co/);
+  assert.match(preview,/Workspace preview disabled/);
+  assert.ok(preview.indexOf('Workspace preview disabled') < preview.indexOf('listWorkspaces(sb)'));
+});
