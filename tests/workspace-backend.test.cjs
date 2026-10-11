@@ -314,3 +314,10 @@ test('verified email is checked before matching pending invitations', () => {
   assert.ok(emailCheck >= 0 && invitationLookup > emailCheck);
   assert.equal(sql.split('Verify your email before creating a company workspace').length - 1, 1);
 });
+
+test('company onboarding requires authenticated session role inside security definer RPC', () => {
+  const sql = load('staging_create_my_company.sql');
+  assert.match(sql, /security definer/i);
+  assert.match(sql, /auth\.role\(\)\) is distinct from 'authenticated'/i);
+  assert.match(sql, /revoke all on function public\.create_my_company\(text\) from anon/i);
+});
