@@ -237,3 +237,12 @@ test('membership guard refuses unknown company before UI data requests', () => {
   assert.throws(() => client.requireWorkspaceMembership([alpha], 'beta'), /not authorized/);
   assert.throws(() => client.requireWorkspaceMembership([alpha], '   '), /Select a workspace/);
 });
+
+test('opt-in preview checks membership before querying selected company', () => {
+  const fs = require('node:fs');
+  const html = fs.readFileSync(require('node:path').join(__dirname, '..', 'index.html'), 'utf8');
+  const guard = html.indexOf('requireWorkspaceMembership(workspaces,selected.id)');
+  const query = html.indexOf('listDeals(sb,authorized.id)', guard);
+  assert.ok(guard > 0, 'preview must check membership');
+  assert.ok(query > guard, 'preview must guard before requesting deals');
+});
