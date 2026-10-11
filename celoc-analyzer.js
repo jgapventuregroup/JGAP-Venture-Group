@@ -1,7 +1,7 @@
 /* JGAP CELOC Analyzer - isolated module. Never edits existing analyzer calculations. */
 (function(){
   'use strict';
-  var VERSION='20261005-1';
+  var VERSION='20261010-2';
   var RATE_DEFAULT=7.5;
   var panelId='jgapCelocPanel';
   var stateKey='jgap_celoc_v1';
@@ -28,22 +28,33 @@
   }
   function findPurchasePrice(){
     var app=document.getElementById('app'); if(!app) return 0;
-    var inputs=Array.prototype.slice.call(app.querySelectorAll('input'));
-    for(var i=0;i<inputs.length;i++){
-      var el=inputs[i], meta=((el.name||'')+' '+(el.id||'')+' '+(el.placeholder||'')).toLowerCase();
-      if(/purchase.*price|asking.*price|offer.*price|purchaseprice/.test(meta)) return num(el.value);
+    // The actual Deal Analyzer uses these IDs, not descriptive name attributes.
+    // Our explicit offer wins; otherwise use the tested price, then asking.
+    var priority=['visibleOfferInput','d_price','visibleAskingInput'];
+    for(var p=0;p<priority.length;p++){
+      var field=document.getElementById(priority[p]);
+      if(field && num(field.value)>0) return num(field.value);
     }
-    var labels=Array.prototype.slice.call(app.querySelectorAll('label'));
-    for(var j=0;j<labels.length;j++){
-      var t=(labels[j].textContent||'').toLowerCase();
-      if(/purchase price|asking price|offer price/.test(t)){
-        var inp=labels[j].querySelector('input'); if(inp) return num(inp.value);
+    var inputs=Array.prototype.slice.call(app.querySelectorAll('input'));
+    var groups=[/offer.*price|proposed.*price|bid.*price|offerprice|offer_price/,
+                /purchase.*price|purchaseprice|purchase_price/,
+                /asking.*price|list.*price|askingprice|asking_price/];
+    for(var g=0;g<groups.length;g++){
+      for(var i=0;i<inputs.length;i++){
+        var el=inputs[i];
+        if(el.closest && el.closest('#'+panelId)) continue;
+        var label=el.closest && el.closest('label');
+        var meta=((el.name||'')+' '+(el.id||'')+' '+(el.placeholder||'')+' '+(label?label.textContent:'')).toLowerCase();
+        if(groups[g].test(meta) && num(el.value)>0) return num(el.value);
       }
     }
     return 0;
   }
   function findDownPct(){
     var app=document.getElementById('app'); if(!app) return 20;
+    var dealPrice=num(document.getElementById('d_price')?.value);
+    var dealDown=num(document.getElementById('d_down')?.value);
+    if(dealPrice>0 && dealDown>=0) return dealDown/dealPrice*100;
     var inputs=Array.prototype.slice.call(app.querySelectorAll('input'));
     for(var i=0;i<inputs.length;i++){
       var el=inputs[i], meta=((el.name||'')+' '+(el.id||'')+' '+(el.placeholder||'')).toLowerCase();
@@ -60,10 +71,11 @@
 
     var store=getStore(), key=dealKey(), saved=store[key]||{};
     var purchase=findPurchasePrice();
-    var downPct=Number(saved.downPct||findDownPct()||20);
-    var amount=Number(saved.amount||0);
+    if(!purchase) purchase=Number(saved.p ?? saved.purchase ?? 0);
+    var downPct=Number(saved.d ?? saved.downPct ?? findDownPct() ?? 20);
+    var amount=Number(saved.a ?? saved.amount ?? 0);
     if(!amount && purchase) amount=Math.round(purchase*downPct/100*100)/100;
-    var rate=Number(saved.rate||RATE_DEFAULT);
+    var rate=Number(saved.r ?? saved.rate ?? RATE_DEFAULT);
 
     var panel=document.createElement('section');
     panel.id=panelId;

@@ -19,7 +19,7 @@
     return {
       external_id:String(pick(o,['external_id','externalId','id','listingId','mlsNumber'])||'').trim(),
       address:pick(o,['address','streetAddress','street_address']), city:pick(o,['city']), state:pick(o,['state','stateCode']), zip:pick(o,['zip','postalCode']),
-      property_type:pick(o,['property_type','propertyType','type']), units:units(pick(o,['units','unitCount','numberOfUnits','beds'])),
+      property_type:pick(o,['property_type','propertyType','type']), units:units(pick(o,['units','unitCount','numberOfUnits'])),
       asking_price:price, previous_price:previous, rent_monthly:monthlyRent, expenses_monthly:monthlyExpenses,
       cap_rate:cap, dscr:dscr, cash_flow_monthly:cash,
       source_url:pick(o,['source_url','sourceUrl','url','listingUrl']), confidence:pick(o,['confidence'])||'provider',
@@ -27,8 +27,8 @@
     };
   }
   function normalizeMany(payload, sourceName){
-    const rows=Array.isArray(payload)?payload:(payload?.listings||payload?.properties||payload?.data||[]);
-    return rows.map(x=>normalize(x,sourceName)).filter(x=>x.external_id);
+    const rows=Array.isArray(payload)?payload:(payload?.records||payload?.listings||payload?.properties||payload?.data||[]);
+    return (Array.isArray(rows)?rows:[]).map(x=>normalize(x,sourceName)).filter(x=>x.external_id);
   }
   global.JGAPDealIntelligenceAdapter={normalize,normalizeMany};
 })(window);
