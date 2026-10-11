@@ -14,7 +14,7 @@ test('canceled and payment problem statuses are denied',()=>{
     assert.equal(entitlement({status,current_period_end:now+3600},now).allowed,false);
 });
 test('missing, malformed or expired entitlements fail closed',()=>{
-  for(const record of [null,{},[],{status:'active'},{status:'active',current_period_end:now},{status:'active',current_period_end:'9999999999'},{status:'trialing',trial_end:Infinity}])
+  for(const record of [null,{},[],{status:'active'},{status:'active',current_period_end:now},{status:'active',current_period_end:'9999999999'},{status:'trialing',trial_end:Infinity},{status:'active',current_period_end:now+0.5},{status:'active',current_period_end:Number.MAX_SAFE_INTEGER+1}])
     assert.equal(entitlement(record,now).allowed,false);
 });
 test('invalid clock is rejected rather than granting access',()=>{
