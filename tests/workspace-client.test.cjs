@@ -231,3 +231,9 @@ test('scoped deal operations trim identifiers before backend RPC', async () => {
     assert.equal(args.p_deal_id, 'deal-1');
   }
 });
+
+test('membership guard refuses unknown company before UI data requests', () => {
+  assert.equal(client.requireWorkspaceMembership([alpha, beta], ' alpha ').id, 'alpha');
+  assert.throws(() => client.requireWorkspaceMembership([alpha], 'beta'), /not authorized/);
+  assert.throws(() => client.requireWorkspaceMembership([alpha], '   '), /Select a workspace/);
+});
