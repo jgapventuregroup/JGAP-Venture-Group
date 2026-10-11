@@ -64,6 +64,8 @@
     const { data, error } = await client.rpc('list_company_deals', { p_company_id: workspaceId });
     if (error) throw error;
     if (!Array.isArray(data)) throw new Error('Deal listing returned an invalid result');
+    if (data.some(deal => !deal || deal.company_id !== workspaceId))
+      throw new Error('Deal listing returned a record outside the selected workspace');
     return data;
   }
   async function getDeal(client, workspaceId, dealId) {
