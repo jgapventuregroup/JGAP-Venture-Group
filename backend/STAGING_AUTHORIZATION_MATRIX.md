@@ -88,3 +88,19 @@ For a cross-company UUID, every patch must fail even when the actor has editor r
 
 ### Review finding: SQL patch implementation
 The draft `staging_update_company_deal.sql` builds a dynamic update from a fixed field allowlist and uses `jsonb_populate_record` for typed conversion. This implementation **has not been executed on a staging schema**. Confirm PostgreSQL function resolution, column types, null handling, SQL permissions, and the generated `UPDATE ... RETURNING` behavior before approving the migration. Do not infer SQL correctness from JavaScript tests.
+
+## Cross-company reassignment invariant (staging gate)
+
+The proposed `staging_prevent_deal_reassignment.sql` trigger must be installed **only after explicit staging approval**. Test the direct Data API and SQL update paths with actor E (owner of Alpha, viewer of Beta) and with a separate synthetic actor who is **owner of both** companies. A dual-owner is critical: ordinary membership RLS alone may permit changing `deals.company_id` when the user can edit both companies.
+
+| Attempt | Expected |
+|---|---|
+| Alpha owner changes Alpha deal `company_id` to Beta without Beta membership | Rejected; Alpha deal unchanged |
+| Dual-owner changes Alpha deal `company_id` to Beta | Rejected by trigger; original company unchanged |
+| Dual-owner updates Alpha deal `name` without changing company | Allowed |
+| Alpha owner changes `company_id` to its existing Alpha ID | No reassignment; normal update permissions apply |
+| Viewer updates deal name in own company | Rejected; original name unchanged |
+| Anonymous user updates any deal | Rejected |
+| Direct call to `jgap_private.prevent_deal_company_reassignment()` | Not exposed as customer RPC |
+
+Capture both before/after company IDs and property counts for Alpha and Beta. If a reassignment unexpectedly succeeds, mark launch blocked, do not enable public signup, and do not touch production. This worksheet describes tests only; it does not claim any were executed.
