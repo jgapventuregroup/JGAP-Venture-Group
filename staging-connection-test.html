@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JGAP staging connection</title>
+<style>body{font:16px system-ui,sans-serif;max-width:700px;margin:35px auto;padding:0 20px}label{display:block;margin:12px 0 5px}input,button{font:inherit;padding:10px}input{width:100%;box-sizing:border-box}button{margin:12px 8px 12px 0}#status{white-space:pre-wrap}</style></head><body>
+<h1>JGAP staging connection test</h1>
+<p>This test connects only to the separate staging project. Use a fictional test account. No production data or company writes are involved.</p>
+<label for="key">Staging publishable key</label><input id="key" type="password" autocomplete="off">
+<label for="email">Test account email</label><input id="email" type="email" autocomplete="off">
+<label for="password">Test account password</label><input id="password" type="password" autocomplete="off">
+<button id="signIn">Sign in and read memberships</button><button id="signOut" disabled>Sign out</button>
+<pre id="status" role="status">Not connected</pre>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="./staging-client.js"></script>
+<script>
+(function(){
+'use strict';
+const byId=id=>document.getElementById(id);
+let client=null;
+byId('signIn').onclick=async()=>{
+ byId('signIn').disabled=true;byId('status').textContent='Connecting to staging...';
+ try{
+  client=JGAPStagingClient.createStagingClient(window.supabase,byId('key').value);
+  const auth=await client.auth.signInWithPassword({email:byId('email').value.trim(),password:byId('password').value});
+  if(auth.error)throw auth.error;
+  if(!auth.data.user)throw new Error('No authenticated user');
+  byId('password').value='';
+  const result=await client.rpc('list_my_companies');
+  if(result.error)throw result.error;
+  const rows=Array.isArray(result.data)?result.data:[];
+  byId('status').textContent='Signed in to staging. Authorized memberships: '+rows.length+'\n'+rows.map(x=>String(x.company_name)+' ('+String(x.member_role)+')').join('\n');
+  byId('signOut').disabled=false;
+ }catch(e){byId('status').textContent='Staging connection failed: '+e.message;}
+ finally{byId('signIn').disabled=false;}
+};
+byId('signOut').onclick=async()=>{
+ if(client)await client.auth.signOut();client=null;byId('password').value='';
+ byId('status').textContent='Signed out';byId('signOut').disabled=true;
+};
+})();
+</script></body></html>
