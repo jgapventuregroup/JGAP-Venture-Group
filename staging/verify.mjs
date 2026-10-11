@@ -27,14 +27,14 @@ function element(id){if(!elements.has(id))elements.set(id,{value:String(fields[i
 const context={document:{getElementById:element},window:{},console};
 vm.runInNewContext(scripts[0],context,{filename:'staging/index.html'});
 element('calculate').onclick();
-assert.match(element('results').textContent,/Monthly payment: \\$958\\.04/);
-assert.match(element('results').textContent,/Annual NOI: \\$13,320\\.00/);
-assert.match(element('results').textContent,/Monthly cash flow: \\$151\\.96/);
+assert.match(element('results').textContent,/Monthly payment: \$958\.04/);
+assert.match(element('results').textContent,/Annual NOI: \$13,320\.00/);
+assert.match(element('results').textContent,/Monthly cash flow: \$151\.96/);
 element('rate').value='101';
 element('calculate').onclick();
 assert.match(element('results').textContent,/Error: Invalid percentage or loan term/);
 element('rate').value='7';
 element('down').value='100';
 element('calculate').onclick();
-assert.match(element('results').textContent,/Monthly payment: \\$0\\.00/);
+assert.match(element('results').textContent,/Monthly payment: \$0\.00/);
 console.log('PASS: real application calculation handlers, invalid input, all-cash scenario');
