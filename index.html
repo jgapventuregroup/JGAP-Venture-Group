@@ -199,10 +199,11 @@ async function mountJGAPWorkspacePreview(){
     area.replaceChildren(picker,message);
     window.JGAPWorkspacePicker.mount(picker,workspaces,async selected=>{
       if(!area.isConnected)return;
-      jgapPreviewWorkspaceId=selected.id;
-      message.textContent="Loading deals for "+selected.name+"…";
+      const authorized=window.JGAPWorkspaceClient.requireWorkspaceMembership(workspaces,selected.id);
+      jgapPreviewWorkspaceId=authorized.id;
+      message.textContent="Loading deals for "+authorized.name+"…";
       try{
-        const deals=await window.JGAPWorkspaceClient.listDeals(sb,selected.id);
+        const deals=await window.JGAPWorkspaceClient.listDeals(sb,authorized.id);
         if(!area.isConnected || jgapPreviewWorkspaceId!==selected.id)return;
         message.replaceChildren();
         const summary=document.createElement("p");
