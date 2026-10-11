@@ -255,3 +255,13 @@ test('preview shows safe empty state without triggering customer onboarding', ()
   assert.match(preview, /Customer onboarding is not enabled yet/);
   assert.doesNotMatch(preview, /createWorkspace\(|create_my_company/);
 });
+
+test('preview clears previous company selection after loading memberships', () => {
+  const fs = require('node:fs');
+  const html = fs.readFileSync(require('node:path').join(__dirname, '..', 'index.html'), 'utf8');
+  const preview = html.slice(html.indexOf('async function mountJGAPWorkspacePreview()'), html.indexOf('window.__jgapStartupReachedAuth=true'));
+  const loaded = preview.indexOf('listWorkspaces(sb)');
+  const reset = preview.indexOf('jgapPreviewWorkspaceId=null;', loaded);
+  const mount = preview.indexOf('JGAPWorkspacePicker.mount(', loaded);
+  assert.ok(loaded >= 0 && reset > loaded && mount > reset);
+});
