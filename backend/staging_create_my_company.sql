@@ -32,17 +32,8 @@ begin
     end if;
     return pg_catalog.jsonb_build_object('company_id',v_company,'status','already_member');
   end if;
-  -- A pending invitation should be accepted via the existing invitation flow,
-  -- rather than creating a workspace that may strand the invited user.
-  if exists (
-    select 1 from public.company_invitations ci
-    where pg_catalog.lower(ci.email) = pg_catalog.lower(pg_catalog.coalesce((select email from auth.users where id=v_uid),''))
-      and ci.status = 'pending'
-  ) then
-    raise exception 'Pending company invitation: accept your invitation first';
-  end if;
-  -- Require verified email before granting ownership of a new customer workspace.
-  -- Existing memberships remain accessible above, without creating anything.
+  -- Confirm the account's email before using it for invitation matching.
+  -- Do not create an independent company from an unverified account.
   if not exists (
     select 1 from auth.users u
     where u.id = v_uid
@@ -51,6 +42,15 @@ begin
       and pg_catalog.btrim(u.email) <> ''
   ) then
     raise exception 'Verify your email before creating a company workspace';
+  end if;
+  -- A pending invitation should be accepted via the existing invitation flow,
+  -- rather than creating a workspace that may strand the invited user.
+  if exists (
+    select 1 from public.company_invitations ci
+    where pg_catalog.lower(ci.email) = pg_catalog.lower(pg_catalog.coalesce((select email from auth.users where id=v_uid),''))
+      and ci.status = 'pending'
+  ) then
+    raise exception 'Pending company invitation: accept your invitation first';
   end if;
   insert into public.companies(name) values(v_name) returning id into v_company;
   insert into public.company_members(company_id,user_id,role)
