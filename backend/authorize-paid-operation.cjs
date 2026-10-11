@@ -1,0 +1,17 @@
+'use strict';
+const {entitlement}=require('./subscription-policy.cjs');
+// Server-side integration contract: caller must resolve company membership and
+// trusted subscription from the database, never from browser-provided values.
+async function authorizePaidOperation({userId,companyId,loadMembership,loadSubscription,nowSeconds}) {
+  if(typeof userId!=='string'||!userId.trim()||typeof companyId!=='string'||!companyId.trim())
+    return {allowed:false,reason:'unauthenticated'};
+  if(typeof loadMembership!=='function'||typeof loadSubscription!=='function')
+    throw new Error('Trusted membership and billing loaders are required');
+  const role=await loadMembership(userId,companyId);
+  if(!['owner','admin','editor','viewer'].includes(role))
+    return {allowed:false,reason:'not_member'};
+  const subscription=await loadSubscription(companyId);
+  const access=entitlement(subscription,nowSeconds);
+  return {...access,role};
+}
+module.exports={authorizePaidOperation};
