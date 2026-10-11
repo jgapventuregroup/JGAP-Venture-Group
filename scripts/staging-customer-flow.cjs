@@ -16,6 +16,8 @@ async function exerciseCustomerFlow(client, companyName, dealName, confirmed) {
   if (state.state === 'choose_workspace')
     throw new Error('Multiple workspaces: choose one explicitly; test will not guess');
   if (!state.selected) throw new Error('No authorized workspace available');
+  if (!['owner', 'admin', 'editor'].includes(state.selected.role))
+    throw new Error('Selected workspace is read-only; synthetic deal creation is blocked');
   const companyId = state.selected.id;
   const marker = 'JGAP STAGING TEST: ' + String(dealName || 'Synthetic Duplex');
   const createdId = await workspace.createDeal(client,companyId,{
