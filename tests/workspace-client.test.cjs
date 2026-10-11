@@ -246,3 +246,12 @@ test('opt-in preview checks membership before querying selected company', () => 
   assert.ok(guard > 0, 'preview must check membership');
   assert.ok(query > guard, 'preview must guard before requesting deals');
 });
+
+test('preview shows safe empty state without triggering customer onboarding', () => {
+  const fs = require('node:fs');
+  const html = fs.readFileSync(require('node:path').join(__dirname, '..', 'index.html'), 'utf8');
+  const preview = html.slice(html.indexOf('async function mountJGAPWorkspacePreview()'), html.indexOf('window.__jgapStartupReachedAuth=true'));
+  assert.match(preview, /if\(!workspaces\.length\)/);
+  assert.match(preview, /Customer onboarding is not enabled yet/);
+  assert.doesNotMatch(preview, /createWorkspace\(|create_my_company/);
+});
