@@ -299,3 +299,10 @@ test('new customer workspace requires confirmed email in staging SQL', () => {
   const creation = sql.indexOf('insert into public.companies');
   assert.ok(verification > 0 && creation > verification, 'email gate must precede workspace creation');
 });
+
+test('staging onboarding never chooses first company when multiple memberships exist', () => {
+  const sql = load('staging_create_my_company.sql');
+  assert.match(sql, /pg_catalog\.count\(distinct cm\.company_id\)/);
+  assert.match(sql, /Choose an existing company workspace explicitly/);
+  assert.ok(sql.indexOf('count(distinct cm.company_id)') < sql.indexOf("'already_member'"));
+});
