@@ -55,6 +55,10 @@
       throw new Error('Workspace creation returned an invalid result');
     return data;
   }
+  function requireWorkspaceMembership(workspaces, workspaceId) {
+    const id = normalizeWorkspaceId(workspaceId);
+    return selectWorkspace(workspaces, id);
+  }
   async function listDeals(client, workspaceId) {
     workspaceId = normalizeWorkspaceId(workspaceId);
     const { data, error } = await client.rpc('list_company_deals', { p_company_id: workspaceId });
@@ -153,7 +157,7 @@
       choices
     };
   }
-  const api = { normalizeWorkspaces, selectWorkspace, renderWorkspacePicker, listWorkspaces, createWorkspace, listDeals, getDeal, createDeal, updateDeal, deleteDeal };
+  const api = { normalizeWorkspaces, selectWorkspace, requireWorkspaceMembership, renderWorkspacePicker, listWorkspaces, createWorkspace, listDeals, getDeal, createDeal, updateDeal, deleteDeal };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.JGAPWorkspaceClient = api;
 })(typeof window !== 'undefined' ? window : globalThis);
