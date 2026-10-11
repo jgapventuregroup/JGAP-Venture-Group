@@ -306,3 +306,11 @@ test('staging onboarding never chooses first company when multiple memberships e
   assert.match(sql, /Choose an existing company workspace explicitly/);
   assert.ok(sql.indexOf('count(distinct cm.company_id)') < sql.indexOf("'already_member'"));
 });
+
+test('verified email is checked before matching pending invitations', () => {
+  const sql = load('staging_create_my_company.sql');
+  const emailCheck = sql.indexOf('u.email_confirmed_at is not null');
+  const invitationLookup = sql.indexOf('from public.company_invitations ci');
+  assert.ok(emailCheck >= 0 && invitationLookup > emailCheck);
+  assert.equal(sql.split('Verify your email before creating a company workspace').length - 1, 1);
+});
