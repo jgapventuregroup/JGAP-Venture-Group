@@ -2,7 +2,7 @@
 const {entitlement}=require('./subscription-policy.cjs');
 // Server-side integration contract: caller must resolve company membership and
 // trusted subscription from the database, never from browser-provided values.
-async function authorizePaidOperation({userId,companyId,loadMembership,loadSubscription,nowSeconds,operation='read'}) {
+async function authorizePaidOperation({userId,companyId,loadMembership,loadSubscription,nowSeconds,operation}) {
   if(typeof userId!=='string'||!userId.trim()||typeof companyId!=='string'||!companyId.trim())
     return {allowed:false,reason:'unauthenticated'};
   if(typeof loadMembership!=='function'||typeof loadSubscription!=='function')
