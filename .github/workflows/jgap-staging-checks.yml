@@ -1,0 +1,17 @@
+name: JGAP staging checks
+on:
+  push:
+    branches: [jgap-staging-workspace]
+  pull_request:
+    paths: ['staging/**', '.github/workflows/jgap-staging-checks.yml']
+jobs:
+  static-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate staging HTML and JavaScript
+        run: |
+          node staging/verify.mjs
