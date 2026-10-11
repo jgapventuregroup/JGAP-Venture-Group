@@ -215,3 +215,19 @@ test('duplicate workspace memberships do not create duplicate company choices', 
   assert.deepEqual(rows.map(row => row.id), ['alpha','beta']);
   assert.equal(client.renderWorkspacePicker(rows, null).choices.length, 2);
 });
+
+test('scoped deal operations trim identifiers before backend RPC', async () => {
+  const calls = [];
+  const db = {rpc: async (name, args) => {
+    calls.push({name,args});
+    return {data:name==='delete_company_deal' ? true : {id:'deal-1'},error:null};
+  }};
+  await client.getDeal(db, ' alpha ', ' deal-1 ');
+  await client.updateDeal(db, ' alpha ', ' deal-1 ', {name:'Edited'});
+  await client.deleteDeal(db, ' alpha ', ' deal-1 ', true);
+  assert.equal(calls.length, 3);
+  for (const {args} of calls) {
+    assert.equal(args.p_company_id, 'alpha');
+    assert.equal(args.p_deal_id, 'deal-1');
+  }
+});
