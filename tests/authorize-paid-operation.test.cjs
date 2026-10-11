@@ -37,3 +37,10 @@ test('unknown operation fails closed without billing lookup',async()=>{
   assert.deepEqual(result,{allowed:false,reason:'invalid_operation'});
   assert.equal(billingCalls,0);
 });
+
+test('omitting operation never defaults to paid read access',async()=>{
+  let billingCalls=0;
+  const result=await authorizePaidOperation({userId:'owner',companyId:'company-a',loadMembership:async()=> 'owner',loadSubscription:async()=>{billingCalls++;return active;},nowSeconds:now});
+  assert.deepEqual(result,{allowed:false,reason:'invalid_operation'});
+  assert.equal(billingCalls,0);
+});
