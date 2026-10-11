@@ -51,9 +51,9 @@
     if (name.length < 2 || name.length > 100) throw new Error('Company name must be 2 to 100 characters');
     const { data, error } = await client.rpc('create_my_company', { p_company_name: name });
     if (error) throw error;
-    if (!data || !data.company_id || !['created', 'already_member'].includes(data.status))
+    if (!data || typeof data.company_id !== 'string' || !data.company_id.trim() || !['created', 'already_member'].includes(data.status))
       throw new Error('Workspace creation returned an invalid result');
-    return data;
+    return { ...data, company_id: data.company_id.trim() };
   }
   function requireWorkspaceMembership(workspaces, workspaceId) {
     const id = normalizeWorkspaceId(workspaceId);
