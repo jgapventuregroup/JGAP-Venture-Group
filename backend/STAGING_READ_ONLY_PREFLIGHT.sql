@@ -68,8 +68,7 @@ select e.name as expected_rpc,
        count(p.oid) as installed_overloads
 from expected e
 left join pg_catalog.pg_proc p on p.proname=e.name
-left join pg_catalog.pg_namespace n on n.oid=p.pronamespace and n.nspname='public'
-where n.oid is not null or p.oid is null
+  and p.pronamespace = (select oid from pg_catalog.pg_namespace where nspname='public')
 group by e.name order by e.name;
 
 -- Do not interpret presence alone as correctness: review exact definitions,
