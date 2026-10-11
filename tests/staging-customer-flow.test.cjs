@@ -45,3 +45,14 @@ test('viewer workspace never attempts synthetic deal creation',async()=>{
   await assert.rejects(exerciseCustomerFlow(client,'Alpha','Duplex',true),/read-only/);
   assert.deepEqual(calls,['list_my_companies']);
 });
+
+test('synthetic flow cannot silently create a new company',async()=>{
+  const calls=[];
+  const client={rpc:async(name)=>{
+    calls.push(name);
+    if(name==='list_my_companies')return {data:[],error:null};
+    throw Error('no company creation permitted');
+  }};
+  await assert.rejects(exerciseCustomerFlow(client,'Synthetic Co','Duplex',true),/create a synthetic company separately/);
+  assert.deepEqual(calls,['list_my_companies']);
+});
