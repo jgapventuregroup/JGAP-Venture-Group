@@ -22,6 +22,10 @@
       throw new Error('Select a workspace first');
     return workspaceId.trim();
   }
+  function normalizeDealId(dealId) {
+    if (typeof dealId !== 'string' || !dealId.trim()) throw new Error('Workspace and deal are required');
+    return dealId.trim();
+  }
   function selectWorkspace(workspaces, requestedId) {
     const rows = normalizeWorkspaces(workspaces);
     if (requestedId !== null && requestedId !== undefined && requestedId !== '') {
@@ -58,7 +62,8 @@
     return data || [];
   }
   async function getDeal(client, workspaceId, dealId) {
-    if (typeof workspaceId !== 'string' || !workspaceId.trim() || typeof dealId !== 'string' || !dealId.trim()) throw new Error('Workspace and deal are required');
+    workspaceId = normalizeWorkspaceId(workspaceId);
+    dealId = normalizeDealId(dealId);
     const { data, error } = await client.rpc('get_company_deal', {
       p_company_id: workspaceId, p_deal_id: dealId
     });
@@ -78,7 +83,8 @@
     'projected_sale_price','loan_structure'
   ]);
   async function updateDeal(client, workspaceId, dealId, patch) {
-    if (typeof workspaceId !== 'string' || !workspaceId.trim() || typeof dealId !== 'string' || !dealId.trim()) throw new Error('Workspace and deal are required');
+    workspaceId = normalizeWorkspaceId(workspaceId);
+    dealId = normalizeDealId(dealId);
     if (!patch || Array.isArray(patch) || typeof patch !== 'object' || !Object.keys(patch).length)
       throw new Error('A nonempty deal patch is required');
     if (Object.getPrototypeOf(patch) !== Object.prototype && Object.getPrototypeOf(patch) !== null)
@@ -94,7 +100,8 @@
   }
   async function deleteDeal(client, workspaceId, dealId, confirmed) {
     if (confirmed !== true) throw new Error('Confirm deal deletion first');
-    if (typeof workspaceId !== 'string' || !workspaceId.trim() || typeof dealId !== 'string' || !dealId.trim()) throw new Error('Workspace and deal are required');
+    workspaceId = normalizeWorkspaceId(workspaceId);
+    dealId = normalizeDealId(dealId);
     const { data, error } = await client.rpc('delete_company_deal', {
       p_company_id: workspaceId, p_deal_id: dealId
     });
