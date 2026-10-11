@@ -6,14 +6,18 @@
 const onboarding = require('../workspace-onboarding.js');
 const workspace = require('../workspace-client.js');
 
-async function exerciseCustomerFlow(client, companyName, dealName, confirmed) {
+async function exerciseCustomerFlow(client, companyName, dealName, confirmed, selectedCompanyId = null) {
   if (confirmed !== true) throw new Error('Explicit synthetic staging test confirmation required');
   if (!client || typeof client.rpc !== 'function') throw new Error('Staging RPC client required');
   let state = await onboarding.resolveOnboarding(client);
   if (state.state === 'needs_workspace')
     throw new Error('No workspace exists; create a synthetic company separately with explicit approval');
-  if (state.state === 'choose_workspace')
-    throw new Error('Multiple workspaces: choose one explicitly; test will not guess');
+  if (state.state === 'choose_workspace') {
+    if (!selectedCompanyId) throw new Error('Multiple workspaces: choose one explicitly; test will not guess');
+    state = { ...state, selected: onboarding.chooseExisting(state, selectedCompanyId) };
+  } else if (selectedCompanyId && state.selected && state.selected.id !== selectedCompanyId) {
+    throw new Error('Requested company is not the authorized workspace');
+  }
   if (!state.selected) throw new Error('No authorized workspace available');
   if (!['owner', 'admin', 'editor'].includes(state.selected.role))
     throw new Error('Selected workspace is read-only; synthetic deal creation is blocked');
