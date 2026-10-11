@@ -321,3 +321,9 @@ test('company onboarding requires authenticated session role inside security def
   assert.match(sql, /auth\.role\(\)\) is distinct from 'authenticated'/i);
   assert.match(sql, /revoke all on function public\.create_my_company\(text\) from anon/i);
 });
+
+test('pending invitations match trimmed case-insensitive account email', () => {
+  const sql = load('staging_create_my_company.sql');
+  assert.match(sql, /pg_catalog\.lower\(pg_catalog\.btrim\(ci\.email\)\)/);
+  assert.match(sql, /pg_catalog\.lower\(pg_catalog\.btrim\(u\.email\)\)/);
+});
