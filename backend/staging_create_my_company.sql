@@ -40,7 +40,10 @@ begin
   -- Existing memberships remain accessible above, without creating anything.
   if not exists (
     select 1 from auth.users u
-    where u.id = v_uid and u.email_confirmed_at is not null
+    where u.id = v_uid
+      and u.email_confirmed_at is not null
+      and u.email is not null
+      and pg_catalog.btrim(u.email) <> ''
   ) then
     raise exception 'Verify your email before creating a company workspace';
   end if;
