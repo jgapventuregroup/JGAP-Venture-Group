@@ -56,3 +56,33 @@ test('synthetic flow cannot silently create a new company',async()=>{
   await assert.rejects(exerciseCustomerFlow(client,'Synthetic Co','Duplex',true),/create a synthetic company separately/);
   assert.deepEqual(calls,['list_my_companies']);
 });
+
+test('explicit company selection uses only the authorized selected company',async()=>{
+  const calls=[];
+  const client={rpc:async(name,args)=>{
+    calls.push({name,args});
+    if(name==='list_my_companies')return {data:[
+      {company_id:'alpha',company_name:'Alpha',member_role:'viewer'},
+      {company_id:'beta',company_name:'Beta',member_role:'owner'}
+    ],error:null};
+    if(name==='create_company_deal_with_offer')return {data:'deal-beta',error:null};
+    if(name==='get_company_deal')return {data:[{id:'deal-beta',company_id:'beta',name:'JGAP STAGING TEST: Duplex'}],error:null};
+    if(name==='list_company_deals')return {data:[{id:'deal-beta',company_id:'beta',name:'JGAP STAGING TEST: Duplex'}],error:null};
+    throw Error('unexpected '+name);
+  }};
+  const result=await exerciseCustomerFlow(client,'Beta','Duplex',true,'beta');
+  assert.equal(result.companyId,'beta');
+  for(const call of calls.filter(c=>c.args?.p_company_id))assert.equal(call.args.p_company_id,'beta');
+});
+test('explicit company selection refuses an unlisted company before writes',async()=>{
+  const calls=[];
+  const client={rpc:async(name)=>{
+    calls.push(name);
+    return {data:[
+      {company_id:'alpha',company_name:'Alpha',member_role:'owner'},
+      {company_id:'beta',company_name:'Beta',member_role:'owner'}
+    ],error:null};
+  }};
+  await assert.rejects(exerciseCustomerFlow(client,'Other','Duplex',true,'gamma'),/not authorized/);
+  assert.deepEqual(calls,['list_my_companies']);
+});
