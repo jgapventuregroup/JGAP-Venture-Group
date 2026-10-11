@@ -23,6 +23,7 @@ async function exerciseCustomerFlow(client, companyName, dealName, confirmed, se
     throw new Error('Selected workspace is read-only; synthetic deal creation is blocked');
   const companyId = state.selected.id;
   const marker = 'JGAP STAGING TEST: ' + String(dealName || 'Synthetic Duplex');
+  if (marker.length > 100) throw new Error('Synthetic deal name must fit within 100 characters');
   const createdId = await workspace.createDeal(client,companyId,{
     name:marker,asking_price:150000,target_offer_price:130000,monthly_rent:1800
   });
@@ -34,6 +35,8 @@ async function exerciseCustomerFlow(client, companyName, dealName, confirmed, se
   const listed = await workspace.listDeals(client,companyId);
   if (!listed.some(row => row.id === createdId))
     throw new Error('Created deal not present in scoped listing');
+  // Leave the synthetic deal in staging for deliberate operator review and cleanup.
+  // Never auto-delete after partial failure, which could hide evidence of isolation bugs.
   return {companyId,createdId,verified:true,cleanupRequired:true};
 }
 module.exports = {exerciseCustomerFlow};
