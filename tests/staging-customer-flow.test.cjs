@@ -32,3 +32,16 @@ test('synthetic customer flow refuses ambiguous multi-company membership',async(
   await assert.rejects(exerciseCustomerFlow(client,'Alpha','Duplex',true),/Multiple workspaces/);
   assert.deepEqual(calls,['list_my_companies']);
 });
+
+test('viewer workspace never attempts synthetic deal creation',async()=>{
+  const calls=[];
+  const client={rpc:async(name)=>{
+    calls.push(name);
+    if(name==='list_my_companies')return {data:[{
+      company_id:'alpha',company_name:'Alpha',member_role:'viewer'
+    }],error:null};
+    throw Error('write must not occur');
+  }};
+  await assert.rejects(exerciseCustomerFlow(client,'Alpha','Duplex',true),/read-only/);
+  assert.deepEqual(calls,['list_my_companies']);
+});
