@@ -10,9 +10,8 @@ async function exerciseCustomerFlow(client, companyName, dealName, confirmed) {
   if (confirmed !== true) throw new Error('Explicit synthetic staging test confirmation required');
   if (!client || typeof client.rpc !== 'function') throw new Error('Staging RPC client required');
   let state = await onboarding.resolveOnboarding(client);
-  if (state.state === 'needs_workspace') {
-    state = await onboarding.createFirstWorkspace(client,state,companyName,true);
-  }
+  if (state.state === 'needs_workspace')
+    throw new Error('No workspace exists; create a synthetic company separately with explicit approval');
   if (state.state === 'choose_workspace')
     throw new Error('Multiple workspaces: choose one explicitly; test will not guess');
   if (!state.selected) throw new Error('No authorized workspace available');
