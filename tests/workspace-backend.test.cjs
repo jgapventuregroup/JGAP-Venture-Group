@@ -292,7 +292,8 @@ test('staging trigger prevents moving a deal between companies', () => {
 test('new customer workspace requires confirmed email in staging SQL', () => {
   const sql = load('staging_create_my_company.sql');
   assert.match(sql, /auth\.users u/);
-  assert.match(sql, /u\.id = v_uid and u\.email_confirmed_at is not null/);
+  assert.match(sql, /u\.id = v_uid\s+and u\.email_confirmed_at is not null/);
+  assert.match(sql, /pg_catalog\.btrim\(u\.email\) <> ''/);
   assert.match(sql, /Verify your email before creating a company workspace/);
   const verification = sql.indexOf('u.email_confirmed_at is not null');
   const creation = sql.indexOf('insert into public.companies');
