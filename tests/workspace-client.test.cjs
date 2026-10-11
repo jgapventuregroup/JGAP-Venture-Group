@@ -265,3 +265,15 @@ test('preview clears previous company selection after loading memberships', () =
   const mount = preview.indexOf('JGAPWorkspacePicker.mount(', loaded);
   assert.ok(loaded >= 0 && reset > loaded && mount > reset);
 });
+
+test('workspace creation refuses malformed company IDs and trims valid replies', async () => {
+  for (const id of [42, {}, '   ', null]) {
+    await assert.rejects(client.createWorkspace({
+      rpc: async () => ({ data: { company_id: id, status: 'created' }, error: null })
+    }, 'Valid Company', true), /invalid result/);
+  }
+  const result = await client.createWorkspace({
+    rpc: async () => ({ data: { company_id: ' alpha ', status: 'already_member' }, error: null })
+  }, 'Valid Company', true);
+  assert.equal(result.company_id, 'alpha');
+});
