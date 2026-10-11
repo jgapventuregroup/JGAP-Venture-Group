@@ -12,7 +12,7 @@
     if (typeof publishableKey !== 'string' || !publishableKey.trim())
       throw new Error('Staging publishable key is required');
     const key = publishableKey.trim();
-    if (!key.startsWith('sb_publishable_'))
+    if (!key.startsWith('sb_publishable_') || key.length <= 'sb_publishable_'.length)
       throw new Error('Only a staging publishable key may be used');
     if (STAGING_URL.includes(PRODUCTION_PROJECT))
       throw new Error('Production project must never be used for staging');
