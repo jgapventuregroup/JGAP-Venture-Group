@@ -75,7 +75,11 @@
       p_company_id: workspaceId, p_deal_id: dealId
     });
     if (error) throw error;
-    return Array.isArray(data) ? (data[0] || null) : (data || null);
+    if (Array.isArray(data) && data.length > 1) throw new Error('Deal lookup returned multiple records');
+    const deal = Array.isArray(data) ? (data[0] || null) : (data || null);
+    if (deal && (typeof deal !== 'object' || deal.company_id !== workspaceId || deal.id !== dealId))
+      throw new Error('Deal lookup returned a record outside the selected workspace');
+    return deal;
   }
   const editableDealFields = new Set([
     'name','status','property_type','purchase_price','down_payment','interest_rate',
