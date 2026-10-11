@@ -10,7 +10,7 @@ test('nonmember is rejected without looking up billing details',async()=>{
   assert.equal(billingCalls,0);
 });
 test('valid member with active entitlement can access paid operation',async()=>{
-  const result=await authorizePaidOperation({userId:'member',companyId:'company-a',loadMembership:async()=> 'editor',loadSubscription:async()=>active,nowSeconds:now});
+  const result=await authorizePaidOperation({userId:'member',companyId:'company-a',operation:'read',loadMembership:async()=> 'editor',loadSubscription:async()=>active,nowSeconds:now});
   assert.deepEqual(result,{allowed:true,reason:'entitled',role:'editor'});
 });
 test('member with expired entitlement cannot access paid operation',async()=>{
