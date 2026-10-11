@@ -25,6 +25,11 @@ begin
     order by cm.created_at, cm.company_id
     limit 1;
   if v_company is not null then
+    -- Never silently choose a company when the user has multiple memberships.
+    if (select pg_catalog.count(distinct cm.company_id)
+        from public.company_members cm where cm.user_id = v_uid) > 1 then
+      raise exception 'Choose an existing company workspace explicitly';
+    end if;
     return pg_catalog.jsonb_build_object('company_id',v_company,'status','already_member');
   end if;
   -- A pending invitation should be accepted via the existing invitation flow,
