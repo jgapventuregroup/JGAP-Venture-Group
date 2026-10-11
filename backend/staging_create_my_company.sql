@@ -51,7 +51,10 @@ begin
   -- rather than creating a workspace that may strand the invited user.
   if exists (
     select 1 from public.company_invitations ci
-    where pg_catalog.lower(ci.email) = pg_catalog.lower(pg_catalog.coalesce((select email from auth.users where id=v_uid),''))
+    where pg_catalog.lower(pg_catalog.btrim(ci.email)) = (
+      select pg_catalog.lower(pg_catalog.btrim(u.email))
+      from auth.users u where u.id = v_uid
+    )
       and ci.status = 'pending'
   ) then
     raise exception 'Pending company invitation: accept your invitation first';
