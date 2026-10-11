@@ -194,6 +194,12 @@ async function mountJGAPWorkspacePreview(){
   area.id="jgapWorkspacePreview";
   area.setAttribute("aria-label","Company workspace preview");
   status.after(area);
+  // This preview must never send a production-session token to staging or
+  // silently operate against the production project.
+  if(new URL(SUPABASE_URL).hostname!=="qfszapteuxuogoselprp.supabase.co"){
+    area.textContent="Workspace preview disabled: connect a verified staging-only Supabase client first.";
+    return;
+  }
   try{
     const workspaces=await window.JGAPWorkspaceClient.listWorkspaces(sb);
     if(!area.isConnected)return;
