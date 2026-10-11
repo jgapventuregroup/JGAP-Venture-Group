@@ -54,3 +54,19 @@ Immediately stop on any cross-company data exposure, viewer write access, privil
 
 ## Release evidence record template
 For each staging test, record: `test_id`, `schema_commit`, `test_project_id`, `account_role`, `company_id`, `endpoint`, `expected`, `observed`, `pass_fail`, and `reviewer`. Use synthetic identifiers in shared reports. A passing static CI run is not a substitute for these records.
+
+## Deployment inventory and verification (2026-10-11)
+
+| Component | Confirmed in staging? | Verification still required |
+|---|---|---|
+| Four foundation tables, RLS enabled | Yes, prior inspection | Recheck schema and grants before migrations |
+| Six company/deal RLS policies | Yes, prior inspection | Authenticated owner/editor/viewer negative tests |
+| Membership helper functions | Yes, prior inspection | Actual role-scoped execution |
+| `create_my_company` RPC | **Unknown; do not assume installed** | Inspect function definition, grants and verified-email behavior |
+| `list_my_companies` RPC | **Unknown; do not assume installed** | Inspect function and cross-tenant output |
+| Scoped create/read/update/delete deal RPCs | **Not confirmed installed** | Inspect each deployed signature and test against RLS |
+| Deal company reassignment trigger | **Not confirmed installed** | Inspect `pg_trigger` and run dual-owner test |
+| Workspace picker frontend | Dev-branch preview only | Staging UI and sign-out tests |
+| Customer billing/subscriptions | Not activated | Entitlements, webhook replay, cancellation and access tests |
+
+**Installation safety:** GitHub passing tests mean only that draft files passed offline checks. Do not mark an item installed until a staging read-only inspection confirms its exact function/trigger definition. Because prior connector writes caused repeated authorization prompts, do not retry them automatically. The next staging step is a separately approved, consolidated operation, not a series of speculative permission requests.
