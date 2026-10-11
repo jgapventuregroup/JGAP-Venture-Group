@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JGAP Customer Workspace Preview</title>
+<style>
+body{font:16px system-ui,sans-serif;max-width:840px;margin:32px auto;padding:0 20px;color:#183048;background:#f5f8fb}
+header,section{background:white;border:1px solid #d6e0e9;border-radius:12px;padding:24px;margin:16px 0}
+h1{margin-top:0}label{display:block;margin:12px 0 6px;font-weight:600}
+select,button{font:inherit;padding:10px;border-radius:7px}select{width:100%;max-width:420px}button{background:#155e90;color:white;border:0;cursor:pointer;margin-top:12px}
+table{border-collapse:collapse;width:100%;margin-top:14px}th,td{text-align:left;border-bottom:1px solid #d6e0e9;padding:12px}
+small{color:#526779}.note{background:#eaf4fb;padding:12px;border-radius:7px}
+</style></head>
+<body>
+<header><h1>JGAP customer workspace preview</h1><p class="note">Offline demonstration only. Uses fictional companies and properties. No database connection, account creation, billing, or real customer data.</p></header>
+<section><h2>Choose your company</h2><label for="company">Authorized workspace</label>
+<select id="company"><option value="a">Demo Property Group</option><option value="b">Example Rental Holdings</option></select>
+<p id="role"></p></section>
+<section><h2>Deal pipeline</h2><p id="summary"></p><table><thead><tr><th>Property</th><th>Asking price</th><th>Status</th></tr></thead><tbody id="deals"></tbody></table>
+<p><small>Company switching replaces the entire deal list; real isolation must be enforced by Supabase RLS, not by this browser view.</small></p></section>
+<script>
+(function(){
+'use strict';
+const data={
+ a:{role:'Owner',deals:[['101 Sample Lane','$225,000','Reviewing'],['25 Fictional Court','$310,000','Analyzing']]},
+ b:{role:'Viewer',deals:[['88 Example Avenue','$185,000','Watching']]}
+};
+const select=document.getElementById('company'),tbody=document.getElementById('deals');
+function render(){
+ const workspace=data[select.value];if(!workspace)return;
+ document.getElementById('role').textContent='Demonstration role: '+workspace.role;
+ document.getElementById('summary').textContent=workspace.deals.length+' fictional deal(s) in this workspace.';
+ tbody.replaceChildren();
+ for(const deal of workspace.deals){const tr=document.createElement('tr');for(const value of deal){const td=document.createElement('td');td.textContent=value;tr.appendChild(td);}tbody.appendChild(tr);}
+}
+select.addEventListener('change',render);render();
+})();
+</script>
+</body></html>
