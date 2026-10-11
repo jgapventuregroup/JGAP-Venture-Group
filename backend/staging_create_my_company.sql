@@ -14,6 +14,10 @@ declare
   v_name text := pg_catalog.btrim(pg_catalog.coalesce(p_company_name,''));
 begin
   if v_uid is null then raise exception 'Authentication required'; end if;
+  -- SECURITY DEFINER functions must not accept a forged session role.
+  if (select auth.role()) is distinct from 'authenticated' then
+    raise exception 'Authenticated session required';
+  end if;
   if pg_catalog.length(v_name) < 2 or pg_catalog.length(v_name) > 100 then
     raise exception 'Company name must be 2 to 100 characters';
   end if;
