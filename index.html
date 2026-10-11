@@ -194,6 +194,7 @@ async function mountJGAPWorkspacePreview(){
   try{
     const workspaces=await window.JGAPWorkspaceClient.listWorkspaces(sb);
     if(!area.isConnected)return;
+    jgapPreviewWorkspaceId=null;
     if(!workspaces.length){
       area.textContent="No company workspace is available for this account. Customer onboarding is not enabled yet.";
       return;
