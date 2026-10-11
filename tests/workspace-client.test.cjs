@@ -220,7 +220,7 @@ test('scoped deal operations trim identifiers before backend RPC', async () => {
   const calls = [];
   const db = {rpc: async (name, args) => {
     calls.push({name,args});
-    return {data:name==='delete_company_deal' ? true : {id:'deal-1'},error:null};
+    return {data:name==='delete_company_deal' ? true : {id:'deal-1',company_id:'alpha'},error:null};
   }};
   await client.getDeal(db, ' alpha ', ' deal-1 ');
   await client.updateDeal(db, ' alpha ', ' deal-1 ', {name:'Edited'});
