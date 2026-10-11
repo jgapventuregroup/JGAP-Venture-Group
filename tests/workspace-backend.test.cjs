@@ -180,7 +180,8 @@ test('company onboarding qualifies builtin text helpers under restricted search 
   const sql = load('staging_create_my_company.sql');
   assert.ok(sql.includes('pg_catalog.btrim(pg_catalog.coalesce('));
   assert.ok(sql.includes('pg_catalog.length(v_name)'));
-  assert.ok(sql.includes('pg_catalog.lower(pg_catalog.coalesce('));
+  assert.ok(sql.includes('pg_catalog.lower(pg_catalog.btrim(ci.email))'));
+  assert.ok(sql.includes('pg_catalog.lower(pg_catalog.btrim(u.email))'));
 });
 
 test('deal edits cannot null required financial inputs or exceed selling cost bounds', () => {
