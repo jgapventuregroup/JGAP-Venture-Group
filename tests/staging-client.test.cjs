@@ -16,7 +16,7 @@ test('staging client uses isolated project and nonpersistent session', () => {
 test('staging client rejects missing or privileged keys without connecting', () => {
   let calls=0;
   const lib={createClient:()=>{calls++;return {};}};
-  for(const key of ['', '  ', 'sb_secret_test', 'service_role', 'aaa.bbb.ccc',null]){
+  for(const key of ['', '  ', 'sb_secret_test', 'service_role', 'aaa.bbb.ccc','sb_publishable_', 'eyJlegacy',null]){
     assert.throws(()=>createStagingClient(lib,key),/publishable key/);
   }
   assert.equal(calls,0);
